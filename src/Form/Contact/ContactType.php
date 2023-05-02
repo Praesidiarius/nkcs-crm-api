@@ -15,7 +15,11 @@ class ContactType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('firstName', TextType::class)
+            ->add('firstName', TextType::class, [
+                'required' => true,
+                'invalid_message' => 'You entered an invalid value, it should include %num% letters',
+                'invalid_message_parameters' => ['%num%' => 6],
+            ])
             ->add('lastName', TextType::class)
             ->add('isCompany', CheckboxType::class)
             ->add('emailPrivate', EmailType::class)
@@ -27,12 +31,7 @@ class ContactType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Contact::class,
-            'csrf_protection' => true,
-            // the name of the hidden HTML field that stores the token
-            'csrf_field_name' => '_token',
-            // an arbitrary string used to generate the value of the token
-            // using a different string for each form improves its security
-            'csrf_token_id'   => 'contact',
+            'csrf_protection' => false,
         ]);
     }
 }

@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Uid\Uuid;
 
 #[Route('/api/contact')]
 class ContactController extends AbstractController
@@ -51,8 +52,8 @@ class ContactController extends AbstractController
         $form = $this->createForm(ContactType::class, $contact);
 
         return $this->json([
-            'form' => $form,
-            'token' => $tokenManager->getToken('contact')->getValue(),
+            'form' => $this->contactManager->getFormFields(),
+            'token' => $tokenManager->getToken( Uuid::v4())->getValue(),
         ]);
     }
 

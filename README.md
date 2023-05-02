@@ -1,4 +1,5 @@
 # NKCS CRM Api
+> Simple, light and extensible api based on the symfony framework
 
 ## Install
 - ``composer install``

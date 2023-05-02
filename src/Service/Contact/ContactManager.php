@@ -37,6 +37,30 @@ class ContactManager
                 'type' => 'email'
             ];
         }
+
         return $indexHeaders;
+    }
+
+    public function getFormFields(): array
+    {
+        $formFields = [
+            [
+                'text' => 'Vorname',
+                'key' => 'firstName',
+                'type' => 'text'
+            ],
+            [
+                'text' => 'Nachname',
+                'key' => 'lastName',
+                'type' => 'text'
+            ],
+            [
+                'text' => 'E-Mail Privat',
+                'key' => 'emailPrivate',
+                'type' => 'email'
+            ],
+        ];
+
+        return $formFields;
     }
 }
