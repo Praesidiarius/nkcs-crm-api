@@ -60,15 +60,19 @@ class ContactController extends AbstractController
         $data = json_decode($body, true);
 
         // todo: do this the symfony way - how?
+        $addressFields = ['street', 'zip', 'city'];
         $address = new ContactAddress();
-        $address->setStreet($data['street']);
-        $address->setZip($data['zip']);
-        $address->setCity($data['city']);
+        $contactHasAddress = false;
 
-        // remove relation fields from data to prevent form errors
-        unset($data['street']);
-        unset($data['zip']);
-        unset($data['city']);
+        foreach ($addressFields as $addressField) {
+            if (!isset($data[$addressField])) {
+                continue;
+            }
+            $contactHasAddress = true;
+            $setterName = 'set' . ucfirst($addressField);
+            $address->$setterName($data[$addressField]);
+            unset($data[$addressField]);
+        }
 
         $contact = new Contact();
 
@@ -112,7 +116,9 @@ class ContactController extends AbstractController
         $address->setContact($contact);
 
         // save address
-        $this->addressRepository->save($address, true);
+        if ($contactHasAddress) {
+            $this->addressRepository->save($address, true);
+        }
 
         return $this->itemResponse($contact);
     }
