@@ -175,6 +175,10 @@ class ContactController extends AbstractController
     public function delete(
         Contact $contact,
     ): Response {
+        $addresses = $this->addressRepository->findBy(['contact' => $contact]);
+        foreach ($addresses as $address) {
+            $this->addressRepository->remove($address);
+        }
         $this->contactRepository->remove($contact, true);
 
         return $this->json(['state' => 'success']);
