@@ -9,9 +9,16 @@ use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class ContactType extends AbstractType
 {
+    public function __construct(
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
+    )
+    {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -33,5 +40,57 @@ class ContactType extends AbstractType
             'data_class' => Contact::class,
             'csrf_protection' => false,
         ]);
+    }
+
+    public function getFormFields(): array
+    {
+        $formFields = [
+            [
+                'text' => 'Vorname',
+                'key' => 'firstName',
+                'type' => 'text'
+            ],
+            [
+                'text' => 'Nachname',
+                'key' => 'lastName',
+                'type' => 'text'
+            ],
+            [
+                'text' => 'E-Mail Privat',
+                'key' => 'emailPrivate',
+                'type' => 'email'
+            ],
+        ];
+
+        return $formFields;
+    }
+
+    public function getIndexHeaders(): array
+    {
+        $indexHeaders = [
+            [
+                'text' => 'Vorname',
+                'value' => 'firstName',
+                'sortable' => true,
+                'type' => 'text'
+            ],
+            [
+                'text' => 'Nachname',
+                'value' => 'lastName',
+                'sortable' => true,
+                'type' => 'text'
+            ],
+        ];
+
+        if ($this->authorizationChecker->isGranted('ROLE_ADMIN')) {
+            $indexHeaders[] =  [
+                'text' => 'E-Mail (Privat)',
+                'value' => 'emailPrivate',
+                'sortable' => true,
+                'type' => 'email'
+            ];
+        }
+
+        return $indexHeaders;
     }
 }

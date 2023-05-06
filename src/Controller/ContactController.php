@@ -11,27 +11,25 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
-use Symfony\Component\Uid\Uuid;
 
 #[Route('/api/contact')]
 class ContactController extends AbstractController
 {
     public function __construct(
         private readonly ContactManager $contactManager,
+        private readonly ContactType $contactForm,
+        private readonly ContactRepository $contactRepository,
     )
     {
     }
 
     #[Route('/', name: 'contact_index', methods: ['GET'])]
-    public function list(
-        ContactRepository $contactRepository,
-    ): Response
+    public function list(): Response
     {
-        $contacts = $contactRepository->findBySearchAttributes();
+        $contacts = $this->contactRepository->findBySearchAttributes();
 
         $data = [
-            'headers' => $this->contactManager->getIndexHeaders(),
+            'headers' => $this->contactForm->getIndexHeaders(),
             'items' => $contacts,
             'total_items' => count($contacts),
             'pagination' => [
@@ -45,23 +43,15 @@ class ContactController extends AbstractController
     }
 
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
-    public function getAddForm(
-        CsrfTokenManagerInterface $tokenManager,
-    ): Response {
-        $contact = new Contact();
-        $form = $this->createForm(ContactType::class, $contact);
+    public function getAddForm(): Response {
 
         return $this->json([
-            'form' => $this->contactManager->getFormFields(),
-            'token' => $tokenManager->getToken( Uuid::v4())->getValue(),
+            'form' => $this->contactForm->getFormFields(),
         ]);
     }
 
     #[Route('/add', name: 'contact_add_save', methods: ['POST'])]
-    public function saveAddForm(
-        Request $request,
-        ContactRepository $contactRepository,
-    ): Response {
+    public function saveAddForm(Request $request): Response {
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -70,54 +60,84 @@ class ContactController extends AbstractController
         $form->submit($data);
 
         if (!$form->isValid()) {
-            return $this->json(
-                $form->getErrors(),
-                400
-            );
+            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailPrivate())) {
+                return $this->json([
+                    ['message' => 'E-Mail is already used by another contact']
+                ], 400);
+            }
+            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailBusiness())) {
+                return $this->json([
+                    ['message' => 'E-Mail is already used by another contact']
+                ], 400);
+            }
+            if (count($form->getErrors()) > 0) {
+                return $this->json(
+                    $form->getErrors(),
+                    400
+                );
+            }
+        }
+
+        // manual validation
+        if ($contact->getFirstName() === null && $contact->getLastName() === null) {
+            return $this->json([
+                ['message' => 'You must provide a first or last name']
+            ], 400);
         }
 
         $contact->setCreatedBy($this->getUser()->getId());
         $contact->setCreatedDate(new \DateTime());
 
-        $contactRepository->save($contact, true);
+        $this->contactRepository->save($contact, true);
 
         return $this->itemResponse($contact);
     }
 
     #[Route('/edit/{id}', name: 'contact_edit', methods: ['GET'])]
-    public function getEditForm(
-        CsrfTokenManagerInterface $tokenManager,
-        Contact $contact,
-    ): Response {
-        $form = $this->createForm(ContactType::class, $contact);
-
+    public function getEditForm(Contact $contact): Response {
         return $this->json([
-            'form' => $form,
-            'token' => $tokenManager->getToken('contact')->getValue(),
-            'data' => $contact
+            'form' => $this->contactForm->getFormFields(),
+            'item' => $contact
         ]);
     }
 
     #[Route('/edit/{id}', name: 'contact_edit_save', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
-        ContactRepository $contactRepository,
         Contact $contact,
     ): Response {
         $body = $request->getContent();
         $data = json_decode($body, true);
 
+        // unset readonly fields
+        unset($data['createdBy']);
+        unset($data['createdDate']);
+        unset($data['id']);
+
         $form = $this->createForm(ContactType::class, $contact);
         $form->submit($data);
 
         if (!$form->isValid()) {
-            return $this->json(
-                $form->getErrors(),
-                400
-            );
+            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailPrivate(), $contact->getId())) {
+                return $this->json([
+                    ['message' => 'E-Mail is already used by another contact']
+                ], 400);
+            }
+            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailBusiness(), $contact->getId())) {
+                return $this->json([
+                    ['message' => 'E-Mail is already used by another contact']
+                ], 400);
+            }
+
+            if (count($form->getErrors()) > 0) {
+                return $this->json(
+                    $form->getErrors(),
+                    400
+                );
+            }
         }
 
-        $contactRepository->save($contact, true);
+        $this->contactRepository->save($contact, true);
 
         return $this->itemResponse($contact);
     }
@@ -129,11 +149,21 @@ class ContactController extends AbstractController
         return $this->itemResponse($contact);
     }
 
+    #[Route('/{id}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    public function delete(
+        Contact $contact,
+    ): Response {
+        $this->contactRepository->remove($contact, true);
+
+        return $this->json(['state' => 'success']);
+    }
+
     private function itemResponse(
         Contact $contact,
     ): Response {
         $data = [
             'item' => $contact,
+            'form' => $this->contactForm->getFormFields(),
         ];
 
         return $this->json($data);

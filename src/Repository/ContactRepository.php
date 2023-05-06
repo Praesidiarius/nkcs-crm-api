@@ -49,6 +49,23 @@ class ContactRepository extends ServiceEntityRepository
         ;
     }
 
+    public function checkDuplicateEmail(?string $email, int $contactId = 0): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->where('c.emailPrivate = :email')
+            ->orWhere('c.emailBusiness = :email')
+            ->setParameter('email', $email);
+
+        if ($contactId !== 0) {
+            $qb->andWhere('c.id != :contactId');
+            $qb->setParameter('contactId', $contactId);
+        }
+
+        return $qb
+            ->getQuery()
+            ->getResult();
+    }
+
 //    /**
 //     * @return Contact[] Returns an array of Contact objects
 //     */

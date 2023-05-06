@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ContactRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
 class Contact
@@ -21,12 +22,16 @@ class Contact
     private ?string $lastName = null;
 
     #[ORM\Column]
-    private ?bool $isCompany = null;
+    private bool $isCompany = false;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Email]
+    #[Assert\Unique]
     private ?string $emailPrivate = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Email]
+    #[Assert\Unique]
     private ?string $emailBusiness = null;
 
     #[ORM\Column]
