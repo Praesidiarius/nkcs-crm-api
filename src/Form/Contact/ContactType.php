@@ -5,6 +5,7 @@ namespace App\Form\Contact;
 use App\Entity\Contact;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -42,23 +43,78 @@ class ContactType extends AbstractType
         ]);
     }
 
+    public function getFormSections(): array
+    {
+        $formSections = [
+            [
+                'text' => 'Basis Daten',
+                'key' => 'basic',
+            ],
+            [
+                'text' => 'Adressen',
+                'key' => 'address',
+            ]
+        ];
+
+        return $formSections;
+    }
+
     public function getFormFields(): array
     {
         $formFields = [
             [
                 'text' => 'Vorname',
                 'key' => 'firstName',
-                'type' => 'text'
+                'type' => 'text',
+                'section' => 'basic',
+                'cols' => 4,
             ],
             [
                 'text' => 'Nachname',
                 'key' => 'lastName',
-                'type' => 'text'
+                'type' => 'text',
+                'section' => 'basic',
+                'cols' => 4
             ],
             [
                 'text' => 'E-Mail Privat',
                 'key' => 'emailPrivate',
-                'type' => 'email'
+                'type' => 'email',
+                'section' => 'basic',
+                'cols' => 12
+            ],
+            [
+                'text' => 'Adressen',
+                'key' => 'address',
+                'type' => 'table',
+                'section' => 'address',
+                'cols' => 12,
+                'fields' => [
+                    [
+                        'text' => 'Street',
+                        'key' => 'street',
+                        'value' => 'street',
+                        'type' => 'text',
+                        'section' => 'address',
+                        'cols' => 6
+                    ],
+                    [
+                        'text' => 'ZIP',
+                        'key' => 'zip',
+                        'value' => 'zip',
+                        'type' => 'text',
+                        'section' => 'address',
+                        'cols' => 1
+                    ],
+                    [
+                        'text' => 'City',
+                        'key' => 'city',
+                        'value' => 'city',
+                        'type' => 'text',
+                        'section' => 'address',
+                        'cols' => 5
+                    ],
+                ]
             ],
         ];
 

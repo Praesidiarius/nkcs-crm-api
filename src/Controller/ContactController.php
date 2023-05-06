@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Contact;
+use App\Entity\ContactAddress;
 use App\Form\Contact\ContactType;
+use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Service\Contact\ContactManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,6 +21,7 @@ class ContactController extends AbstractController
         private readonly ContactManager $contactManager,
         private readonly ContactType $contactForm,
         private readonly ContactRepository $contactRepository,
+        private readonly ContactAddressRepository $addressRepository,
     )
     {
     }
@@ -47,6 +50,7 @@ class ContactController extends AbstractController
 
         return $this->json([
             'form' => $this->contactForm->getFormFields(),
+            'sections' => $this->contactForm->getFormSections(),
         ]);
     }
 
@@ -55,7 +59,19 @@ class ContactController extends AbstractController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
+        // todo: do this the symfony way - how?
+        $address = new ContactAddress();
+        $address->setStreet($data['street']);
+        $address->setZip($data['zip']);
+        $address->setCity($data['city']);
+
+        // remove relation fields from data to prevent form errors
+        unset($data['street']);
+        unset($data['zip']);
+        unset($data['city']);
+
         $contact = new Contact();
+
         $form = $this->createForm(ContactType::class, $contact);
         $form->submit($data);
 
@@ -85,20 +101,25 @@ class ContactController extends AbstractController
             ], 400);
         }
 
+        // set readonly fields
         $contact->setCreatedBy($this->getUser()->getId());
         $contact->setCreatedDate(new \DateTime());
 
+        // save contact
         $this->contactRepository->save($contact, true);
+
+        // attach address to contact
+        $address->setContact($contact);
+
+        // save address
+        $this->addressRepository->save($address, true);
 
         return $this->itemResponse($contact);
     }
 
     #[Route('/edit/{id}', name: 'contact_edit', methods: ['GET'])]
     public function getEditForm(Contact $contact): Response {
-        return $this->json([
-            'form' => $this->contactForm->getFormFields(),
-            'item' => $contact
-        ]);
+        return $this->itemResponse($contact);
     }
 
     #[Route('/edit/{id}', name: 'contact_edit_save', methods: ['POST'])]
@@ -110,6 +131,7 @@ class ContactController extends AbstractController
         $data = json_decode($body, true);
 
         // unset readonly fields
+        unset($data['address']);
         unset($data['createdBy']);
         unset($data['createdDate']);
         unset($data['id']);
@@ -161,9 +183,15 @@ class ContactController extends AbstractController
     private function itemResponse(
         Contact $contact,
     ): Response {
+        $addresses = $this->addressRepository->findBy(['contact' => $contact]);
+        foreach ($addresses as $address) {
+            $contact->addAddress($address);
+        }
+
         $data = [
             'item' => $contact,
             'form' => $this->contactForm->getFormFields(),
+            'sections' => $this->contactForm->getFormSections(),
         ];
 
         return $this->json($data);
