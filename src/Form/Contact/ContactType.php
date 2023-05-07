@@ -5,17 +5,18 @@ namespace App\Form\Contact;
 use App\Entity\Contact;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ContactType extends AbstractType
 {
     public function __construct(
         private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly TranslatorInterface $translator,
     )
     {
     }
@@ -47,11 +48,11 @@ class ContactType extends AbstractType
     {
         $formSections = [
             [
-                'text' => 'Basis Daten',
+                'text' => $this->translator->trans('contact.form.section.basic'),
                 'key' => 'basic',
             ],
             [
-                'text' => 'Adressen',
+                'text' => $this->translator->trans('contact.form.section.addresses'),
                 'key' => 'address',
             ]
         ];
@@ -63,35 +64,35 @@ class ContactType extends AbstractType
     {
         $formFields = [
             [
-                'text' => 'Vorname',
+                'text' => $this->translator->trans('firstname'),
                 'key' => 'firstName',
                 'type' => 'text',
                 'section' => 'basic',
                 'cols' => 4,
             ],
             [
-                'text' => 'Nachname',
+                'text' => $this->translator->trans('lastname'),
                 'key' => 'lastName',
                 'type' => 'text',
                 'section' => 'basic',
                 'cols' => 4
             ],
             [
-                'text' => 'E-Mail Privat',
+                'text' => $this->translator->trans('email.private'),
                 'key' => 'emailPrivate',
                 'type' => 'email',
                 'section' => 'basic',
                 'cols' => 12
             ],
             [
-                'text' => 'Adressen',
+                'text' =>  $this->translator->trans('addresses'),
                 'key' => 'address',
                 'type' => 'table',
                 'section' => 'address',
                 'cols' => 12,
                 'fields' => [
                     [
-                        'text' => 'Street',
+                        'text' => $this->translator->trans('address.street'),
                         'key' => 'street',
                         'value' => 'street',
                         'type' => 'text',
@@ -99,7 +100,7 @@ class ContactType extends AbstractType
                         'cols' => 6
                     ],
                     [
-                        'text' => 'ZIP',
+                        'text' => $this->translator->trans('address.zip'),
                         'key' => 'zip',
                         'value' => 'zip',
                         'type' => 'text',
@@ -107,7 +108,7 @@ class ContactType extends AbstractType
                         'cols' => 1
                     ],
                     [
-                        'text' => 'City',
+                        'text' => $this->translator->trans('address.city'),
                         'key' => 'city',
                         'value' => 'city',
                         'type' => 'text',
@@ -125,13 +126,13 @@ class ContactType extends AbstractType
     {
         $indexHeaders = [
             [
-                'text' => 'Vorname',
+                'text' => $this->translator->trans('firstname'),
                 'value' => 'firstName',
                 'sortable' => true,
                 'type' => 'text'
             ],
             [
-                'text' => 'Nachname',
+                'text' => $this->translator->trans('lastname'),
                 'value' => 'lastName',
                 'sortable' => true,
                 'type' => 'text'
@@ -140,7 +141,7 @@ class ContactType extends AbstractType
 
         if ($this->authorizationChecker->isGranted('ROLE_ADMIN')) {
             $indexHeaders[] =  [
-                'text' => 'E-Mail (Privat)',
+                'text' => $this->translator->trans('email.private'),
                 'value' => 'emailPrivate',
                 'sortable' => true,
                 'type' => 'email'

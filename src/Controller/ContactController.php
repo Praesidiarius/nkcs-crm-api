@@ -26,26 +26,8 @@ class ContactController extends AbstractController
     {
     }
 
-    #[Route('/', name: 'contact_index', methods: ['GET'])]
-    public function list(): Response
-    {
-        $contacts = $this->contactRepository->findBySearchAttributes();
-
-        $data = [
-            'headers' => $this->contactForm->getIndexHeaders(),
-            'items' => $contacts,
-            'total_items' => count($contacts),
-            'pagination' => [
-                'pages' => 1,
-                'page_size' => 35,
-                'page' => 1,
-            ],
-        ];
-
-        return $this->json($data, 200);
-    }
-
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
+    #[Route('/add/{_locale}', name: 'contact_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
 
         return $this->json([
@@ -55,6 +37,7 @@ class ContactController extends AbstractController
     }
 
     #[Route('/add', name: 'contact_add_save', methods: ['POST'])]
+    #[Route('/add/{_locale}', name: 'contact_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
         $body = $request->getContent();
         $data = json_decode($body, true);
@@ -124,11 +107,13 @@ class ContactController extends AbstractController
     }
 
     #[Route('/edit/{id}', name: 'contact_edit', methods: ['GET'])]
+    #[Route('/edit/{_locale}/{id}', name: 'contact_edit_translated', methods: ['GET'])]
     public function getEditForm(Contact $contact): Response {
         return $this->itemResponse($contact);
     }
 
     #[Route('/edit/{id}', name: 'contact_edit_save', methods: ['POST'])]
+    #[Route('/edit/{_locale}/{id}', name: 'contact_edit_save_translated', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
         Contact $contact,
@@ -171,6 +156,7 @@ class ContactController extends AbstractController
     }
 
     #[Route('/{id}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    #[Route('/{_locale}/{id}', name: 'contact_view_translated', methods: ['GET'])]
     public function view(
         Contact $contact,
     ): Response {
@@ -178,6 +164,7 @@ class ContactController extends AbstractController
     }
 
     #[Route('/{id}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    #[Route('/{_locale}/{id}', name: 'contact_deletetranslated', methods: ['DELETE'])]
     public function delete(
         Contact $contact,
     ): Response {
@@ -188,6 +175,26 @@ class ContactController extends AbstractController
         $this->contactRepository->remove($contact, true);
 
         return $this->json(['state' => 'success']);
+    }
+
+    #[Route('/', name: 'contact_index', methods: ['GET'])]
+    #[Route('/{_locale}', name: 'contact_index_translated', methods: ['GET'])]
+    public function list(): Response
+    {
+        $contacts = $this->contactRepository->findBySearchAttributes();
+
+        $data = [
+            'headers' => $this->contactForm->getIndexHeaders(),
+            'items' => $contacts,
+            'total_items' => count($contacts),
+            'pagination' => [
+                'pages' => 1,
+                'page_size' => 35,
+                'page' => 1,
+            ],
+        ];
+
+        return $this->json($data, 200);
     }
 
     private function itemResponse(

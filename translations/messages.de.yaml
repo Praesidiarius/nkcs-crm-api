@@ -1,0 +1,13 @@
+firstname: Vorname
+lastname: Nachname
+address:
+  street: Strasse
+  zip: PLZ
+  city: Ort
+email:
+  private: E-Mail (privat)
+contact:
+  form:
+    section:
+      basic: Kontaktdaten
+      addresses: Adressen
