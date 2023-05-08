@@ -164,7 +164,7 @@ class ContactController extends AbstractController
     }
 
     #[Route('/{id}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
-    #[Route('/{_locale}/{id}', name: 'contact_deletetranslated', methods: ['DELETE'])]
+    #[Route('/{_locale}/{id}', name: 'contact_delete_translated', methods: ['DELETE'])]
     public function delete(
         Contact $contact,
     ): Response {

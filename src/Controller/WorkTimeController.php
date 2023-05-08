@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 
 #[Route('/api/work-time')]
 class WorkTimeController extends AbstractController
@@ -68,6 +69,24 @@ class WorkTimeController extends AbstractController
         $this->worktimeRepository->save($workTime, true);
 
         return $this->itemResponse($workTime);
+    }
+
+    #[Route('/{id}', name: 'work_time_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    #[Route('/{_locale}/{id}', name: 'work_time_view_translated', methods: ['GET'])]
+    public function view(
+        Worktime $workTime,
+    ): Response {
+        return $this->itemResponse($workTime);
+    }
+
+    #[Route('/{id}', name: 'work_time_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    #[Route('/{_locale}/{id}', name: 'work_time_delete_translated', methods: ['DELETE'])]
+    public function delete(
+        Worktime $workTime,
+    ): Response {
+        $this->worktimeRepository->remove($workTime, true);
+
+        return $this->json(['state' => 'success']);
     }
 
     #[Route('/', name: 'work_time_index', methods: ['GET'])]

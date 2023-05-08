@@ -1,5 +1,6 @@
 firstname: Vorname
 lastname: Nachname
+comment: Kommentar
 address:
   street: Strasse
   zip: PLZ
@@ -11,3 +12,11 @@ contact:
     section:
       basic: Kontaktdaten
       addresses: Adressen
+time:
+  date: Datum
+work-time:
+  start: Beginn
+  end: Ende
+  form:
+    section:
+      basic: Eintrag
