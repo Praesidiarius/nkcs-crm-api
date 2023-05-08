@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Worktime;
 use App\Form\WorkTime\WorkTimeType;
 use App\Repository\WorktimeRepository;
+use App\Service\WorkTime\WorkTimeManager;
 use DateTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +19,7 @@ class WorkTimeController extends AbstractController
     public function __construct(
         private readonly WorktimeRepository $worktimeRepository,
         private readonly WorkTimeType $workTimeForm,
+        private readonly WorkTimeManager $workTimeManager,
     )
     {
     }
@@ -95,9 +97,14 @@ class WorkTimeController extends AbstractController
     {
         $workTimes = $this->worktimeRepository->findBy(['user' => $this->getUser()]);
 
+
+
         $data = [
             'headers' => $this->workTimeForm->getIndexHeaders(),
             'items' => $workTimes,
+            'widgets' => [
+                'week' => $this->workTimeManager->getWorkTimeWeeklyWidgetData($this->getUser())
+            ],
             'total_items' => count($workTimes),
             'pagination' => [
                 'pages' => 1,

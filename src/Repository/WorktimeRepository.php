@@ -2,9 +2,11 @@
 
 namespace App\Repository;
 
+use App\Entity\User;
 use App\Entity\Worktime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @extends ServiceEntityRepository<Worktime>
@@ -37,6 +39,21 @@ class WorktimeRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function getWorkTimeCurrentWeek(UserInterface $user): array
+    {
+        return $this->createQueryBuilder('w')
+            ->where('w.user = :user')
+            ->andWhere('w.date BETWEEN :start AND :end')
+            ->setParameters([
+                'user' => $user,
+                'start' => new \DateTime('monday this week'),
+                'end' => new \DateTime('sunday this week'),
+            ])
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
 //    /**
