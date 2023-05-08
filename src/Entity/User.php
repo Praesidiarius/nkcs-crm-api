@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -26,6 +28,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Worktime::class, orphanRemoval: true)]
+    private Collection $worktimes;
+
+    public function __construct()
+    {
+        $this->worktimes = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -95,5 +105,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    /**
+     * @return Collection<int, Worktime>
+     */
+    public function getWorktimes(): Collection
+    {
+        return $this->worktimes;
+    }
+
+    public function addWorktime(Worktime $worktime): self
+    {
+        if (!$this->worktimes->contains($worktime)) {
+            $this->worktimes->add($worktime);
+            $worktime->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWorktime(Worktime $worktime): self
+    {
+        if ($this->worktimes->removeElement($worktime)) {
+            // set the owning side to null (unless already changed)
+            if ($worktime->getUser() === $this) {
+                $worktime->setUser(null);
+            }
+        }
+
+        return $this;
     }
 }
