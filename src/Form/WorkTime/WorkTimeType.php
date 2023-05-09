@@ -92,21 +92,21 @@ class WorkTimeType extends AbstractType
     {
         $indexHeaders = [
             [
-                'text' => $this->translator->trans('time.date'),
-                'value' => 'date',
-                'sortable' => true,
+                'title' => $this->translator->trans('time.date'),
+                'key' => 'date',
+                'sortable' => false,
                 'type' => 'date'
             ],
             [
-                'text' => $this->translator->trans('work-time.start'),
-                'value' => 'start',
-                'sortable' => true,
+                'title' => $this->translator->trans('work-time.start'),
+                'key' => 'start',
+                'sortable' => false,
                 'type' => 'time'
             ],
             [
-                'text' => $this->translator->trans('work-time.end'),
-                'value' => 'end',
-                'sortable' => true,
+                'title' => $this->translator->trans('work-time.end'),
+                'key' => 'end',
+                'sortable' => false,
                 'type' => 'time'
             ],
         ];

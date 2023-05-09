@@ -126,24 +126,24 @@ class ContactType extends AbstractType
     {
         $indexHeaders = [
             [
-                'text' => $this->translator->trans('firstname'),
-                'value' => 'firstName',
-                'sortable' => true,
+                'title' => $this->translator->trans('firstname'),
+                'key' => 'firstName',
+                'sortable' => false,
                 'type' => 'text'
             ],
             [
-                'text' => $this->translator->trans('lastname'),
-                'value' => 'lastName',
-                'sortable' => true,
+                'title' => $this->translator->trans('lastname'),
+                'key' => 'lastName',
+                'sortable' => false,
                 'type' => 'text'
             ],
         ];
 
         if ($this->authorizationChecker->isGranted('ROLE_ADMIN')) {
             $indexHeaders[] =  [
-                'text' => $this->translator->trans('email.private'),
-                'value' => 'emailPrivate',
-                'sortable' => true,
+                'title' => $this->translator->trans('email.private'),
+                'key' => 'emailPrivate',
+                'sortable' => false,
                 'type' => 'email'
             ];
         }

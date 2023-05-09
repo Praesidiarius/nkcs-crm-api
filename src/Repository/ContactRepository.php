@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Contact;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -39,14 +40,16 @@ class ContactRepository extends ServiceEntityRepository
         }
     }
 
-    public function findBySearchAttributes(?string $first_name = null): array
+    public function findBySearchAttributes(int $page, int $pageSize): Paginator
     {
-        return $this->createQueryBuilder('c')
+        $qb = $this->createQueryBuilder('c')
             ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
+            ->setFirstResult(($page-1) * $pageSize)
+            ->setMaxResults($pageSize)
             ->getQuery()
-            ->getResult()
         ;
+
+        return new Paginator($qb, false);
     }
 
     public function checkDuplicateEmail(?string $email, int $contactId = 0): array

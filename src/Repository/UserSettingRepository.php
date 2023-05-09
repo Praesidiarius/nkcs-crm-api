@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\UserSetting;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @extends ServiceEntityRepository<UserSetting>
@@ -38,6 +39,21 @@ class UserSettingRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
+
+    public function getUserSetting(UserInterface $user, string $settingKey): mixed
+    {
+        $setting = $this->findOneBy([
+            'user' => $user,
+            'settingKey' => $settingKey,
+        ])?->getSettingValue();
+
+        if (is_numeric($setting)) {
+            return (float) $setting;
+        }
+
+        return $setting;
+    }
+
 
 //    /**
 //     * @return UserSetting[] Returns an array of UserSetting objects

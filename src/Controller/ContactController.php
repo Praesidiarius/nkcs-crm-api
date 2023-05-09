@@ -7,6 +7,7 @@ use App\Entity\ContactAddress;
 use App\Form\Contact\ContactType;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
+use App\Repository\UserSettingRepository;
 use App\Service\Contact\ContactManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ class ContactController extends AbstractController
         private readonly ContactType $contactForm,
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
+        private readonly UserSettingRepository $userSettings,
     )
     {
     }
@@ -179,18 +181,24 @@ class ContactController extends AbstractController
 
     #[Route('/', name: 'contact_index', methods: ['GET'])]
     #[Route('/{_locale}', name: 'contact_index_translated', methods: ['GET'])]
-    public function list(): Response
+    public function list(
+        Request $request,
+    ): Response
     {
-        $contacts = $this->contactRepository->findBySearchAttributes();
+        $pageSize = $this->userSettings->getUserSetting(
+            $this->getUser(),
+            'pagination-page-size',
+        );
+        $page = $request->query->getInt('page', 1);
+        $contacts = $this->contactRepository->findBySearchAttributes($page, $pageSize);
 
         $data = [
             'headers' => $this->contactForm->getIndexHeaders(),
             'items' => $contacts,
             'total_items' => count($contacts),
             'pagination' => [
-                'pages' => 1,
-                'page_size' => 35,
-                'page' => 1,
+                'page_size' => $pageSize,
+                'page' => $page,
             ],
         ];
 
