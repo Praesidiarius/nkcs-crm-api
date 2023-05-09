@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Item;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -37,6 +38,18 @@ class ItemRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function findBySearchAttributes(int $page, int $pageSize): Paginator
+    {
+        $qb = $this->createQueryBuilder('i')
+            ->orderBy('i.id', 'ASC')
+            ->setFirstResult(($page-1) * $pageSize)
+            ->setMaxResults($pageSize)
+            ->getQuery()
+        ;
+
+        return new Paginator($qb, false);
     }
 
 //    /**

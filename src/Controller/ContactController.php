@@ -9,6 +9,7 @@ use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\UserSettingRepository;
 use App\Service\Contact\ContactManager;
+use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -92,7 +93,7 @@ class ContactController extends AbstractController
 
         // set readonly fields
         $contact->setCreatedBy($this->getUser()->getId());
-        $contact->setCreatedDate(new \DateTime());
+        $contact->setCreatedDate(new DateTimeImmutable());
 
         // save contact
         $this->contactRepository->save($contact, true);

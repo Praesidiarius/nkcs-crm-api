@@ -7,6 +7,7 @@ use App\Form\WorkTime\WorkTimeType;
 use App\Repository\WorktimeRepository;
 use App\Service\WorkTime\WorkTimeManager;
 use DateTime;
+use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -65,7 +66,7 @@ class WorkTimeController extends AbstractController
         // set readonly fields
         $workTime->setUser($this->getUser());
         $workTime->setCreatedBy($this->getUser()->getId());
-        $workTime->setCreatedDate(new DateTime());
+        $workTime->setCreatedDate(new DateTimeImmutable());
 
         // save contact
         $this->worktimeRepository->save($workTime, true);

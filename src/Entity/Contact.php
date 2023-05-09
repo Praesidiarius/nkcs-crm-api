@@ -40,7 +40,7 @@ class Contact
     #[ORM\Column]
     private ?int $createdBy = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?DateTimeInterface $createdDate = null;
 
     #[ORM\OneToMany(mappedBy: 'contact', targetEntity: ContactAddress::class)]

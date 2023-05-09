@@ -36,7 +36,7 @@ class Worktime
     #[ORM\Column]
     private ?int $createdBy = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?DateTimeInterface $createdDate = null;
 
     public function getId(): ?int
