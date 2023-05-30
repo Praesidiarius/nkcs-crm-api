@@ -22,6 +22,9 @@ class DocumentType
     #[ORM\OneToMany(mappedBy: 'type', targetEntity: Document::class, orphanRemoval: true)]
     private Collection $documents;
 
+    #[ORM\Column(length: 50)]
+    private ?string $identifier = null;
+
     public function __construct()
     {
         $this->documents = new ArrayCollection();
@@ -70,6 +73,18 @@ class DocumentType
                 $document->setType(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getIdentifier(): ?string
+    {
+        return $this->identifier;
+    }
+
+    public function setIdentifier(string $identifier): self
+    {
+        $this->identifier = $identifier;
 
         return $this;
     }

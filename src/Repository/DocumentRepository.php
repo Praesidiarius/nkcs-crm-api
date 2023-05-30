@@ -3,7 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\Document;
+use App\Entity\DocumentType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -44,15 +46,22 @@ class DocumentRepository extends ServiceEntityRepository
         }
     }
 
-    public function findBySearchAttributes(int $page, int $pageSize): Paginator
+    public function findBySearchAttributes(int $page, int $pageSize, ?string $documentType): Paginator
     {
         $qb = $this->createQueryBuilder('d')
             ->orderBy('d.id', 'ASC')
             ->setFirstResult(($page-1) * $pageSize)
             ->setMaxResults($pageSize)
-            ->getQuery()
         ;
 
-        return new Paginator($qb, false);
+        if ($documentType) {
+            $qb
+                ->join(DocumentType::class, 'dt', JOIN::WITH, 'dt.id = d.type')
+                ->andWhere('dt.identifier = :documentType')
+                ->setParameter('documentType', $documentType)
+            ;
+        }
+
+        return new Paginator($qb->getQuery(), false);
     }
 }

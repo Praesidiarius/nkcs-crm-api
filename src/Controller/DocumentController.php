@@ -86,7 +86,7 @@ class DocumentController extends AbstractController
             'pagination-page-size',
         );
         $page = $request->query->getInt('page', 1);
-        $documents = $this->documentRepository->findBySearchAttributes($page, $pageSize);
+        $documents = $this->documentRepository->findBySearchAttributes($page, $pageSize, $request->query->getAlpha('type'));
 
         $data = [
             'headers' => $this->documentForm->getIndexHeaders(),
