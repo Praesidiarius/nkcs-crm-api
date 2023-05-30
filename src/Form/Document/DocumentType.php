@@ -3,6 +3,7 @@
 namespace App\Form\Document;
 
 use App\Entity\Document;
+use App\Repository\DocumentTypeRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -15,6 +16,7 @@ class DocumentType extends AbstractType
 {
     public function __construct(
         private readonly TranslatorInterface $translator,
+        private readonly DocumentTypeRepository $documentTypeRepository,
     )
     {
     }
@@ -72,6 +74,15 @@ class DocumentType extends AbstractType
 
     public function getFormFields(): array
     {
+        $docTypes = $this->documentTypeRepository->findAll();
+        $docTypeField = [];
+        foreach ($docTypes as $docType) {
+            $docTypeField[] = [
+                'id' => $docType->getId(),
+                'text' => $this->translator->trans($docType->getName())
+            ];
+        }
+
         return [
             [
                 'text' => $this->translator->trans('name'),
@@ -81,11 +92,19 @@ class DocumentType extends AbstractType
                 'cols' => 4,
             ],
             [
+                'text' => $this->translator->trans('document.type'),
+                'key' => 'type',
+                'type' => 'select',
+                'data' => $docTypeField,
+                'section' => 'basic',
+                'cols' => 4,
+            ],
+            [
                 'text' => $this->translator->trans('document.template'),
                 'key' => 'template',
                 'type' => 'file',
                 'section' => 'basic',
-                'cols' => 8,
+                'cols' => 4,
             ],
         ];
     }

@@ -20,3 +20,7 @@ work-time:
   form:
     section:
       basic: Eintrag
+document:
+  type:
+    contact: Kundendokumente
+    job: Auftragsdokumente

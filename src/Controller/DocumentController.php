@@ -46,7 +46,7 @@ class DocumentController extends AbstractController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
-        $docType = $this->documentTypeRepository->find(1);
+        $docType = $this->documentTypeRepository->find($data['document']['type']);
 
         $document = new Document();
         $document->setName($data['document']['name']);

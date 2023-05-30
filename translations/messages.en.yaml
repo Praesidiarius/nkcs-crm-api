@@ -11,3 +11,7 @@ contact:
     section:
       basic: Contact data
       addresses: Addresses
+document:
+  type:
+    contact: Client documents
+    job: Job documents
