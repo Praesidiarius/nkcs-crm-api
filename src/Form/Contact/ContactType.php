@@ -92,7 +92,7 @@ class ContactType extends AbstractType
                 'cols' => 12,
                 'fields' => [
                     [
-                        'text' => $this->translator->trans('address.street'),
+                        'title' => $this->translator->trans('address.street'),
                         'key' => 'street',
                         'value' => 'street',
                         'type' => 'text',
@@ -100,7 +100,7 @@ class ContactType extends AbstractType
                         'cols' => 6
                     ],
                     [
-                        'text' => $this->translator->trans('address.zip'),
+                        'title' => $this->translator->trans('address.zip'),
                         'key' => 'zip',
                         'value' => 'zip',
                         'type' => 'text',
@@ -108,7 +108,7 @@ class ContactType extends AbstractType
                         'cols' => 1
                     ],
                     [
-                        'text' => $this->translator->trans('address.city'),
+                        'title' => $this->translator->trans('address.city'),
                         'key' => 'city',
                         'value' => 'city',
                         'type' => 'text',

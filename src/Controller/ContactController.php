@@ -184,8 +184,7 @@ class ContactController extends AbstractController
     #[Route('/{_locale}', name: 'contact_index_translated', methods: ['GET'])]
     public function list(
         Request $request,
-    ): Response
-    {
+    ): Response {
         $pageSize = $this->userSettings->getUserSetting(
             $this->getUser(),
             'pagination-page-size',
