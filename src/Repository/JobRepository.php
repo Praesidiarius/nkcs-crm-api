@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Job;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -37,6 +38,18 @@ class JobRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function findBySearchAttributes(int $page, int $pageSize): Paginator
+    {
+        $qb = $this->createQueryBuilder('j')
+            ->orderBy('j.id', 'ASC')
+            ->setFirstResult(($page-1) * $pageSize)
+            ->setMaxResults($pageSize)
+            ->getQuery()
+        ;
+
+        return new Paginator($qb, false);
     }
 
 //    /**
