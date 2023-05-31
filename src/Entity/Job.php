@@ -35,6 +35,11 @@ class Job
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?DateTimeInterface $createdDate = null;
 
+    #[ORM\ManyToOne(inversedBy: 'jobs')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Ignore]
+    private ?Contact $contact = null;
+
     public function __construct()
     {
         $this->jobPositions = new ArrayCollection();
@@ -119,6 +124,18 @@ class Job
     public function setCreatedDate(DateTimeInterface $createdDate): self
     {
         $this->createdDate = $createdDate;
+
+        return $this;
+    }
+
+    public function getContact(): ?Contact
+    {
+        return $this->contact;
+    }
+
+    public function setContact(?Contact $contact): self
+    {
+        $this->contact = $contact;
 
         return $this;
     }

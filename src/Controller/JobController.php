@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Job;
 use App\Form\Job\JobType;
+use App\Repository\ContactRepository;
 use App\Repository\JobRepository;
+use App\Repository\JobTypeRepository;
 use App\Repository\UserSettingRepository;
 use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,6 +21,8 @@ class JobController extends AbstractController
     public function __construct(
         private readonly JobType $jobForm,
         private readonly JobRepository $jobRepository,
+        private readonly JobTypeRepository $jobTypeRepository,
+        private readonly ContactRepository $contactRepository,
         private readonly UserSettingRepository $userSettings,
     )
     {
@@ -42,6 +46,11 @@ class JobController extends AbstractController
 
         $job = new Job();
 
+        $contactId = (int)$data['contact'];
+        if ($contactId > 0) {
+            $data['contact'] = $this->contactRepository->find($contactId);
+        }
+
         $form = $this->createForm(JobType::class, $job);
         $form->submit($data);
 
@@ -60,6 +69,11 @@ class JobController extends AbstractController
                 ['message' => 'You must provide a title']
             ], 400);
         }
+
+
+        $tempType = $this->jobTypeRepository->find(1);
+        $job->setType($tempType);
+        $job->setContact($data['contact']);
 
         // set readonly fields
         $job->setCreatedBy($this->getUser()->getId());

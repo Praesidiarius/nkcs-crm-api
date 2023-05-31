@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
@@ -46,9 +47,13 @@ class Contact
     #[ORM\OneToMany(mappedBy: 'contact', targetEntity: ContactAddress::class)]
     private Collection $address;
 
+    #[ORM\OneToMany(mappedBy: 'contact', targetEntity: Job::class)]
+    private Collection $jobs;
+
     public function __construct()
     {
         $this->address = new ArrayCollection();
+        $this->jobs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -78,6 +83,24 @@ class Contact
         $this->lastName = $lastName;
 
         return $this;
+    }
+
+    public function getName(): ?string
+    {
+        $name = '';
+        if ($this->firstName) {
+            $name = $this->firstName;
+        }
+
+        if ($this->lastName) {
+            // add whitespace if there is a firstname
+            if ($name !== '') {
+                $name .= ' ';
+            }
+            $name .= $this->lastName;
+        }
+
+        return $name;
     }
 
     public function isIsCompany(): ?bool
@@ -164,6 +187,36 @@ class Contact
             // set the owning side to null (unless already changed)
             if ($address->getContact() === $this) {
                 $address->setContact(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Job>
+     */
+    public function getJobs(): Collection
+    {
+        return $this->jobs;
+    }
+
+    public function addJob(Job $job): self
+    {
+        if (!$this->jobs->contains($job)) {
+            $this->jobs->add($job);
+            $job->setContact($this);
+        }
+
+        return $this;
+    }
+
+    public function removeJob(Job $job): self
+    {
+        if ($this->jobs->removeElement($job)) {
+            // set the owning side to null (unless already changed)
+            if ($job->getContact() === $this) {
+                $job->setContact(null);
             }
         }
 

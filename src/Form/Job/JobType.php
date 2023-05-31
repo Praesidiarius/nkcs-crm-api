@@ -2,10 +2,10 @@
 
 namespace App\Form\Job;
 
-use App\Entity\Contact;
+use App\Entity\Job;
+use App\Repository\ContactRepository;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -17,6 +17,7 @@ class JobType extends AbstractType
     public function __construct(
         private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly TranslatorInterface $translator,
+        private readonly ContactRepository $contactRepository,
     )
     {
     }
@@ -24,22 +25,21 @@ class JobType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('firstName', TextType::class, [
+            ->add('title', TextType::class, [
                 'required' => true,
                 'invalid_message' => 'You entered an invalid value, it should include %num% letters',
                 'invalid_message_parameters' => ['%num%' => 6],
             ])
-            ->add('lastName', TextType::class)
-            ->add('isCompany', CheckboxType::class)
-            ->add('emailPrivate', EmailType::class)
-            ->add('emailBusiness', EmailType::class)
+            ->add('contact', NumberType::class, [
+                'required' => true,
+            ])
         ;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => Contact::class,
+            'data_class' => Job::class,
             'csrf_protection' => false,
         ]);
     }
@@ -48,12 +48,8 @@ class JobType extends AbstractType
     {
         $formSections = [
             [
-                'text' => $this->translator->trans('contact.form.section.basic'),
+                'text' => $this->translator->trans('job.form.section.basic'),
                 'key' => 'basic',
-            ],
-            [
-                'text' => $this->translator->trans('contact.form.section.addresses'),
-                'key' => 'address',
             ]
         ];
 
@@ -62,60 +58,30 @@ class JobType extends AbstractType
 
     public function getFormFields(): array
     {
+        $contacts = $this->contactRepository->findAll();
+        $contactField = [];
+        foreach ($contacts as $contact) {
+            $contactField[] = [
+                'id' => $contact->getId(),
+                'text' => $contact->getName()
+            ];
+        }
+
         $formFields = [
             [
-                'text' => $this->translator->trans('firstname'),
-                'key' => 'firstName',
+                'text' => $this->translator->trans('job.title'),
+                'key' => 'title',
                 'type' => 'text',
                 'section' => 'basic',
-                'cols' => 4,
+                'cols' => 6,
             ],
             [
-                'text' => $this->translator->trans('lastname'),
-                'key' => 'lastName',
-                'type' => 'text',
+                'text' => $this->translator->trans('job.contact'),
+                'key' => 'contact',
+                'type' => 'autocomplete',
                 'section' => 'basic',
-                'cols' => 4
-            ],
-            [
-                'text' => $this->translator->trans('email.private'),
-                'key' => 'emailPrivate',
-                'type' => 'email',
-                'section' => 'basic',
-                'cols' => 12
-            ],
-            [
-                'text' =>  $this->translator->trans('addresses'),
-                'key' => 'address',
-                'type' => 'table',
-                'section' => 'address',
-                'cols' => 12,
-                'fields' => [
-                    [
-                        'title' => $this->translator->trans('address.street'),
-                        'key' => 'street',
-                        'value' => 'street',
-                        'type' => 'text',
-                        'section' => 'address',
-                        'cols' => 6
-                    ],
-                    [
-                        'title' => $this->translator->trans('address.zip'),
-                        'key' => 'zip',
-                        'value' => 'zip',
-                        'type' => 'text',
-                        'section' => 'address',
-                        'cols' => 1
-                    ],
-                    [
-                        'title' => $this->translator->trans('address.city'),
-                        'key' => 'city',
-                        'value' => 'city',
-                        'type' => 'text',
-                        'section' => 'address',
-                        'cols' => 5
-                    ],
-                ]
+                'data' => $contactField,
+                'cols' => 6,
             ],
         ];
 
@@ -126,27 +92,12 @@ class JobType extends AbstractType
     {
         $indexHeaders = [
             [
-                'title' => $this->translator->trans('firstname'),
-                'key' => 'firstName',
+                'title' => $this->translator->trans('job.title'),
+                'key' => 'title',
                 'sortable' => false,
                 'type' => 'text'
-            ],
-            [
-                'title' => $this->translator->trans('lastname'),
-                'key' => 'lastName',
-                'sortable' => false,
-                'type' => 'text'
-            ],
+            ]
         ];
-
-        if ($this->authorizationChecker->isGranted('ROLE_ADMIN')) {
-            $indexHeaders[] =  [
-                'title' => $this->translator->trans('email.private'),
-                'key' => 'emailPrivate',
-                'sortable' => false,
-                'type' => 'email'
-            ];
-        }
 
         return $indexHeaders;
     }
