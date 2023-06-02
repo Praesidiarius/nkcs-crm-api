@@ -3,19 +3,20 @@
 namespace App\Form\Contact;
 
 use App\Entity\Contact;
-use App\Entity\Job;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ContactType extends AbstractType
 {
     public function __construct(
         private readonly TranslatorInterface $translator,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
     )
     {
     }
