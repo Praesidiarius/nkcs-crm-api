@@ -27,6 +27,10 @@ class Item
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?DateTimeInterface $createdDate = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?ItemUnit $unit = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -47,6 +51,16 @@ class Item
     public function getPrice(): ?float
     {
         return $this->price;
+    }
+
+    public function getPriceText(): string
+    {
+        $posPriceView = $this->getPrice();
+        if (fmod($posPriceView, 1) === 0.0) {
+            $posPriceView = number_format($this->getPrice(), 0, '.', '\'') . '.-';
+        }
+
+        return $posPriceView;
     }
 
     public function setPrice(float $price): self
@@ -76,6 +90,18 @@ class Item
     public function setCreatedDate(DateTimeInterface $createdDate): self
     {
         $this->createdDate = $createdDate;
+
+        return $this;
+    }
+
+    public function getUnit(): ?ItemUnit
+    {
+        return $this->unit;
+    }
+
+    public function setUnit(?ItemUnit $unit): self
+    {
+        $this->unit = $unit;
 
         return $this;
     }

@@ -3,6 +3,9 @@
 namespace App\Form\Item;
 
 use App\Entity\Item;
+use App\Entity\ItemUnit;
+use App\Repository\ItemUnitRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -16,6 +19,7 @@ class ItemType extends AbstractType
     public function __construct(
         private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly TranslatorInterface $translator,
+        private readonly ItemUnitRepository $itemUnitRepository,
     )
     {
     }
@@ -25,6 +29,9 @@ class ItemType extends AbstractType
         $builder
             ->add('name', TextType::class)
             ->add('price', NumberType::class)
+            ->add('unit', EntityType::class, [
+                'class' => ItemUnit::class
+            ])
         ;
     }
 
@@ -50,13 +57,22 @@ class ItemType extends AbstractType
 
     public function getFormFields(): array
     {
+        $itemUnits = $this->itemUnitRepository->findAll();
+        $unitField = [];
+        foreach ($itemUnits as $itemUnit) {
+            $unitField[] = [
+                'id' => $itemUnit->getId(),
+                'text' => $this->translator->trans($itemUnit->getName())
+            ];
+        }
+
         $formFields = [
             [
                 'text' => $this->translator->trans('item.name'),
                 'key' => 'name',
                 'type' => 'text',
                 'section' => 'basic',
-                'cols' => 8,
+                'cols' => 6,
             ],
             [
                 'text' => $this->translator->trans('item.price'),
@@ -64,7 +80,15 @@ class ItemType extends AbstractType
                 'type' => 'number',
                 'section' => 'basic',
                 'cols' => 4
-            ]
+            ],
+            [
+                'text' => $this->translator->trans('item.unit.unit'),
+                'key' => 'unit',
+                'type' => 'select',
+                'section' => 'basic',
+                'data' => $unitField,
+                'cols' => 2,
+            ],
         ];
 
         return $formFields;
@@ -84,6 +108,13 @@ class ItemType extends AbstractType
                 'key' => 'price',
                 'sortable' => false,
                 'type' => 'numberFloat-2'
+            ],
+            [
+                'title' => $this->translator->trans('item.unit.unit'),
+                'key' => 'unit',
+                'sortable' => false,
+                'type' => 'object',
+                'label_key' => 'name',
             ],
         ];
 

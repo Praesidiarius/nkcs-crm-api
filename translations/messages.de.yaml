@@ -24,3 +24,13 @@ document:
   type:
     contact: Kundendokumente
     job: Auftragsdokumente
+item:
+  unit:
+    unit: Einheit
+    piece: Stk.
+    hour: h
+  price: Preis
+  name: Beschreibung
+  form:
+    section:
+      basic: Stammdaten
