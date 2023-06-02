@@ -3,8 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Job;
+use App\Entity\JobPosition;
 use App\Form\Job\JobType;
 use App\Repository\ContactRepository;
+use App\Repository\ItemRepository;
+use App\Repository\JobPositionRepository;
+use App\Repository\JobPositionUnitRepository;
 use App\Repository\JobRepository;
 use App\Repository\JobTypeRepository;
 use App\Repository\UserSettingRepository;
@@ -14,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/api/job')]
 class JobController extends AbstractController
@@ -22,8 +27,12 @@ class JobController extends AbstractController
         private readonly JobType $jobForm,
         private readonly JobRepository $jobRepository,
         private readonly JobTypeRepository $jobTypeRepository,
+        private readonly JobPositionUnitRepository $jobPositionUnitRepository,
+        private readonly JobPositionRepository $jobPositionRepository,
         private readonly ContactRepository $contactRepository,
         private readonly UserSettingRepository $userSettings,
+        private readonly TranslatorInterface $translator,
+        private readonly ItemRepository $itemRepository,
     )
     {
     }
@@ -165,13 +174,97 @@ class JobController extends AbstractController
         return $this->json($data, 200);
     }
 
+    #[Route('/position', name: 'job_position_add', methods: ['POST'])]
+    #[Route('/position/{_locale}', name: 'job_position_add_translated', methods: ['POST'])]
+    public function savePositionAddForm(
+        Request $request,
+    ): Response {
+        $body = $request->getContent();
+        $data = json_decode($body, true);
+
+        $position = new JobPosition();
+
+        $jobId = (int) $data['job'];
+        $unitId = (int) $data['unit'];
+
+        if ($jobId <= 0) {
+            return $this->json([
+                ['message' => 'Invalid Job ID']
+            ], 400);
+        }
+
+        $job = $this->jobRepository->find($jobId);
+
+        $position->setJob($job);
+        $position->setComment($data['title']);
+        $position->setAmount($data['amount']);
+
+        $itemId = (int) $data['item'];
+        if ($itemId > 0) {
+            $item = $this->itemRepository->find($itemId);
+            $position->setItem($item);
+            $unit = $this->jobPositionUnitRepository->find(1);
+            $position->setUnit($unit);
+        } else {
+            if ($unitId <= 0) {
+                return $this->json([
+                    ['message' => 'Invalid Unit']
+                ], 400);
+            }
+            $unit = $this->jobPositionUnitRepository->find($unitId);
+            $position->setUnit($unit);
+            $position->setPrice($data['price']);
+        }
+
+        // save position
+        $this->jobPositionRepository->save($position, true);
+
+        return $this->json([
+            'positions' => $job->getJobPositions(),
+        ]);
+    }
+
+    #[Route('/unit', name: 'job_unit_list', methods: ['GET'])]
+    #[Route('/unit/{_locale}', name: 'job_unit_list', methods: ['GET'])]
+    public function listUnits(
+        Request $request,
+    ): Response {
+        $units = $this->jobPositionUnitRepository->findAll();
+        $unitsTranslated = [];
+
+        foreach ($units as $unit) {
+            $unitsTranslated[] = [
+                'id' => $unit->getId(),
+                'text' => $this->translator->trans($unit->getName()),
+            ];
+        }
+
+        $data = [
+            'items' => $unitsTranslated,
+        ];
+
+        return $this->json($data);
+    }
+
     private function itemResponse(
         Job $job,
     ): Response {
+        $units = $this->jobPositionUnitRepository->findAll();
+        $unitsTranslated = [];
+
+        foreach ($units as $unit) {
+            $unitsTranslated[] = [
+                'id' => $unit->getId(),
+                'text' => $this->translator->trans($unit->getName()),
+            ];
+        }
+
         $data = [
             'item' => $job,
             'form' => $this->jobForm->getFormFields(),
             'sections' => $this->jobForm->getFormSections(),
+            'position_units' => $unitsTranslated,
+            'positions' => $job->getJobPositions(),
         ];
 
         return $this->json($data);

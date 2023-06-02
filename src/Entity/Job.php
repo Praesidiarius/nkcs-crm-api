@@ -79,7 +79,18 @@ class Job
      */
     public function getJobPositions(): Collection
     {
-        return $this->jobPositions;
+        $jobPositionsWithCustomData = new ArrayCollection();
+
+        /** @var JobPosition $jobPosition */
+        foreach($this->jobPositions as $jobPosition) {
+            if ($jobPosition->getItem()) {
+                $jobPosition->setPrice($jobPosition->getItem()->getPrice());
+            }
+
+            $jobPositionsWithCustomData->add($jobPosition);
+        }
+
+        return $jobPositionsWithCustomData;
     }
 
     public function addJobPosition(JobPosition $jobPosition): self

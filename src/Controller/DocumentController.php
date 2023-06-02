@@ -67,8 +67,9 @@ class DocumentController extends AbstractController
         string $entityType,
     ): Response {
         $fileName = match($entityType) {
-          'contact' => $this->documentGenerator->generateContactDocument($document, $entityId),
-          default => throw new NotFoundHttpException('invalid document type')
+            'contact' => $this->documentGenerator->generateContactDocument($document, $entityId),
+            'job' => $this->documentGenerator->generateJobDocument($document, $entityId),
+            default => throw new NotFoundHttpException('invalid document type')
         };
 
         return $this->json([

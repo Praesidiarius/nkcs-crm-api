@@ -26,6 +26,13 @@ class JobPosition
     #[ORM\JoinColumn(nullable: false)]
     private ?Job $job = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?JobPositionUnit $unit = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $amount = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -46,6 +53,16 @@ class JobPosition
     public function getPrice(): ?float
     {
         return $this->price;
+    }
+
+    public function getPriceText(): string
+    {
+        $posPriceView = $this->getPrice();
+        if (fmod($posPriceView, 1) === 0.0) {
+            $posPriceView = number_format($this->getPrice(), 0, '.', '\'') . '.-';
+        }
+
+        return $posPriceView;
     }
 
     public function setPrice(?float $price): self
@@ -77,5 +94,43 @@ class JobPosition
         $this->job = $job;
 
         return $this;
+    }
+
+    public function getUnit(): ?JobPositionUnit
+    {
+        return $this->unit;
+    }
+
+    public function setUnit(?JobPositionUnit $unit): self
+    {
+        $this->unit = $unit;
+
+        return $this;
+    }
+
+    public function getAmount(): ?float
+    {
+        return $this->amount;
+    }
+
+    public function setAmount(?float $amount): self
+    {
+        $this->amount = $amount;
+
+        return $this;
+    }
+
+    public function getTotal(): float
+    {
+        return round($this->getAmount() * $this->getPrice(), 2);
+    }
+
+    public function getTotalText(): string
+    {
+        $posTotalView = number_format($this->getTotal(), 2, '.', '\'');
+        if (fmod($this->getTotal(), 1) === 0.0) {
+            $posTotalView = number_format($this->getTotal(), 0, '.', '\'') . '.-';
+        }
+        return $posTotalView;
     }
 }
