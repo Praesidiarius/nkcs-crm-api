@@ -26,6 +26,7 @@ class DocumentController extends AbstractController
         private readonly DocumentTypeRepository $documentTypeRepository,
         private readonly DocumentType $documentForm,
         private readonly DocumentGenerator $documentGenerator,
+        private readonly string $documentBaseDir,
     )
     {
     }
@@ -54,7 +55,7 @@ class DocumentController extends AbstractController
         $document = $this->documentRepository->save($document, true);
 
         $template = base64_decode($data['file']);
-        file_put_contents($_SERVER['DOCUMENT_ROOT'].'/data/templates/' . $document->getId() . '.docx', $template);
+        file_put_contents($this->documentBaseDir . '/templates/' . $document->getId() . '.docx', $template);
 
         return $this->itemResponse($document);
     }

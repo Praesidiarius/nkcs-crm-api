@@ -17,16 +17,20 @@ class DocumentGenerator
         private readonly JobRepository $jobRepository,
         private readonly Security $security,
         private readonly TranslatorInterface $translator,
-    )
-    {
+        private readonly string $documentBaseDir,
+        private readonly string $documentWebRoot,
+    ) {
     }
 
-    public function generateContactDocument(Document $template, int $contactId): string
-    {
+    public function generateContactDocument(
+        Document $template,
+        int $contactId,
+
+    ): string {
         $contact = $this->contactRepository->find($contactId);
 
-        $fileName = '/data/documents/'.$template->getName().'-'.$contact->getLastName().'.docx';
-        $templateProcessor = new TemplateProcessor($_SERVER['DOCUMENT_ROOT'] . '/data/templates/' . $template->getId() . '.docx');
+        $fileName = '/contact/'.$template->getName().'-'.$contact->getName().'.docx';
+        $templateProcessor = new TemplateProcessor($this->documentBaseDir . '/templates/' . $template->getId() . '.docx');
 
         $primaryAddress = $contact->getAddress()->first();
 
@@ -49,17 +53,17 @@ class DocumentGenerator
         $templateProcessor->setValue('userTitle', $this->security->getUser()->getFunction());
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
-        $templateProcessor->saveAs($_SERVER['DOCUMENT_ROOT'] . $fileName);
+        $templateProcessor->saveAs($this->documentBaseDir . $fileName);
 
-        return $fileName;
+        return $this->documentWebRoot . $fileName;
     }
 
     public function generateJobDocument(Document $template, int $jobId): string
     {
         $job = $this->jobRepository->find($jobId);
 
-        $fileName = '/data/documents/'.$template->getName().'-'.$job->getId().'.docx';
-        $templateProcessor = new TemplateProcessor($_SERVER['DOCUMENT_ROOT'] . '/data/templates/' . $template->getId() . '.docx');
+        $fileName = '/job/'.$template->getName().'-'.$job->getId().'.docx';
+        $templateProcessor = new TemplateProcessor($this->documentBaseDir . '/templates/' . $template->getId() . '.docx');
 
         $contact = $job->getContact();
         /**
@@ -123,9 +127,9 @@ class DocumentGenerator
         $templateProcessor->setValue('total', number_format($jobSubTotal, 2, '.', '\''));
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
-        $templateProcessor->saveAs($_SERVER['DOCUMENT_ROOT'] . $fileName);
+        $templateProcessor->saveAs($this->documentBaseDir . $fileName);
 
-        return $fileName;
+        return $this->documentWebRoot . $fileName;
     }
 
 }
