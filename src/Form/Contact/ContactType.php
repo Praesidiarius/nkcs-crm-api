@@ -3,6 +3,9 @@
 namespace App\Form\Contact;
 
 use App\Entity\Contact;
+use App\Entity\ContactSalution;
+use App\Repository\ContactSalutionRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
@@ -17,6 +20,7 @@ class ContactType extends AbstractType
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly ContactSalutionRepository $contactSalutionRepository,
     )
     {
     }
@@ -24,12 +28,18 @@ class ContactType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('salution', EntityType::class, [
+                'class' => ContactSalution::class,
+            ])
             ->add('firstName', TextType::class, [
                 'required' => true,
                 'invalid_message' => 'You entered an invalid value, it should include %num% letters',
                 'invalid_message_parameters' => ['%num%' => 6],
             ])
+            ->add('companyUid', TextType::class)
+            ->add('companyName', TextType::class)
             ->add('lastName', TextType::class)
+            ->add('phone', TextType::class)
             ->add('isCompany', CheckboxType::class)
             ->add('emailPrivate', EmailType::class)
             ->add('emailBusiness', EmailType::class)
@@ -60,29 +70,72 @@ class ContactType extends AbstractType
         return $formSections;
     }
 
-    public function getFormFields(): array
+    public function getFormFields($isCompany = false): array
     {
-        $formFields = [
-            [
+        $contactSalutions = $this->contactSalutionRepository->findAll();
+        $salutionField = [];
+        foreach ($contactSalutions as $salution) {
+            $salutionField[] = [
+                'id' => $salution->getId(),
+                'text' => $this->translator->trans($salution->getName()),
+            ];
+        }
+        $formFields = [];
+
+        if (!$isCompany) {
+            $formFields[] = [
+                'text' => $this->translator->trans('salution'),
+                'key' => 'salution',
+                'type' => 'select',
+                'section' => 'basic',
+                'cols' => 2,
+                'data' => $salutionField,
+            ];
+            $formFields[] = [
                 'text' => $this->translator->trans('firstname'),
                 'key' => 'firstName',
                 'type' => 'text',
                 'section' => 'basic',
-                'cols' => 4,
-            ],
-            [
+                'cols' => 5,
+            ];
+            $formFields[] = [
                 'text' => $this->translator->trans('lastname'),
                 'key' => 'lastName',
                 'type' => 'text',
                 'section' => 'basic',
+                'cols' => 5
+            ];
+        } else {
+            $formFields[] = [
+                'text' => $this->translator->trans('company'),
+                'key' => 'companyName',
+                'type' => 'text',
+                'section' => 'basic',
+                'cols' => 8
+            ];
+            $formFields[] = [
+                'text' => $this->translator->trans('companyUid'),
+                'key' => 'companyUid',
+                'type' => 'text',
+                'section' => 'basic',
                 'cols' => 4
-            ],
+            ];
+        }
+
+        $baseFields = [
             [
-                'text' => $this->translator->trans('email.private'),
+                'text' => $this->translator->trans('email.address'),
                 'key' => 'emailPrivate',
                 'type' => 'email',
                 'section' => 'basic',
-                'cols' => 12
+                'cols' => 8
+            ],
+            [
+                'text' => $this->translator->trans('phone'),
+                'key' => 'phone',
+                'type' => 'phone',
+                'section' => 'basic',
+                'cols' => 4
             ],
             [
                 'text' =>  $this->translator->trans('addresses'),
@@ -92,7 +145,7 @@ class ContactType extends AbstractType
                 'cols' => 12,
                 'fields' => [
                     [
-                        'title' => $this->translator->trans('address.street'),
+                        'text' => $this->translator->trans('address.street'),
                         'key' => 'street',
                         'value' => 'street',
                         'type' => 'text',
@@ -100,7 +153,7 @@ class ContactType extends AbstractType
                         'cols' => 6
                     ],
                     [
-                        'title' => $this->translator->trans('address.zip'),
+                        'text' => $this->translator->trans('address.zip'),
                         'key' => 'zip',
                         'value' => 'zip',
                         'type' => 'text',
@@ -108,7 +161,7 @@ class ContactType extends AbstractType
                         'cols' => 1
                     ],
                     [
-                        'title' => $this->translator->trans('address.city'),
+                        'text' => $this->translator->trans('address.city'),
                         'key' => 'city',
                         'value' => 'city',
                         'type' => 'text',
@@ -119,12 +172,24 @@ class ContactType extends AbstractType
             ],
         ];
 
-        return $formFields;
+        return array_merge($formFields, $baseFields);
     }
 
     public function getIndexHeaders(): array
     {
         $indexHeaders = [
+            [
+                'title' => $this->translator->trans('company'),
+                'key' => 'companyName',
+                'sortable' => false,
+                'type' => 'text'
+            ],
+            [
+                'title' => $this->translator->trans('salution'),
+                'key' => 'salution',
+                'sortable' => false,
+                'type' => 'text'
+            ],
             [
                 'title' => $this->translator->trans('firstname'),
                 'key' => 'firstName',

@@ -39,6 +39,16 @@ class ContactController extends AbstractController
         ]);
     }
 
+    #[Route('/add-company', name: 'contact_company_add', methods: ['GET'])]
+    #[Route('/add-company/{_locale}', name: 'contact_company_add_translated', methods: ['GET'])]
+    public function getAddFormCompany(): Response {
+
+        return $this->json([
+            'form' => $this->contactForm->getFormFields(true),
+            'sections' => $this->contactForm->getFormSections(),
+        ]);
+    }
+
     #[Route('/add', name: 'contact_add_save', methods: ['POST'])]
     #[Route('/add/{_locale}', name: 'contact_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
@@ -85,7 +95,7 @@ class ContactController extends AbstractController
         }
 
         // manual validation
-        if ($contact->getFirstName() === null && $contact->getLastName() === null) {
+        if ($contact->getFirstName() === null && $contact->getLastName() === null && $contact->getCompanyName() === null) {
             return $this->json([
                 ['message' => 'You must provide a first or last name']
             ], 400);
@@ -126,6 +136,7 @@ class ContactController extends AbstractController
 
         // unset readonly fields
         unset($data['address']);
+        unset($data['jobs']);
         unset($data['createdBy']);
         unset($data['createdDate']);
         unset($data['id']);
@@ -215,7 +226,7 @@ class ContactController extends AbstractController
 
         $data = [
             'item' => $contact,
-            'form' => $this->contactForm->getFormFields(),
+            'form' => $this->contactForm->getFormFields($contact->isIsCompany()),
             'sections' => $this->contactForm->getFormSections(),
         ];
 

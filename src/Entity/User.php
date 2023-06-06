@@ -35,6 +35,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserSetting::class, orphanRemoval: true)]
     private Collection $userSettings;
 
+    #[ORM\Column(length: 50)]
+    private ?string $firstName = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $lastName = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $function = null;
+
     public function __construct()
     {
         $this->worktimes = new ArrayCollection();
@@ -167,6 +176,60 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $userSetting->setUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getFirstName(): ?string
+    {
+        return $this->firstName;
+    }
+
+    public function setFirstName(string $firstName): self
+    {
+        $this->firstName = $firstName;
+
+        return $this;
+    }
+
+    public function getLastName(): ?string
+    {
+        return $this->lastName;
+    }
+
+    public function setLastName(?string $lastName): self
+    {
+        $this->lastName = $lastName;
+
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        $name = '';
+        if ($this->firstName) {
+            $name = $this->firstName;
+        }
+
+        if ($this->lastName) {
+            // add whitespace if there is a firstname
+            if ($name !== '') {
+                $name .= ' ';
+            }
+            $name .= $this->lastName;
+        }
+
+        return $name;
+    }
+
+    public function getFunction(): ?string
+    {
+        return $this->function;
+    }
+
+    public function setFunction(?string $function): self
+    {
+        $this->function = $function;
 
         return $this;
     }

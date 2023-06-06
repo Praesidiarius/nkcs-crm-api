@@ -92,11 +92,23 @@ class JobType extends AbstractType
     {
         $indexHeaders = [
             [
+                'title' => $this->translator->trans('job.id'),
+                'key' => 'id',
+                'sortable' => false,
+                'type' => 'text'
+            ],
+            [
                 'title' => $this->translator->trans('job.title'),
                 'key' => 'title',
                 'sortable' => false,
                 'type' => 'text'
-            ]
+            ],
+            [
+                'title' => $this->translator->trans('job.contact'),
+                'key' => 'contact',
+                'sortable' => false,
+                'type' => 'select'
+            ],
         ];
 
         return $indexHeaders;

@@ -1,5 +1,9 @@
+salution: Anrede
 firstname: Vorname
 lastname: Nachname
+company: Firma
+companyUid: UID
+phone: Tel
 comment: Kommentar
 address:
   street: Strasse
@@ -7,7 +11,11 @@ address:
   city: Ort
 email:
   private: E-Mail (privat)
+  address: E-Mail Adresse
 contact:
+  salution:
+    mr: Herr
+    mrs: Frau
   form:
     section:
       basic: Kontaktdaten
@@ -24,6 +32,13 @@ document:
   type:
     contact: Kundendokumente
     job: Auftragsdokumente
+job:
+  id: Auftrags-Nr
+  contact: Kunde
+  title: Titel
+  form:
+    section:
+      basic: Stammdaten
 item:
   unit:
     unit: Einheit

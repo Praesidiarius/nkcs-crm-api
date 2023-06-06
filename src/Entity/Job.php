@@ -18,7 +18,7 @@ class Job
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 100, nullable: true)]
     private ?string $title = null;
 
     #[ORM\ManyToOne]
@@ -37,8 +37,10 @@ class Job
 
     #[ORM\ManyToOne(inversedBy: 'jobs')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Ignore]
     private ?Contact $contact = null;
+
+    #[ORM\Column]
+    private ?float $subTotal = 0;
 
     public function __construct()
     {
@@ -147,6 +149,18 @@ class Job
     public function setContact(?Contact $contact): self
     {
         $this->contact = $contact;
+
+        return $this;
+    }
+
+    public function getSubTotal(): ?float
+    {
+        return $this->subTotal;
+    }
+
+    public function setSubTotal(float $subTotal): self
+    {
+        $this->subTotal = $subTotal;
 
         return $this;
     }

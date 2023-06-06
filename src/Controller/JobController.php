@@ -73,11 +73,12 @@ class JobController extends AbstractController
         }
 
         // manual validation
+        /**
         if ($job->getTitle() === null) {
             return $this->json([
                 ['message' => 'You must provide a title']
             ], 400);
-        }
+        } **/
 
 
         $tempType = $this->jobTypeRepository->find(1);
@@ -219,8 +220,19 @@ class JobController extends AbstractController
         // save position
         $this->jobPositionRepository->save($position, true);
 
+        $jobPositionsNew = $job->getJobPositions();
+        $jobSubTotal = 0;
+        foreach ($jobPositionsNew as $jobPosition) {
+            $jobSubTotal += $jobPosition->getTotal();
+        }
+        $job->setSubTotal($jobSubTotal);
+        $this->jobRepository->save($job, true);
+
         return $this->json([
-            'positions' => $job->getJobPositions(),
+            'positions' => $jobPositionsNew,
+            'job' => [
+                'subTotal' => $job->getSubTotal(),
+            ]
         ]);
     }
 

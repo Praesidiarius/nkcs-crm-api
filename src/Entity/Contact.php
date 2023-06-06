@@ -50,6 +50,18 @@ class Contact
     #[ORM\OneToMany(mappedBy: 'contact', targetEntity: Job::class)]
     private Collection $jobs;
 
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $phone = null;
+
+    #[ORM\ManyToOne]
+    private ?ContactSalution $salution = null;
+
+    #[ORM\Column(length: 150, nullable: true)]
+    private ?string $companyName = null;
+
+    #[ORM\Column(length: 30, nullable: true)]
+    private ?string $companyUid = null;
+
     public function __construct()
     {
         $this->address = new ArrayCollection();
@@ -87,17 +99,21 @@ class Contact
 
     public function getName(): ?string
     {
-        $name = '';
-        if ($this->firstName) {
-            $name = $this->firstName;
+        if ($this->isIsCompany()) {
+            return $this->getCompanyName();
         }
 
-        if ($this->lastName) {
+        $name = '';
+        if ($this->getFirstName()) {
+            $name = $this->getFirstName();
+        }
+
+        if ($this->getLastName()) {
             // add whitespace if there is a firstname
             if ($name !== '') {
                 $name .= ' ';
             }
-            $name .= $this->lastName;
+            $name .= $this->getLastName();
         }
 
         return $name;
@@ -193,14 +209,6 @@ class Contact
         return $this;
     }
 
-    /**
-     * @return Collection<int, Job>
-     */
-    public function getJobs(): Collection
-    {
-        return $this->jobs;
-    }
-
     public function addJob(Job $job): self
     {
         if (!$this->jobs->contains($job)) {
@@ -219,6 +227,54 @@ class Contact
                 $job->setContact(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(?string $phone): self
+    {
+        $this->phone = $phone;
+
+        return $this;
+    }
+
+    public function getSalution(): ?ContactSalution
+    {
+        return $this->salution;
+    }
+
+    public function setSalution(?ContactSalution $salution): self
+    {
+        $this->salution = $salution;
+
+        return $this;
+    }
+
+    public function getCompanyName(): ?string
+    {
+        return $this->companyName;
+    }
+
+    public function setCompanyName(?string $companyName): self
+    {
+        $this->companyName = $companyName;
+
+        return $this;
+    }
+
+    public function getCompanyUid(): ?string
+    {
+        return $this->companyUid;
+    }
+
+    public function setCompanyUid(?string $companyUid): self
+    {
+        $this->companyUid = $companyUid;
 
         return $this;
     }

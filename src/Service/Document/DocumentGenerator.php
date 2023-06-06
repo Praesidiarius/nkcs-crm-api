@@ -8,6 +8,7 @@ use App\Repository\JobRepository;
 use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DocumentGenerator
 {
@@ -15,6 +16,7 @@ class DocumentGenerator
         private readonly ContactRepository $contactRepository,
         private readonly JobRepository $jobRepository,
         private readonly Security $security,
+        private readonly TranslatorInterface $translator,
     )
     {
     }
@@ -28,21 +30,23 @@ class DocumentGenerator
 
         $primaryAddress = $contact->getAddress()->first();
 
-        $name = $contact->getFirstName()
-            ? $contact->getFirstName() . ' ' . $contact->getLastName()
-            : $contact->getLastName();
+        $name = $contact->isIsCompany() ? $contact->getCompanyName() : $this->translator->trans($contact->getSalution()->getName()). ' '.$contact->getName();
 
-        $title = new TextRun();
-        $title->addText($name);
-        $title->addTextBreak();
-        $title->addText($primaryAddress->getStreet());
-        $title->addTextBreak();
-        $title->addText($primaryAddress->getZip() . ' ' . $primaryAddress->getCity());
-        $templateProcessor->setComplexBlock('address', $title);
+        if ($primaryAddress) {
+            $title = new TextRun();
+            $title->addText($name);
+            $title->addTextBreak();
+            $title->addText($primaryAddress->getStreet());
+            $title->addTextBreak();
+            $title->addText($primaryAddress->getZip() . ' ' . $primaryAddress->getCity());
+            $templateProcessor->setComplexBlock('address', $title);
+        } else {
+            $templateProcessor->setValue('address', '');
+        }
 
         $templateProcessor->setValue('salution', 'Grüezi ' . $name);
-        $templateProcessor->setValue('userName', $this->security->getUser()->getUserIdentifier());
-        $templateProcessor->setValue('userTitle', 'Geschäftsführer');
+        $templateProcessor->setValue('userName', $this->security->getUser()->getName());
+        $templateProcessor->setValue('userTitle', $this->security->getUser()->getFunction());
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
         $templateProcessor->saveAs($_SERVER['DOCUMENT_ROOT'] . $fileName);
@@ -66,13 +70,18 @@ class DocumentGenerator
             : $contact->getLastName();
 
         $primaryAddress = $contact->getAddress()->first();
-        $title = new TextRun();
-        $title->addText($name);
-        $title->addTextBreak();
-        $title->addText($primaryAddress->getStreet());
-        $title->addTextBreak();
-        $title->addText($primaryAddress->getZip() . ' ' . $primaryAddress->getCity());
-        $templateProcessor->setComplexBlock('address', $title);
+        if ($primaryAddress) {
+            $title = new TextRun();
+            $title->addText($name);
+            $title->addTextBreak();
+            $title->addText($primaryAddress->getStreet());
+            $title->addTextBreak();
+            $title->addText($primaryAddress->getZip() . ' ' . $primaryAddress->getCity());
+            $templateProcessor->setComplexBlock('address', $title);
+        } else {
+            $templateProcessor->setValue('address', '');
+        }
+
 
         /**
          * Add Job Positions
