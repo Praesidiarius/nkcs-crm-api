@@ -2,19 +2,22 @@
 
 namespace App\Controller;
 
-use App\Entity\Contact;
 use App\Entity\Document;
-use App\Form\Document\DocumentType;
+use App\Entity\DocumentTemplate;
+use App\Form\Document\DocumentTemplateType;
 use App\Repository\DocumentRepository;
+use App\Repository\DocumentTemplateRepository;
 use App\Repository\DocumentTypeRepository;
 use App\Repository\UserSettingRepository;
 use App\Service\Document\DocumentGenerator;
+use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGenerator;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Requirement\Requirement;
 
 #[Route('/api/document')]
@@ -23,59 +26,102 @@ class DocumentController extends AbstractController
     public function __construct(
         private readonly UserSettingRepository $userSettings,
         private readonly DocumentRepository $documentRepository,
+        private readonly DocumentTemplateRepository $templateRepository,
         private readonly DocumentTypeRepository $documentTypeRepository,
-        private readonly DocumentType $documentForm,
+        private readonly DocumentTemplateType $templateForm,
         private readonly DocumentGenerator $documentGenerator,
         private readonly string $documentBaseDir,
     )
     {
     }
 
-    #[Route('/add', name: 'document_add', methods: ['GET'])]
-    #[Route('/add/{_locale}', name: 'document_add_translated', methods: ['GET'])]
+    #[Route('/add', name: 'document_template_add', methods: ['GET'])]
+    #[Route('/add/{_locale}', name: 'document_template_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
-
         return $this->json([
-            'form' => $this->documentForm->getFormFields(),
-            'sections' => $this->documentForm->getFormSections(),
+            'form' => $this->templateForm->getFormFields(),
+            'sections' => $this->templateForm->getFormSections(),
         ]);
     }
 
-    #[Route('/add', name: 'document_add_save', methods: ['POST'])]
-    #[Route('/add/{_locale}', name: 'document_add_save_translated', methods: ['POST'])]
+    #[Route('/add', name: 'document_template_add_save', methods: ['POST'])]
+    #[Route('/add/{_locale}', name: 'document_template_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
         $body = $request->getContent();
         $data = json_decode($body, true);
 
         $docType = $this->documentTypeRepository->find($data['document']['type']);
 
-        $document = new Document();
-        $document->setName($data['document']['name']);
-        $document->setType($docType);
-        $document = $this->documentRepository->save($document, true);
+        $template = new DocumentTemplate();
+        $template->setName($data['document']['name']);
+        $template->setType($docType);
+        $template = $this->templateRepository->save($template, true);
 
-        $template = base64_decode($data['file']);
-        file_put_contents($this->documentBaseDir . '/templates/' . $document->getId() . '.docx', $template);
+        $templateContent = base64_decode($data['file']);
+        $templateSavePath = $this->documentBaseDir . '/templates/' . $template->getId() . '.docx';
+        file_put_contents($templateSavePath, $templateContent);
 
-        return $this->itemResponse($document);
+        return $this->itemResponse($template);
     }
 
     #[Route('/generate/{id}/{entityId}/{entityType}', name: 'document_generate', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     #[Route('/generate/{_locale}/{id}/{entityId}/{entityType}', name: 'document_generate_translated', methods: ['GET'])]
-    public function view(
-        Document $document,
+    public function generate(
+        DocumentTemplate $template,
         int $entityId,
         string $entityType,
     ): Response {
-        $fileName = match($entityType) {
-            'contact' => $this->documentGenerator->generateContactDocument($document, $entityId),
-            'job' => $this->documentGenerator->generateJobDocument($document, $entityId),
-            default => throw new NotFoundHttpException('invalid document type')
+        $documentType = $this->documentTypeRepository->findOneBy(['identifier' => $entityType]);
+        if (!$documentType) {
+            throw new NotFoundHttpException('invalid document type');
+        }
+
+        $document = new Document();
+        $document->setEntityId($entityId);
+        $document->setType($documentType);
+        $document->setFileName('#temp#');
+        $document->setTemplate($template);
+        $document->setCreatedDate(new DateTimeImmutable());
+        $document->setCreatedBy($this->getUser()->getId());
+
+        $document = $this->documentRepository->save($document, true);
+
+        $fileName = match($documentType->getIdentifier()) {
+            'contact' => $this->documentGenerator->generateContactDocument($template, $document, $entityId),
+            'job' => $this->documentGenerator->generateJobDocument($template, $entityId),
         };
 
+        $document->setFileName($fileName);
+        $document = $this->documentRepository->save($document, true);
+
         return $this->json([
-            'file' => 'http://' . $_SERVER['HTTP_HOST']. $fileName
+            'document' => $this->getDocumentAsBase64Download($document),
+            'name' => $document->getFileName(),
         ]);
+    }
+
+    #[Route('/download/{id}', name: 'document_download', methods: ['GET'])]
+    public function download(
+        Document $document,
+    ) : Response {
+        return $this->json([
+            'document' => $this->getDocumentAsBase64Download($document),
+            'name' => $document->getFileName(),
+        ]);
+    }
+
+    private function getDocumentAsBase64Download(
+        Document $document
+    ) : string {
+        $fileContent = file_get_contents(
+            $this->documentBaseDir
+            . '/'
+            . $document->getType()->getIdentifier()
+            . '/'
+            . $document->getFileName()
+        );
+
+        return base64_encode($fileContent);
     }
 
     #[Route('/', name: 'document_index', methods: ['GET'])]
@@ -88,12 +134,12 @@ class DocumentController extends AbstractController
             'pagination-page-size',
         );
         $page = $request->query->getInt('page', 1);
-        $documents = $this->documentRepository->findBySearchAttributes($page, $pageSize, $request->query->getAlpha('type'));
+        $templates = $this->templateRepository->findBySearchAttributes($page, $pageSize, $request->query->getAlpha('type'));
 
         $data = [
-            'headers' => $this->documentForm->getIndexHeaders(),
-            'items' => $documents,
-            'total_items' => count($documents),
+            'headers' => $this->templateForm->getIndexHeaders(),
+            'items' => $templates,
+            'total_items' => count($templates),
             'pagination' => [
                 'page_size' => $pageSize,
                 'page' => $page,
@@ -104,12 +150,12 @@ class DocumentController extends AbstractController
     }
 
     private function itemResponse(
-        Document $document,
+        DocumentTemplate $template,
     ): Response {
         $data = [
-            'item' => $document,
-            'form' => $this->documentForm->getFormFields(),
-            'sections' => $this->documentForm->getFormSections(),
+            'item' => $template,
+            'form' => $this->templateForm->getFormFields(),
+            'sections' => $this->templateForm->getFormSections(),
         ];
 
         return $this->json($data);

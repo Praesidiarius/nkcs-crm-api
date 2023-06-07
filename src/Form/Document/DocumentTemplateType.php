@@ -2,7 +2,7 @@
 
 namespace App\Form\Document;
 
-use App\Entity\Document;
+use App\Entity\DocumentTemplate;
 use App\Repository\DocumentTypeRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
@@ -12,7 +12,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class DocumentType extends AbstractType
+class DocumentTemplateType extends AbstractType
 {
     public function __construct(
         private readonly TranslatorInterface $translator,
@@ -57,7 +57,7 @@ class DocumentType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => Document::class,
+            'data_class' => DocumentTemplate::class,
             'csrf_protection' => false,
         ]);
     }

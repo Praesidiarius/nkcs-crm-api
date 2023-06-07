@@ -3,6 +3,7 @@
 namespace App\Service\Document;
 
 use App\Entity\Document;
+use App\Entity\DocumentTemplate;
 use App\Repository\ContactRepository;
 use App\Repository\JobRepository;
 use PhpOffice\PhpWord\Element\TextRun;
@@ -23,13 +24,13 @@ class DocumentGenerator
     }
 
     public function generateContactDocument(
-        Document $template,
+        DocumentTemplate $template,
+        Document $document,
         int $contactId,
-
     ): string {
         $contact = $this->contactRepository->find($contactId);
 
-        $fileName = '/contact/'.$template->getName().'-'.$contact->getName().'.docx';
+        $fileName = $template->getName() . '-' . $contact->getName() . '-' . $document->getId() . '.docx';
         $templateProcessor = new TemplateProcessor($this->documentBaseDir . '/templates/' . $template->getId() . '.docx');
 
         $primaryAddress = $contact->getAddress()->first();
@@ -53,12 +54,15 @@ class DocumentGenerator
         $templateProcessor->setValue('userTitle', $this->security->getUser()->getFunction());
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
-        $templateProcessor->saveAs($this->documentBaseDir . $fileName);
+        $templateProcessor->saveAs($this->documentBaseDir . '/' . $template->getType()->getIdentifier() . '/' . $fileName);
 
-        return $this->documentWebRoot . $fileName;
+        return $fileName;
     }
 
-    public function generateJobDocument(Document $template, int $jobId): string
+    public function generateJobDocument(
+        DocumentTemplate $template,
+        int $jobId,
+    ): string
     {
         $job = $this->jobRepository->find($jobId);
 
@@ -66,6 +70,7 @@ class DocumentGenerator
         $templateProcessor = new TemplateProcessor($this->documentBaseDir . '/templates/' . $template->getId() . '.docx');
 
         $contact = $job->getContact();
+
         /**
          * Add Contact Address
          */
@@ -129,7 +134,7 @@ class DocumentGenerator
 
         $templateProcessor->saveAs($this->documentBaseDir . $fileName);
 
-        return $this->documentWebRoot . $fileName;
+        return $fileName;
     }
 
 }

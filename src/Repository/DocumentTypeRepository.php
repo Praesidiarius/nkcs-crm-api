@@ -40,7 +40,7 @@ class DocumentTypeRepository extends ServiceEntityRepository
     }
 
 //    /**
-//     * @return DocumentType[] Returns an array of DocumentType objects
+//     * @return DocumentTemplateType[] Returns an array of DocumentTemplateType objects
 //     */
 //    public function findByExampleField($value): array
 //    {
@@ -54,7 +54,7 @@ class DocumentTypeRepository extends ServiceEntityRepository
 //        ;
 //    }
 
-//    public function findOneBySomeField($value): ?DocumentType
+//    public function findOneBySomeField($value): ?DocumentTemplateType
 //    {
 //        return $this->createQueryBuilder('d')
 //            ->andWhere('d.exampleField = :val')
