@@ -31,6 +31,9 @@ class Item
     #[ORM\JoinColumn(nullable: false)]
     private ?ItemUnit $unit = null;
 
+    #[ORM\Column]
+    private bool $stripeEnabled = false;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -102,6 +105,18 @@ class Item
     public function setUnit(?ItemUnit $unit): self
     {
         $this->unit = $unit;
+
+        return $this;
+    }
+
+    public function isStripeEnabled(): ?bool
+    {
+        return $this->stripeEnabled;
+    }
+
+    public function setStripeEnabled(bool $stripeEnabled): self
+    {
+        $this->stripeEnabled = $stripeEnabled;
 
         return $this;
     }

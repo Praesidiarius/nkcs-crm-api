@@ -8,6 +8,9 @@ parameters:
     api.base_url: '%env(NKCS_API_BASE_URL)%'
     document.base_dir: '%env(NKCS_DATA_DIR)%'
     document.web_root: '%env(NKCS_DATA_WEBROOT)%'
+    payment.stripe_key: '%env(STRIPE_KEY)%'
+    payment.stripe_secret: '%env(STRIPE_SECRET)%'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -16,6 +19,7 @@ services:
         bind:
             $documentBaseDir: '%document.base_dir%'
             $documentWebRoot: '%document.web_root%'
+            $paymentStripeKey: '%payment.stripe_key%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

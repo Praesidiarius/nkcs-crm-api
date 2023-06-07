@@ -7,6 +7,7 @@ use App\Entity\ItemUnit;
 use App\Repository\ItemUnitRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -20,6 +21,7 @@ class ItemType extends AbstractType
         private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly TranslatorInterface $translator,
         private readonly ItemUnitRepository $itemUnitRepository,
+        private readonly string $paymentStripeKey,
     )
     {
     }
@@ -33,6 +35,10 @@ class ItemType extends AbstractType
                 'class' => ItemUnit::class
             ])
         ;
+
+        if ($this->paymentStripeKey) {
+            $builder->add('stripeEnabled', CheckboxType::class);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -90,6 +96,16 @@ class ItemType extends AbstractType
                 'cols' => 2,
             ],
         ];
+
+        if ($this->paymentStripeKey) {
+            $formFields[] = [
+                'text' => $this->translator->trans('item.addToStripe'),
+                'key' => 'stripeEnabled',
+                'type' => 'checkbox',
+                'section' => 'basic',
+                'cols' => 12
+            ];
+        }
 
         return $formFields;
     }

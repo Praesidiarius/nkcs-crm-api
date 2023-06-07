@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\DocumentTemplateRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 #[ORM\Entity(repositoryClass: DocumentTemplateRepository::class)]
 class DocumentTemplate
@@ -18,6 +19,7 @@ class DocumentTemplate
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
+    #[Ignore]
     private ?DocumentType $type = null;
 
     public function getId(): ?int

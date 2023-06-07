@@ -8,6 +8,7 @@ use App\Form\Item\ItemType;
 use App\Repository\ItemRepository;
 use App\Repository\UserSettingRepository;
 use DateTimeImmutable;
+use Stripe\StripeClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -68,6 +69,27 @@ class ItemController extends AbstractController
 
         // save contact
         $this->itemRepository->save($item, true);
+
+        /**
+         * Stripe Integration
+         */
+        if ($this->getParameter('payment.stripe_key') && $item->isStripeEnabled()) {
+            $stripeClient = new StripeClient($this->getParameter('payment.stripe_secret'));
+
+            $stripeProduct = $stripeClient->products->create([
+                'name' => $item->getName(),
+                'description' => 'A Test Item'
+            ]);
+
+            $stripePrice = $stripeClient->prices->create([
+                // stripe wants amount in cents
+                'unit_amount' => $item->getPrice() * 100,
+                'currency' => 'chf',
+                // todo: need a flag for subscriptions on items
+                'recurring' => ['interval' => 'month'],
+                'product' => $stripeProduct['id']
+            ]);
+        }
 
         return $this->itemResponse($item);
     }
