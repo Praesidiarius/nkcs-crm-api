@@ -11,17 +11,16 @@ use App\Repository\DocumentTypeRepository;
 use App\Repository\UserSettingRepository;
 use App\Service\Document\DocumentGenerator;
 use DateTimeImmutable;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGenerator;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/document')]
-class DocumentController extends AbstractController
+class DocumentController extends AbstractApiController
 {
     public function __construct(
         private readonly UserSettingRepository $userSettings,
@@ -30,14 +29,20 @@ class DocumentController extends AbstractController
         private readonly DocumentTypeRepository $documentTypeRepository,
         private readonly DocumentTemplateType $templateForm,
         private readonly DocumentGenerator $documentGenerator,
+        private readonly HttpClientInterface $httpClient,
         private readonly string $documentBaseDir,
     )
     {
+        parent::__construct($this->httpClient);
     }
 
     #[Route('/add', name: 'document_template_add', methods: ['GET'])]
     #[Route('/add/{_locale}', name: 'document_template_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->json([
             'form' => $this->templateForm->getFormFields(),
             'sections' => $this->templateForm->getFormSections(),
@@ -47,6 +52,10 @@ class DocumentController extends AbstractController
     #[Route('/add', name: 'document_template_add_save', methods: ['POST'])]
     #[Route('/add/{_locale}', name: 'document_template_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -71,6 +80,10 @@ class DocumentController extends AbstractController
         int $entityId,
         string $entityType,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $documentType = $this->documentTypeRepository->findOneBy(['identifier' => $entityType]);
         if (!$documentType) {
             throw new NotFoundHttpException('invalid document type');
@@ -104,6 +117,10 @@ class DocumentController extends AbstractController
     public function download(
         Document $document,
     ) : Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->json([
             'document' => $this->getDocumentAsBase64Download($document),
             'name' => $document->getFileName(),
@@ -129,6 +146,10 @@ class DocumentController extends AbstractController
     public function list(
         Request $request,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $pageSize = $this->userSettings->getUserSetting(
             $this->getUser(),
             'pagination-page-size',

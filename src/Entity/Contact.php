@@ -47,9 +47,6 @@ class Contact
     #[ORM\OneToMany(mappedBy: 'contact', targetEntity: ContactAddress::class)]
     private Collection $address;
 
-    #[ORM\OneToMany(mappedBy: 'contact', targetEntity: Job::class)]
-    private Collection $jobs;
-
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $phone = null;
 
@@ -63,7 +60,12 @@ class Contact
     private ?string $companyUid = null;
 
     #[ORM\OneToMany(mappedBy: 'contact', targetEntity: License::class)]
+    #[Ignore]
     private Collection $licenses;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Assert\Unique]
+    private ?string $contactIdentifier = null;
 
     public function __construct()
     {
@@ -309,6 +311,18 @@ class Contact
                 $license->setContact(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getContactIdentifier(): ?string
+    {
+        return $this->contactIdentifier;
+    }
+
+    public function setContactIdentifier(?string $contactIdentifier): self
+    {
+        $this->contactIdentifier = $contactIdentifier;
 
         return $this;
     }

@@ -34,6 +34,12 @@ class Item
     #[ORM\Column]
     private bool $stripeEnabled = false;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $stripePriceId = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -117,6 +123,30 @@ class Item
     public function setStripeEnabled(bool $stripeEnabled): self
     {
         $this->stripeEnabled = $stripeEnabled;
+
+        return $this;
+    }
+
+    public function getStripePriceId(): ?string
+    {
+        return $this->stripePriceId;
+    }
+
+    public function setStripePriceId(?string $stripePriceId): self
+    {
+        $this->stripePriceId = $stripePriceId;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }

@@ -13,11 +13,13 @@ use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/contact')]
-class ContactController extends AbstractController
+class ContactController extends AbstractApiController
 {
     public function __construct(
         private readonly ContactManager $contactManager,
@@ -25,13 +27,18 @@ class ContactController extends AbstractController
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
         private readonly UserSettingRepository $userSettings,
+        private readonly HttpClientInterface $httpClient,
     )
     {
+        parent::__construct($this->httpClient);
     }
 
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
     #[Route('/add/{_locale}', name: 'contact_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
 
         return $this->json([
             'form' => $this->contactForm->getFormFields(),
@@ -42,6 +49,9 @@ class ContactController extends AbstractController
     #[Route('/add-company', name: 'contact_company_add', methods: ['GET'])]
     #[Route('/add-company/{_locale}', name: 'contact_company_add_translated', methods: ['GET'])]
     public function getAddFormCompany(): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
 
         return $this->json([
             'form' => $this->contactForm->getFormFields(true),
@@ -52,6 +62,10 @@ class ContactController extends AbstractController
     #[Route('/add', name: 'contact_add_save', methods: ['POST'])]
     #[Route('/add/{_locale}', name: 'contact_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -122,6 +136,10 @@ class ContactController extends AbstractController
     #[Route('/edit/{id}', name: 'contact_edit', methods: ['GET'])]
     #[Route('/edit/{_locale}/{id}', name: 'contact_edit_translated', methods: ['GET'])]
     public function getEditForm(Contact $contact): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->itemResponse($contact);
     }
 
@@ -131,6 +149,10 @@ class ContactController extends AbstractController
         Request $request,
         Contact $contact,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -174,6 +196,10 @@ class ContactController extends AbstractController
     public function view(
         Contact $contact,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->itemResponse($contact);
     }
 
@@ -182,6 +208,10 @@ class ContactController extends AbstractController
     public function delete(
         Contact $contact,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $addresses = $this->addressRepository->findBy(['contact' => $contact]);
         foreach ($addresses as $address) {
             $this->addressRepository->remove($address);
@@ -196,6 +226,10 @@ class ContactController extends AbstractController
     public function list(
         Request $request,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $pageSize = $this->userSettings->getUserSetting(
             $this->getUser(),
             'pagination-page-size',

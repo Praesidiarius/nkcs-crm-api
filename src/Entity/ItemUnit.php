@@ -16,6 +16,9 @@ class ItemUnit
     #[ORM\Column(length: 30)]
     private ?string $name = null;
 
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $type = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -29,6 +32,18 @@ class ItemUnit
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(?string $type): self
+    {
+        $this->type = $type;
 
         return $this;
     }

@@ -57,18 +57,6 @@ class License
         return $this;
     }
 
-    public function getItem(): ?Item
-    {
-        return $this->item;
-    }
-
-    public function setItem(?Item $item): self
-    {
-        $this->item = $item;
-
-        return $this;
-    }
-
     public function getDateCreated(): ?\DateTimeInterface
     {
         return $this->dateCreated;

@@ -131,7 +131,8 @@ class LicenseController extends AbstractController
         );
 
         return $this->json([
-            'url' => $response->toArray()['url']
+            'url' => $response->toArray()['url'],
+            'product' => $licenseProduct,
         ]);
     }
 
@@ -142,6 +143,10 @@ class LicenseController extends AbstractController
     ) : Response {
         $purchase = $this->licensePurchaseRepository->findOneBy(['hash' => $hash]);
 
+        if ($purchase->getCheckoutId()) {
+            return new Response($this->translator->trans('license.subscription.alreadyProcessed'));
+        }
+
         $purchase->setCheckoutId($checkoutSessionId);
         $purchase->setDateCompleted(new DateTimeImmutable());
 
@@ -150,15 +155,19 @@ class LicenseController extends AbstractController
         $license->setProduct($purchase->getProduct());
         $license->setContact($purchase->getContact());
         $license->setDateCreated(new DateTimeImmutable());
-        $license->setDateValid(new DateTimeImmutable(date('Y-m-d H:i:s', strtotime('+30 days'))));
-        // todo: fix this
-        $license->setUrlApi('test');
-        $license->setUrlClient('test');
+        if ($license->getProduct()->getItem()->getUnit()->getType() === 'sub-month') {
+            $license->setDateValid(new DateTimeImmutable(date('Y-m-d H:i:s', strtotime('+30 days'))));
+        }
+        if ($license->getProduct()->getItem()->getUnit()->getType() === 'sub-year') {
+            $license->setDateValid(new DateTimeImmutable(date('Y-m-d H:i:s', strtotime('+365 days'))));
+        }
+        // todo: remove these fields if not really needed
+        $license->setUrlApi('');
+        $license->setUrlClient('');
 
         $this->licenseRepository->save($license, true);
 
-        // todo: redirect back to client
-        return new Response('Done');
+        return new Response($this->translator->trans('license.subscription.paymentSuccess'));
     }
 
     #[Route('/purchase-link/{id}/{licenseHolder}', name: 'license_purchase_get_checkout_url', methods: ['GET'])]
@@ -178,21 +187,18 @@ class LicenseController extends AbstractController
         Stripe::setApiKey($this->getParameter('payment.stripe_secret'));
 
         try {
-            // todo: move price to item
-            $price = Price::retrieve('TEST');
-
-            $factory = new PasswordHasherFactory([
-                'common' => ['algorithm' => 'bcrypt'],
-            ]);
-
-            $hasher = $factory->getPasswordHasher('common');
+            if (!$licenseProduct->getItem()?->getStripePriceId()) {
+                return $this->json(['error' => 'invalid license item']);
+            }
+            $price = Price::retrieve($licenseProduct->getItem()->getStripePriceId());
             $hash = Uuid::v4();
-
-            // fix this
-            $demoContact = $this->contactRepository->find(1);
+            $contact = $this->contactRepository->findOneBy(['contactIdentifier' => $licenseHolder]);
+            if (!$contact) {
+                return $this->json(['error' => 'contact not found']);
+            }
 
             $purchase = new LicensePurchase();
-            $purchase->setContact($demoContact);
+            $purchase->setContact($contact);
             $purchase->setHolder($licenseHolder);
             $purchase->setHash($hash);
             $purchase->setProduct($licenseProduct);
@@ -200,15 +206,24 @@ class LicenseController extends AbstractController
 
             $this->licensePurchaseRepository->save($purchase, true);
 
-            $checkout_session = Session::create([
+            $sessionData = [
                 'line_items' => [[
                     'price' => $price->id,
                     'quantity' => 1,
                 ]],
-                'mode' => 'subscription',
+                'mode' => 'payment',
                 'success_url' => $self . '/license/success/' . $hash . '/{CHECKOUT_SESSION_ID}',
                 'cancel_url' => $self . '/license/cancel',
-            ]);
+            ];
+
+            if (
+                $licenseProduct->getItem()->getUnit()->getType() === 'sub-month'
+                || $licenseProduct->getItem()->getUnit()->getType() === 'sub-year'
+            ) {
+                $sessionData['mode'] = 'subscription';
+            }
+
+            $checkout_session = Session::create($sessionData);
 
             return $this->json([
                 'url' => $checkout_session->url,

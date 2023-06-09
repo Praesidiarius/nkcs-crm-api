@@ -9,6 +9,7 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -31,6 +32,7 @@ class ItemType extends AbstractType
         $builder
             ->add('name', TextType::class)
             ->add('price', NumberType::class)
+            ->add('description', TextareaType::class)
             ->add('unit', EntityType::class, [
                 'class' => ItemUnit::class
             ])
@@ -94,6 +96,13 @@ class ItemType extends AbstractType
                 'section' => 'basic',
                 'data' => $unitField,
                 'cols' => 2,
+            ],
+            [
+                'text' => $this->translator->trans('item.description'),
+                'key' => 'description',
+                'type' => 'textarea',
+                'section' => 'basic',
+                'cols' => 12,
             ],
         ];
 

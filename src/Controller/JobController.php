@@ -13,15 +13,16 @@ use App\Repository\JobRepository;
 use App\Repository\JobTypeRepository;
 use App\Repository\UserSettingRepository;
 use DateTimeImmutable;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/api/job')]
-class JobController extends AbstractController
+class JobController extends AbstractApiController
 {
     public function __construct(
         private readonly JobType $jobForm,
@@ -33,13 +34,18 @@ class JobController extends AbstractController
         private readonly UserSettingRepository $userSettings,
         private readonly TranslatorInterface $translator,
         private readonly ItemRepository $itemRepository,
+        private readonly HttpClientInterface $httpClient,
     )
     {
+        parent::__construct($this->httpClient);
     }
 
     #[Route('/add', name: 'job_add', methods: ['GET'])]
     #[Route('/add/{_locale}', name: 'job_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
 
         return $this->json([
             'form' => $this->jobForm->getFormFields(),
@@ -50,6 +56,10 @@ class JobController extends AbstractController
     #[Route('/add', name: 'job_add_save', methods: ['POST'])]
     #[Route('/add/{_locale}', name: 'job_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -98,6 +108,10 @@ class JobController extends AbstractController
     #[Route('/edit/{id}', name: 'job_edit', methods: ['GET'])]
     #[Route('/edit/{_locale}/{id}', name: 'job_edit_translated', methods: ['GET'])]
     public function getEditForm(Job $job): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->itemResponse($job);
     }
 
@@ -107,6 +121,10 @@ class JobController extends AbstractController
         Request $request,
         Job $job,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -137,6 +155,10 @@ class JobController extends AbstractController
     public function view(
         Job $job,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->itemResponse($job);
     }
 
@@ -145,6 +167,10 @@ class JobController extends AbstractController
     public function delete(
         Job $job,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $this->jobRepository->remove($job, true);
 
         return $this->json(['state' => 'success']);
@@ -155,6 +181,10 @@ class JobController extends AbstractController
     public function list(
         Request $request,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $pageSize = $this->userSettings->getUserSetting(
             $this->getUser(),
             'pagination-page-size',
@@ -180,6 +210,10 @@ class JobController extends AbstractController
     public function savePositionAddForm(
         Request $request,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -241,6 +275,10 @@ class JobController extends AbstractController
     public function listUnits(
         Request $request,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $units = $this->jobPositionUnitRepository->findAll();
         $unitsTranslated = [];
 

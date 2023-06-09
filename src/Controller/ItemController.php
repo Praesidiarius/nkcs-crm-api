@@ -88,17 +88,27 @@ class ItemController extends AbstractApiController
 
             $stripeProduct = $stripeClient->products->create([
                 'name' => $item->getName(),
-                'description' => 'A Test Item'
+                'description' => $item->getDescription(),
             ]);
 
-            $stripePrice = $stripeClient->prices->create([
+            $stripePriceData = [
                 // stripe wants amount in cents
                 'unit_amount' => $item->getPrice() * 100,
-                'currency' => 'chf',
-                // todo: need a flag for subscriptions on items
-                'recurring' => ['interval' => 'month'],
+                'currency' => $this->getParameter('payment.currency'),
                 'product' => $stripeProduct['id']
-            ]);
+            ];
+
+            if ($item->getUnit()->getType() === 'sub-month') {
+                $stripePriceData['recurring'] = ['interval' => 'month'];
+            }
+            if ($item->getUnit()->getType() === 'sub-year') {
+                $stripePriceData['recurring'] = ['interval' => 'year'];
+            }
+            $stripePrice = $stripeClient->prices->create($stripePriceData);
+
+            $item->setStripePriceId($stripePrice['id']);
+
+            $this->itemRepository->save($item, true);
         }
 
         return $this->itemResponse($item);
@@ -107,6 +117,10 @@ class ItemController extends AbstractApiController
     #[Route('/edit/{id}', name: 'item_edit', methods: ['GET'])]
     #[Route('/edit/{_locale}/{id}', name: 'item_edit_translated', methods: ['GET'])]
     public function getEditForm(Item $item): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->itemResponse($item);
     }
 
@@ -116,6 +130,10 @@ class ItemController extends AbstractApiController
         Request $request,
         Item $item,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -146,6 +164,10 @@ class ItemController extends AbstractApiController
     public function view(
         Item $item,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->itemResponse($item);
     }
 
@@ -154,6 +176,10 @@ class ItemController extends AbstractApiController
     public function delete(
         Item $item,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $this->itemRepository->remove($item, true);
 
         return $this->json(['state' => 'success']);

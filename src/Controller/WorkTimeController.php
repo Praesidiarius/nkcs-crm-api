@@ -8,26 +8,32 @@ use App\Repository\WorktimeRepository;
 use App\Service\WorkTime\WorkTimeManager;
 use DateTime;
 use DateTimeImmutable;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/work-time')]
-class WorkTimeController extends AbstractController
+class WorkTimeController extends AbstractApiController
 {
     public function __construct(
         private readonly WorktimeRepository $worktimeRepository,
         private readonly WorkTimeType $workTimeForm,
         private readonly WorkTimeManager $workTimeManager,
+        private readonly HttpClientInterface $httpClient,
     )
     {
+        parent::__construct($this->httpClient);
     }
 
     #[Route('/add', name: 'work_time_add', methods: ['GET'])]
     #[Route('/add/{_locale}', name: 'work_time_translated', methods: ['GET'])]
     public function getAddForm(): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
 
         return $this->json([
             'form' => $this->workTimeForm->getFormFields(),
@@ -38,6 +44,10 @@ class WorkTimeController extends AbstractController
     #[Route('/add', name: 'work_time_add_save', methods: ['POST'])]
     #[Route('/add/{_locale}', name: 'work_time_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -79,6 +89,10 @@ class WorkTimeController extends AbstractController
     public function view(
         Worktime $workTime,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         return $this->itemResponse($workTime);
     }
 
@@ -87,6 +101,10 @@ class WorkTimeController extends AbstractController
     public function delete(
         Worktime $workTime,
     ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $this->worktimeRepository->remove($workTime, true);
 
         return $this->json(['state' => 'success']);
@@ -96,9 +114,11 @@ class WorkTimeController extends AbstractController
     #[Route('/{_locale}', name: 'work_time_index_translated', methods: ['GET'])]
     public function list(): Response
     {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $workTimes = $this->worktimeRepository->findBy(['user' => $this->getUser()]);
-
-
 
         $data = [
             'headers' => $this->workTimeForm->getIndexHeaders(),

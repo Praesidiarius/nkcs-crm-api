@@ -32,6 +32,10 @@ document:
   type:
     contact: Kundendokumente
     job: Auftragsdokumente
+license:
+  subscription:
+    paymentSuccess: Die Zahlung war erfolgreich. Vielen Dank! Sie können dieses Fenster jetzt schliessen und ihr System in vollem Umfang nutzen.
+    alreadyProcessed: Ihre Zahlung wurde bereits verarbeitet. Sie können dieses Fenster jetzt schliessen.
 job:
   id: Auftrags-Nr
   contact: Kunde
