@@ -48,6 +48,9 @@ item:
     unit: Einheit
     piece: Stk.
     hour: h
+    subscription:
+      monthly: Monatsabo
+      yearly: Jahresabo
   price: Preis
   name: Beschreibung
   form:

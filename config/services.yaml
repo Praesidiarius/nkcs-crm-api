@@ -15,7 +15,8 @@ parameters:
     license.holder: '%env(LICENSE_KEY_HOLDER)%'
     license.cache: '%env(LICENSE_KEY_CACHE)%'
     license.server_test: '%env(LICENSE_KEY_SERVER_TEST)%'
-
+    contact.signup_enabled: '%env(CONTACT_SIGNUP_ENABLED)%'
+    mailer.from: '%env(MAILER_FROM)%'
 
 services:
     # default configuration for services in *this* file
