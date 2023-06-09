@@ -10,6 +10,10 @@ parameters:
     document.web_root: '%env(NKCS_DATA_WEBROOT)%'
     payment.stripe_key: '%env(STRIPE_KEY)%'
     payment.stripe_secret: '%env(STRIPE_SECRET)%'
+    license.server: '%env(LICENSE_KEY_SERVER)%'
+    license.holder: '%env(LICENSE_KEY_HOLDER)%'
+    license.cache: '%env(LICENSE_KEY_CACHE)%'
+    license.server_test: '%env(LICENSE_KEY_SERVER_TEST)%'
 
 services:
     # default configuration for services in *this* file

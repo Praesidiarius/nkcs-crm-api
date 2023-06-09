@@ -9,26 +9,32 @@ use App\Repository\ItemRepository;
 use App\Repository\UserSettingRepository;
 use DateTimeImmutable;
 use Stripe\StripeClient;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/item')]
-class ItemController extends AbstractController
+class ItemController extends AbstractApiController
 {
     public function __construct(
         private readonly ItemType $itemType,
         private readonly ItemRepository $itemRepository,
         private readonly UserSettingRepository $userSettings,
+        private readonly HttpClientInterface $httpClient,
     )
     {
+        parent::__construct($this->httpClient);
     }
 
     #[Route('/add', name: 'item_add', methods: ['GET'])]
     #[Route('/add/{_locale}', name: 'item_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
 
         return $this->json([
             'form' => $this->itemType->getFormFields(),
@@ -39,6 +45,10 @@ class ItemController extends AbstractController
     #[Route('/add', name: 'item_add_save', methods: ['POST'])]
     #[Route('/add/{_locale}', name: 'item_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $body = $request->getContent();
         $data = json_decode($body, true);
 
@@ -155,6 +165,10 @@ class ItemController extends AbstractController
         Request $request,
     ): Response
     {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
         $pageSize = $this->userSettings->getUserSetting(
             $this->getUser(),
             'pagination-page-size',

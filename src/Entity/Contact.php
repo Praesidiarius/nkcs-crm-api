@@ -62,10 +62,14 @@ class Contact
     #[ORM\Column(length: 30, nullable: true)]
     private ?string $companyUid = null;
 
+    #[ORM\OneToMany(mappedBy: 'contact', targetEntity: License::class)]
+    private Collection $licenses;
+
     public function __construct()
     {
         $this->address = new ArrayCollection();
         $this->jobs = new ArrayCollection();
+        $this->licenses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -275,6 +279,36 @@ class Contact
     public function setCompanyUid(?string $companyUid): self
     {
         $this->companyUid = $companyUid;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, License>
+     */
+    public function getLicenses(): Collection
+    {
+        return $this->licenses;
+    }
+
+    public function addLicense(License $license): self
+    {
+        if (!$this->licenses->contains($license)) {
+            $this->licenses->add($license);
+            $license->setContact($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLicense(License $license): self
+    {
+        if ($this->licenses->removeElement($license)) {
+            // set the owning side to null (unless already changed)
+            if ($license->getContact() === $this) {
+                $license->setContact(null);
+            }
+        }
 
         return $this;
     }
