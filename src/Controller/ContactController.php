@@ -21,6 +21,7 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/api/contact')]
 class ContactController extends AbstractApiController
@@ -33,6 +34,7 @@ class ContactController extends AbstractApiController
         private readonly UserSettingRepository $userSettings,
         private readonly HttpClientInterface $httpClient,
         private readonly UserRepository $userRepository,
+        private readonly TranslatorInterface $translator,
     )
     {
         parent::__construct($this->httpClient);
@@ -97,12 +99,12 @@ class ContactController extends AbstractApiController
         if (!$form->isValid()) {
             if ($this->contactRepository->checkDuplicateEmail($contact->getEmailPrivate())) {
                 return $this->json([
-                    ['message' => 'E-Mail is already used by another contact']
+                    ['message' => $this->translator->trans('contact.form.validation.emailDuplicate')]
                 ], 400);
             }
             if ($this->contactRepository->checkDuplicateEmail($contact->getEmailBusiness())) {
                 return $this->json([
-                    ['message' => 'E-Mail is already used by another contact']
+                    ['message' => $this->translator->trans('contact.form.validation.emailDuplicate')]
                 ], 400);
             }
             if (count($form->getErrors()) > 0) {

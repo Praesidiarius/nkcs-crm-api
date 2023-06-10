@@ -17,6 +17,8 @@ contact:
     mr: Herr
     mrs: Frau
   form:
+    validation:
+      emailDuplicate: Es gibt bereits einen Kontakt mit dieser E-Mail Adresse
     section:
       basic: Kontaktdaten
       addresses: Adressen
@@ -52,7 +54,9 @@ item:
       monthly: Monatsabo
       yearly: Jahresabo
   price: Preis
-  name: Beschreibung
+  addToStripe: Stripe Kartenzahlung aktivieren
+  name: Name
+  description: Beschreibung
   form:
     section:
       basic: Stammdaten

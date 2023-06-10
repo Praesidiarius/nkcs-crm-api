@@ -143,8 +143,11 @@ class DocumentController extends AbstractApiController
 
     #[Route('/', name: 'document_index', methods: ['GET'])]
     #[Route('/{_locale}', name: 'document_index_translated', methods: ['GET'])]
+    #[Route('/{_locale}/{page}/{filter}', name: 'document_index_translated_with_filter', methods: ['GET'])]
     public function list(
         Request $request,
+        ?int $page,
+        ?string $filter,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -154,10 +157,12 @@ class DocumentController extends AbstractApiController
             $this->getUser(),
             'pagination-page-size',
         );
-        $page = $request->query->getInt('page', 1);
-        $templates = $this->templateRepository->findBySearchAttributes($page, $pageSize, $request->query->getAlpha('type'));
+        $page = $page ?? 1;
+        $templates = $this->templateRepository->findBySearchAttributes($page, $pageSize, $filter);
+
 
         $data = [
+            'filter' => $filter,
             'headers' => $this->templateForm->getIndexHeaders(),
             'items' => $templates,
             'total_items' => count($templates),

@@ -32,9 +32,9 @@ class JobController extends AbstractApiController
         private readonly JobPositionRepository $jobPositionRepository,
         private readonly ContactRepository $contactRepository,
         private readonly UserSettingRepository $userSettings,
-        private readonly TranslatorInterface $translator,
         private readonly ItemRepository $itemRepository,
         private readonly HttpClientInterface $httpClient,
+        private readonly TranslatorInterface $translator,
     )
     {
         parent::__construct($this->httpClient);

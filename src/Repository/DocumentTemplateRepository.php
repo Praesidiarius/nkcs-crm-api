@@ -55,7 +55,7 @@ class DocumentTemplateRepository extends ServiceEntityRepository
         if ($documentType) {
             $qb
                 ->join(DocumentType::class, 'dt', JOIN::WITH, 'dt.id = d.type')
-                ->andWhere('dt.identifier = :documentType')
+                ->where('dt.identifier = :documentType')
                 ->setParameter('documentType', $documentType)
             ;
         }
