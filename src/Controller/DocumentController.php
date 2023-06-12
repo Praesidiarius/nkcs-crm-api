@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-#[Route('/api/document')]
+#[Route('/api/document/{_locale}')]
 class DocumentController extends AbstractApiController
 {
     public function __construct(
@@ -37,7 +37,6 @@ class DocumentController extends AbstractApiController
     }
 
     #[Route('/add', name: 'document_template_add', methods: ['GET'])]
-    #[Route('/add/{_locale}', name: 'document_template_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -50,7 +49,6 @@ class DocumentController extends AbstractApiController
     }
 
     #[Route('/add', name: 'document_template_add_save', methods: ['POST'])]
-    #[Route('/add/{_locale}', name: 'document_template_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -74,7 +72,6 @@ class DocumentController extends AbstractApiController
     }
 
     #[Route('/generate/{id}/{entityId}/{entityType}', name: 'document_generate', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
-    #[Route('/generate/{_locale}/{id}/{entityId}/{entityType}', name: 'document_generate_translated', methods: ['GET'])]
     public function generate(
         DocumentTemplate $template,
         int $entityId,
@@ -141,11 +138,10 @@ class DocumentController extends AbstractApiController
         return base64_encode($fileContent);
     }
 
-    #[Route('/', name: 'document_index', methods: ['GET'])]
-    #[Route('/{_locale}', name: 'document_index_translated', methods: ['GET'])]
-    #[Route('/{_locale}/{page}/{filter}', name: 'document_index_translated_with_filter', methods: ['GET'])]
+    #[Route('/list', name: 'document_index', methods: ['GET'])]
+    #[Route('/list/{page}', name: 'document_index_with_pagination', methods: ['GET'])]
+    #[Route('/list/{page}/{filter}', name: 'document_index_with_filter', methods: ['GET'])]
     public function list(
-        Request $request,
         ?int $page,
         ?string $filter,
     ): Response {

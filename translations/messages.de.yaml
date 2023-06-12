@@ -31,15 +31,21 @@ work-time:
     section:
       basic: Eintrag
 document:
+  templateName: Titel
+  typeField: Typ
+  templateFile: Word Vorlage
   type:
     contact: Kundendokumente
     job: Auftragsdokumente
+  form:
+    section:
+      basic: Vorlage
 license:
   subscription:
     paymentSuccess: Die Zahlung war erfolgreich. Vielen Dank! Sie können dieses Fenster jetzt schliessen und ihr System in vollem Umfang nutzen.
     alreadyProcessed: Ihre Zahlung wurde bereits verarbeitet. Sie können dieses Fenster jetzt schliessen.
 job:
-  id: Auftrags-Nr
+  id: "#"
   contact: Kunde
   title: Titel
   form:

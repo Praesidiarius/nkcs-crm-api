@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[Route('/api/job')]
+#[Route('/api/job/{_locale}')]
 class JobController extends AbstractApiController
 {
     public function __construct(
@@ -41,7 +41,6 @@ class JobController extends AbstractApiController
     }
 
     #[Route('/add', name: 'job_add', methods: ['GET'])]
-    #[Route('/add/{_locale}', name: 'job_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -54,7 +53,6 @@ class JobController extends AbstractApiController
     }
 
     #[Route('/add', name: 'job_add_save', methods: ['POST'])]
-    #[Route('/add/{_locale}', name: 'job_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -106,7 +104,6 @@ class JobController extends AbstractApiController
     }
 
     #[Route('/edit/{id}', name: 'job_edit', methods: ['GET'])]
-    #[Route('/edit/{_locale}/{id}', name: 'job_edit_translated', methods: ['GET'])]
     public function getEditForm(Job $job): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -116,7 +113,6 @@ class JobController extends AbstractApiController
     }
 
     #[Route('/edit/{id}', name: 'job_edit_save', methods: ['POST'])]
-    #[Route('/edit/{_locale}/{id}', name: 'job_edit_save_translated', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
         Job $job,
@@ -150,8 +146,7 @@ class JobController extends AbstractApiController
         return $this->itemResponse($job);
     }
 
-    #[Route('/{id}', name: 'job_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
-    #[Route('/{_locale}/{id}', name: 'job_view_translated', methods: ['GET'])]
+    #[Route('/view/{id}', name: 'job_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
         Job $job,
     ): Response {
@@ -162,8 +157,7 @@ class JobController extends AbstractApiController
         return $this->itemResponse($job);
     }
 
-    #[Route('/{id}', name: 'job_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
-    #[Route('/{_locale}/{id}', name: 'job_delete_translated', methods: ['DELETE'])]
+    #[Route('/remove/{id}', name: 'job_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
     public function delete(
         Job $job,
     ): Response {
@@ -176,10 +170,10 @@ class JobController extends AbstractApiController
         return $this->json(['state' => 'success']);
     }
 
-    #[Route('/', name: 'job_index', methods: ['GET'])]
-    #[Route('/{_locale}', name: 'job_index_translated', methods: ['GET'])]
+    #[Route('/list', name: 'job_index', methods: ['GET'])]
+    #[Route('/list/{page}', name: 'job_index_with_pagination', methods: ['GET'])]
     public function list(
-        Request $request,
+        ?int $page,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -189,7 +183,7 @@ class JobController extends AbstractApiController
             $this->getUser(),
             'pagination-page-size',
         );
-        $page = $request->query->getInt('page', 1);
+        $page = $page ?? 1;
         $jobs = $this->jobRepository->findBySearchAttributes($page, $pageSize);
 
         $data = [
@@ -206,7 +200,6 @@ class JobController extends AbstractApiController
     }
 
     #[Route('/position', name: 'job_position_add', methods: ['POST'])]
-    #[Route('/position/{_locale}', name: 'job_position_add_translated', methods: ['POST'])]
     public function savePositionAddForm(
         Request $request,
     ): Response {
@@ -271,7 +264,6 @@ class JobController extends AbstractApiController
     }
 
     #[Route('/unit', name: 'job_unit_list', methods: ['GET'])]
-    #[Route('/unit/{_locale}', name: 'job_unit_list', methods: ['GET'])]
     public function listUnits(
         Request $request,
     ): Response {

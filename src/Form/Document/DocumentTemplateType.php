@@ -85,14 +85,14 @@ class DocumentTemplateType extends AbstractType
 
         return [
             [
-                'text' => $this->translator->trans('name'),
+                'text' => $this->translator->trans('document.templateName'),
                 'key' => 'name',
                 'type' => 'text',
                 'section' => 'basic',
                 'cols' => 4,
             ],
             [
-                'text' => $this->translator->trans('document.type'),
+                'text' => $this->translator->trans('document.typeField'),
                 'key' => 'type',
                 'type' => 'select',
                 'data' => $docTypeField,
@@ -100,7 +100,7 @@ class DocumentTemplateType extends AbstractType
                 'cols' => 4,
             ],
             [
-                'text' => $this->translator->trans('document.template'),
+                'text' => $this->translator->trans('document.templateFile'),
                 'key' => 'template',
                 'type' => 'file',
                 'section' => 'basic',
@@ -113,7 +113,7 @@ class DocumentTemplateType extends AbstractType
     {
         return [
             [
-                'title' => $this->translator->trans('name'),
+                'title' => $this->translator->trans('document.templateName'),
                 'key' => 'name',
                 'sortable' => false,
                 'type' => 'text'

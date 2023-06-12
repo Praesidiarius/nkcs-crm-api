@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-#[Route('/api/item')]
+#[Route('/api/item/{_locale}')]
 class ItemController extends AbstractApiController
 {
     public function __construct(
@@ -30,7 +30,6 @@ class ItemController extends AbstractApiController
     }
 
     #[Route('/add', name: 'item_add', methods: ['GET'])]
-    #[Route('/add/{_locale}', name: 'item_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -43,7 +42,6 @@ class ItemController extends AbstractApiController
     }
 
     #[Route('/add', name: 'item_add_save', methods: ['POST'])]
-    #[Route('/add/{_locale}', name: 'item_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -115,7 +113,6 @@ class ItemController extends AbstractApiController
     }
 
     #[Route('/edit/{id}', name: 'item_edit', methods: ['GET'])]
-    #[Route('/edit/{_locale}/{id}', name: 'item_edit_translated', methods: ['GET'])]
     public function getEditForm(Item $item): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -125,7 +122,6 @@ class ItemController extends AbstractApiController
     }
 
     #[Route('/edit/{id}', name: 'item_edit_save', methods: ['POST'])]
-    #[Route('/edit/{_locale}/{id}', name: 'item_edit_save_translated', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
         Item $item,
@@ -159,8 +155,7 @@ class ItemController extends AbstractApiController
         return $this->itemResponse($item);
     }
 
-    #[Route('/{id}', name: 'item_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
-    #[Route('/{_locale}/{id}', name: 'item_view_translated', methods: ['GET'])]
+    #[Route('/view/{id}', name: 'item_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
         Item $item,
     ): Response {
@@ -171,8 +166,7 @@ class ItemController extends AbstractApiController
         return $this->itemResponse($item);
     }
 
-    #[Route('/{id}', name: 'item_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
-    #[Route('/{_locale}/{id}', name: 'item_delete_translated', methods: ['DELETE'])]
+    #[Route('/remove/{id}', name: 'item_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
     public function delete(
         Item $item,
     ): Response {
@@ -185,10 +179,10 @@ class ItemController extends AbstractApiController
         return $this->json(['state' => 'success']);
     }
 
-    #[Route('/', name: 'item_index', methods: ['GET'])]
-    #[Route('/{_locale}', name: 'item_index_translated', methods: ['GET'])]
+    #[Route('/list', name: 'item_index', methods: ['GET'])]
+    #[Route('/list/{page}', name: 'item_index_with_pagination', methods: ['GET'])]
     public function list(
-        Request $request,
+        ?int $page,
     ): Response
     {
         if (!$this->checkLicense()) {
@@ -199,7 +193,7 @@ class ItemController extends AbstractApiController
             $this->getUser(),
             'pagination-page-size',
         );
-        $page = $request->query->getInt('page', 1);
+        $page = $page ?? 1;
         $items = $this->itemRepository->findBySearchAttributes($page, $pageSize);
 
         $data = [

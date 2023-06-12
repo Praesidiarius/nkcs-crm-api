@@ -23,17 +23,15 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[Route('/api/contact')]
+#[Route('/api/contact/{_locale}')]
 class ContactController extends AbstractApiController
 {
     public function __construct(
-        private readonly ContactManager $contactManager,
         private readonly ContactType $contactForm,
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
         private readonly UserSettingRepository $userSettings,
         private readonly HttpClientInterface $httpClient,
-        private readonly UserRepository $userRepository,
         private readonly TranslatorInterface $translator,
     )
     {
@@ -41,7 +39,6 @@ class ContactController extends AbstractApiController
     }
 
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
-    #[Route('/add/{_locale}', name: 'contact_add_translated', methods: ['GET'])]
     public function getAddForm(): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -54,7 +51,6 @@ class ContactController extends AbstractApiController
     }
 
     #[Route('/add-company', name: 'contact_company_add', methods: ['GET'])]
-    #[Route('/add-company/{_locale}', name: 'contact_company_add_translated', methods: ['GET'])]
     public function getAddFormCompany(): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -67,7 +63,6 @@ class ContactController extends AbstractApiController
     }
 
     #[Route('/add', name: 'contact_add_save', methods: ['POST'])]
-    #[Route('/add/{_locale}', name: 'contact_add_save_translated', methods: ['POST'])]
     public function saveAddForm(Request $request): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -141,7 +136,6 @@ class ContactController extends AbstractApiController
     }
 
     #[Route('/edit/{id}', name: 'contact_edit', methods: ['GET'])]
-    #[Route('/edit/{_locale}/{id}', name: 'contact_edit_translated', methods: ['GET'])]
     public function getEditForm(Contact $contact): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -151,7 +145,6 @@ class ContactController extends AbstractApiController
     }
 
     #[Route('/edit/{id}', name: 'contact_edit_save', methods: ['POST'])]
-    #[Route('/edit/{_locale}/{id}', name: 'contact_edit_save_translated', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
         Contact $contact,
@@ -251,8 +244,7 @@ class ContactController extends AbstractApiController
         return $this->json(['success' => true]);
     }
 
-    #[Route('/{id}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
-    #[Route('/{_locale}/{id}', name: 'contact_view_translated', methods: ['GET'])]
+    #[Route('/view/{id}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
         Contact $contact,
     ): Response {
@@ -263,8 +255,7 @@ class ContactController extends AbstractApiController
         return $this->itemResponse($contact);
     }
 
-    #[Route('/{id}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
-    #[Route('/{_locale}/{id}', name: 'contact_delete_translated', methods: ['DELETE'])]
+    #[Route('/remove/{id}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
     public function delete(
         Contact $contact,
     ): Response {
@@ -281,10 +272,10 @@ class ContactController extends AbstractApiController
         return $this->json(['state' => 'success']);
     }
 
-    #[Route('/', name: 'contact_index', methods: ['GET'])]
-    #[Route('/{_locale}', name: 'contact_index_translated', methods: ['GET'])]
+    #[Route('/list', name: 'contact_index', methods: ['GET'])]
+    #[Route('/list/{page}', name: 'contact_index_pagination', methods: ['GET'])]
     public function list(
-        Request $request,
+        ?int $page,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -294,7 +285,7 @@ class ContactController extends AbstractApiController
             $this->getUser(),
             'pagination-page-size',
         );
-        $page = $request->query->getInt('page', 1);
+        $page = $page ?? 1;
         $contacts = $this->contactRepository->findBySearchAttributes($page, $pageSize);
 
         $data = [

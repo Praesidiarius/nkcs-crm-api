@@ -15,7 +15,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class JobType extends AbstractType
 {
     public function __construct(
-        private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly TranslatorInterface $translator,
         private readonly ContactRepository $contactRepository,
     )
@@ -95,7 +94,8 @@ class JobType extends AbstractType
                 'title' => $this->translator->trans('job.id'),
                 'key' => 'id',
                 'sortable' => false,
-                'type' => 'text'
+                'type' => 'text',
+                'width' => '25px',
             ],
             [
                 'title' => $this->translator->trans('job.title'),
