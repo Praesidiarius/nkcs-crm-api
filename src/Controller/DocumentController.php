@@ -163,6 +163,7 @@ class DocumentController extends AbstractApiController
             'items' => $templates,
             'total_items' => count($templates),
             'pagination' => [
+                'page_count' => ceil(count($templates) / $pageSize),
                 'page_size' => $pageSize,
                 'page' => $page,
             ],

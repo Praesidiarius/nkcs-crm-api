@@ -293,6 +293,7 @@ class ContactController extends AbstractApiController
             'items' => $contacts,
             'total_items' => count($contacts),
             'pagination' => [
+                'page_count' => ceil(count($contacts) / $pageSize),
                 'page_size' => $pageSize,
                 'page' => $page,
             ],

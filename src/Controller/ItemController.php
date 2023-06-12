@@ -201,6 +201,7 @@ class ItemController extends AbstractApiController
             'items' => $items,
             'total_items' => count($items),
             'pagination' => [
+                'page_count' => ceil(count($items) / $pageSize),
                 'page_size' => $pageSize,
                 'page' => $page,
             ],

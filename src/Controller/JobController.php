@@ -191,6 +191,7 @@ class JobController extends AbstractApiController
             'items' => $jobs,
             'total_items' => count($jobs),
             'pagination' => [
+                'page_count' => ceil(count($jobs) / $pageSize),
                 'page_size' => $pageSize,
                 'page' => $page,
             ],
