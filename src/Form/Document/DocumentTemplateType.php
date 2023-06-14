@@ -103,6 +103,7 @@ class DocumentTemplateType extends AbstractType
                 'text' => $this->translator->trans('document.templateFile'),
                 'key' => 'template',
                 'type' => 'file',
+                'fileType' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'section' => 'basic',
                 'cols' => 4,
             ],
@@ -116,7 +117,14 @@ class DocumentTemplateType extends AbstractType
                 'title' => $this->translator->trans('document.templateName'),
                 'key' => 'name',
                 'sortable' => false,
-                'type' => 'text'
+                'type' => 'text',
+            ],
+            [
+                'title' => $this->translator->trans('index.tasks'),
+                'key' => 'tasks',
+                'type' => 'tasks',
+                'width' => '180px',
+                'class' => 'text-end',
             ]
         ];
     }

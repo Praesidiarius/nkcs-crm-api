@@ -19,9 +19,6 @@ class DocumentType
     #[ORM\Column(length: 100)]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'type', targetEntity: Document::class, orphanRemoval: true)]
-    private Collection $documents;
-
     #[ORM\Column(length: 50)]
     private ?string $identifier = null;
 
@@ -43,36 +40,6 @@ class DocumentType
     public function setName(string $name): self
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Document>
-     */
-    public function getDocuments(): Collection
-    {
-        return $this->documents;
-    }
-
-    public function addDocument(Document $document): self
-    {
-        if (!$this->documents->contains($document)) {
-            $this->documents->add($document);
-            $document->setType($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDocument(Document $document): self
-    {
-        if ($this->documents->removeElement($document)) {
-            // set the owning side to null (unless already changed)
-            if ($document->getType() === $this) {
-                $document->setType(null);
-            }
-        }
 
         return $this;
     }

@@ -10,7 +10,9 @@ use App\Repository\DocumentTemplateRepository;
 use App\Repository\DocumentTypeRepository;
 use App\Repository\UserSettingRepository;
 use App\Service\Document\DocumentGenerator;
+use App\Service\Document\TemplateManager;
 use DateTimeImmutable;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -30,6 +32,7 @@ class DocumentController extends AbstractApiController
         private readonly DocumentTemplateType $templateForm,
         private readonly DocumentGenerator $documentGenerator,
         private readonly HttpClientInterface $httpClient,
+        private readonly TemplateManager $templateManager,
         private readonly string $documentBaseDir,
     )
     {
@@ -98,16 +101,53 @@ class DocumentController extends AbstractApiController
 
         $fileName = match($documentType->getIdentifier()) {
             'contact' => $this->documentGenerator->generateContactDocument($template, $document, $entityId),
-            'job' => $this->documentGenerator->generateJobDocument($template, $entityId),
+            'job' => $this->documentGenerator->generateJobDocument($template, $document, $entityId),
         };
 
         $document->setFileName($fileName);
         $document = $this->documentRepository->save($document, true);
 
         return $this->json([
-            'document' => $this->getDocumentAsBase64Download($document),
+            'document' => $this->documentGenerator->getDocumentAsBase64Download($document),
             'name' => $document->getFileName(),
         ]);
+    }
+
+    #[Route('/edit/{id}', name: 'document_template_edit', methods: ['GET'])]
+    public function getEditForm(DocumentTemplate $template): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        return $this->itemResponse($template);
+    }
+
+    #[Route('/edit/{id}', name: 'document_template_edit_save', methods: ['POST'])]
+    public function saveEditForm(
+        Request $request,
+        DocumentTemplate $template,
+        Filesystem $filesystem,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        $body = $request->getContent();
+        $data = json_decode($body, true);
+
+        $template->setName($data['document']['name']);
+        $template = $this->templateRepository->save($template, true);
+
+        if (array_key_exists('file', $data) && $data['file'] !== '') {
+            $templateContent = base64_decode($data['file']);
+            $templateFile = $this->documentBaseDir . '/templates/' . $template->getId() . '.docx';
+            if ($filesystem->exists($templateFile)) {
+                $filesystem->remove($templateFile);
+            }
+            file_put_contents($templateFile, $templateContent);
+        }
+
+        return $this->itemResponse($template);
     }
 
     #[Route('/download/{id}', name: 'document_download', methods: ['GET'])]
@@ -119,23 +159,23 @@ class DocumentController extends AbstractApiController
         }
 
         return $this->json([
-            'document' => $this->getDocumentAsBase64Download($document),
+            'document' => $this->documentGenerator->getDocumentAsBase64Download($document),
             'name' => $document->getFileName(),
         ]);
     }
 
-    private function getDocumentAsBase64Download(
-        Document $document
-    ) : string {
-        $fileContent = file_get_contents(
-            $this->documentBaseDir
-            . '/'
-            . $document->getType()->getIdentifier()
-            . '/'
-            . $document->getFileName()
-        );
+    #[Route('/download-template/{id}', name: 'document_template_download', methods: ['GET'])]
+    public function downloadTemplate(
+        DocumentTemplate $template,
+    ) : Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
 
-        return base64_encode($fileContent);
+        return $this->json([
+            'document' => $this->templateManager->getTemplateAsBase64Download($template),
+            'name' => $template->getName() . '.docx',
+        ]);
     }
 
     #[Route('/list', name: 'document_index', methods: ['GET'])]
@@ -156,7 +196,6 @@ class DocumentController extends AbstractApiController
         $page = $page ?? 1;
         $templates = $this->templateRepository->findBySearchAttributes($page, $pageSize, $filter);
 
-
         $data = [
             'filter' => $filter,
             'headers' => $this->templateForm->getIndexHeaders(),
@@ -172,9 +211,42 @@ class DocumentController extends AbstractApiController
         return $this->json($data, 200);
     }
 
+    #[Route('/remove/{id}', name: 'document_template_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    public function delete(
+        DocumentTemplate $template,
+        Filesystem $filesystem,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        $templateFile = $this->documentBaseDir . '/templates/' . $template->getId() . '.docx';
+        if ($filesystem->exists($templateFile)) {
+            $filesystem->remove($templateFile);
+        }
+
+        $this->templateRepository->remove($template, true);
+
+        return $this->json(['state' => 'success']);
+    }
+
+    #[Route('/view/{id}', name: 'document_template_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    public function view(
+        DocumentTemplate $template,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        return $this->itemResponse($template);
+    }
+
     private function itemResponse(
         DocumentTemplate $template,
     ): Response {
+        $template->setTemplate($this->templateManager->getTemplateAsBase64Download($template));
+        $template->setFileName($template->getName() . '.docx');
+
         $data = [
             'item' => $template,
             'form' => $this->templateForm->getFormFields(),

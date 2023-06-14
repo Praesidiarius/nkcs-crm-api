@@ -19,8 +19,11 @@ class DocumentTemplate
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    #[Ignore]
     private ?DocumentType $type = null;
+
+    private ?string $template = null;
+
+    private ?string $fileName = null;
 
     public function getId(): ?int
     {
@@ -47,6 +50,30 @@ class DocumentTemplate
     public function setType(?DocumentType $type): self
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    public function getTemplate(): ?string
+    {
+        return $this->template;
+    }
+
+    public function setTemplate(?string $template): self
+    {
+        $this->template = $template;
+
+        return $this;
+    }
+
+    public function getFileName(): ?string
+    {
+        return $this->fileName;
+    }
+
+    public function setFileName(?string $fileName): self
+    {
+        $this->fileName = $fileName;
 
         return $this;
     }

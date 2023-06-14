@@ -61,12 +61,13 @@ class DocumentGenerator
 
     public function generateJobDocument(
         DocumentTemplate $template,
+        Document $document,
         int $jobId,
     ): string
     {
         $job = $this->jobRepository->find($jobId);
 
-        $fileName = '/job/'.$template->getName().'-'.$job->getId().'.docx';
+        $fileName = $template->getName() . '-' . $job->getId() . '-' . $document->getId() . '.docx';
         $templateProcessor = new TemplateProcessor($this->documentBaseDir . '/templates/' . $template->getId() . '.docx');
 
         $contact = $job->getContact();
@@ -132,9 +133,23 @@ class DocumentGenerator
         $templateProcessor->setValue('total', number_format($jobSubTotal, 2, '.', '\''));
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
-        $templateProcessor->saveAs($this->documentBaseDir . $fileName);
+        $templateProcessor->saveAs($this->documentBaseDir . '/' . $template->getType()->getIdentifier() . '/' . $fileName);
 
         return $fileName;
+    }
+
+    public function getDocumentAsBase64Download(
+        Document $document
+    ) : string {
+        $fileContent = file_get_contents(
+            $this->documentBaseDir
+            . '/'
+            . $document->getType()->getIdentifier()
+            . '/'
+            . $document->getFileName()
+        );
+
+        return base64_encode($fileContent);
     }
 
 }
