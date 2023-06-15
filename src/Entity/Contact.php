@@ -63,6 +63,12 @@ class Contact
     #[Assert\Unique]
     private ?string $contactIdentifier = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $signupToken = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeInterface $signupDate = null;
+
     public function __construct()
     {
         $this->address = new ArrayCollection();
@@ -289,6 +295,30 @@ class Contact
     public function setContactIdentifier(?string $contactIdentifier): self
     {
         $this->contactIdentifier = $contactIdentifier;
+
+        return $this;
+    }
+
+    public function getSignupToken(): ?string
+    {
+        return $this->signupToken;
+    }
+
+    public function setSignupToken(?string $signupToken): static
+    {
+        $this->signupToken = $signupToken;
+
+        return $this;
+    }
+
+    public function getSignupDate(): ?\DateTimeInterface
+    {
+        return $this->signupDate;
+    }
+
+    public function setSignupDate(?\DateTimeInterface $signupDate): static
+    {
+        $this->signupDate = $signupDate;
 
         return $this;
     }

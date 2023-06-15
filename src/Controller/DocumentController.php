@@ -48,6 +48,46 @@ class DocumentController extends AbstractApiController
         return $this->json([
             'form' => $this->templateForm->getFormFields(),
             'sections' => $this->templateForm->getFormSections(),
+            'document_placeholders' => [
+                [
+                    'name' => 'Allgemeine Platzhalter',
+                    'key' => 'general',
+                    'placeholders' => [
+                        ['key' => '${date}', 'description' => 'Aktuelles Datum, formatiert in TT.MM.JJJJ'],
+                        ['key' => '${userName}', 'description' => 'Name des aktuellen Benutzers'],
+                        ['key' => '${userTitle}', 'description' => 'Funktion des aktuellen Benutzers'],
+                    ]
+                ],
+                [
+                    'name' => 'Kundendokumente - Allgemein',
+                    'key' => 'general',
+                    'placeholders' => [
+                        ['key' => '${salution}', 'description' => 'Anrede mit Namen des Kontaktes'],
+                        ['key' => '${address}', 'description' => 'Adresse des Kontaktes'],
+                    ]
+                ],
+                [
+                    'name' => 'Auftragsdokumente - Allgemein',
+                    'key' => 'general',
+                    'placeholders' => [
+                        ['key' => '${id}', 'description' => 'Auftrags-Nr'],
+                        ['key' => '${salution}', 'description' => 'Anrede mit Namen des Kunden'],
+                        ['key' => '${address}', 'description' => 'Adresse des Kunden'],
+                        ['key' => '${subTotal}', 'description' => 'Sub-Total des Auftrags (ohne Steuern/Zulagen)'],
+                        ['key' => '${total}', 'description' => 'Total des Auftrags (inkl. Steuern/Zulagen)'],
+                    ]
+                ],
+                [
+                    'name' => 'Auftragsdokumente - Auftrags-Positionen (Zur Verwendung in einer Tabelle)',
+                    'key' => 'general',
+                    'placeholders' => [
+                        ['key' => '${posAm}', 'description' => 'Anzahl der Position'],
+                        ['key' => '${posItem}', 'description' => 'Name der Position'],
+                        ['key' => '${posPrice}', 'description' => 'Einzelpreis der Position'],
+                        ['key' => '${posTotal}', 'description' => 'Total der Position'],
+                    ]
+                ]
+            ]
         ]);
     }
 

@@ -1,23 +1,18 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Contact;
 
+use App\Controller\AbstractApiController;
 use App\Entity\Contact;
 use App\Entity\ContactAddress;
 use App\Form\Contact\ContactType;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
-use App\Repository\SystemSettingRepository;
-use App\Repository\UserRepository;
 use App\Repository\UserSettingRepository;
-use App\Service\Contact\ContactManager;
 use DateTimeImmutable;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -189,59 +184,6 @@ class ContactController extends AbstractApiController
         $this->contactRepository->save($contact, true);
 
         return $this->itemResponse($contact);
-    }
-
-    #[Route('/signup/step1', name: 'contact_signup_step1', methods: ['POST'])]
-    public function signupStep1(
-        Request $request,
-        MailerInterface $mailer,
-        SystemSettingRepository $systemSettings,
-    ): Response {
-        if (!$this->getParameter('contact.signup_enabled')) {
-            throw new HttpException(404);
-        }
-
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        $body = $request->getContent();
-        $data = json_decode($body, true);
-
-        if (!$data['email']) {
-            throw new HttpException(400, 'Please provide a valid e-mail');
-        }
-
-        $contactExists = $this->contactRepository->findOneBy(['emailPrivate' => $data['email']]);
-        if ($contactExists) {
-            throw new HttpException(400, 'E-Mail already exists');
-        }
-
-        //$systemUser = $this->userRepository->findOneBy(['username' => 'system']);
-
-        $contact = new Contact();
-        $contact->setEmailPrivate($data['email']);
-        $contact->setCreatedDate(new DateTimeImmutable());
-        $contact->setCreatedBy(0);
-
-        $this->contactRepository->save($contact, true);
-
-        $emailSubject = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-subject']);
-        $emailContent = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-content']);
-        $emailText = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-text']);
-
-        $email = (new Email())
-            ->from($this->getParameter('mailer.from'))
-            ->to($data['email'])
-            ->priority(Email::PRIORITY_HIGH)
-            ->subject($emailSubject->getSettingValue())
-            ->text($emailText->getSettingValue())
-            ->html($emailContent->getSettingValue())
-        ;
-
-        $mailer->send($email);
-
-        return $this->json(['success' => true]);
     }
 
     #[Route('/view/{id}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
