@@ -39,6 +39,16 @@ class SystemSettingRepository extends ServiceEntityRepository
         }
     }
 
+    public function findSettingByKey($settingKey): ?SystemSetting
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.settingKey = :val')
+            ->setParameter('val', $settingKey)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
 //    /**
 //     * @return SystemSetting[] Returns an array of SystemSetting objects
 //     */

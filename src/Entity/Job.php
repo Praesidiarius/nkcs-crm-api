@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\JobVatMode;
 use App\Repository\JobRepository;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -41,6 +42,9 @@ class Job
 
     #[ORM\Column]
     private ?float $subTotal = 0;
+
+    #[ORM\Column(type: Types::SMALLINT, enumType: JobVatMode::class)]
+    private ?JobVatMode $vatMode = null;
 
     public function __construct()
     {
@@ -161,6 +165,18 @@ class Job
     public function setSubTotal(float $subTotal): self
     {
         $this->subTotal = $subTotal;
+
+        return $this;
+    }
+
+    public function getVatMode(): ?JobVatMode
+    {
+        return $this->vatMode;
+    }
+
+    public function setVatMode(JobVatMode $vatMode): self
+    {
+        $this->vatMode = $vatMode;
 
         return $this;
     }

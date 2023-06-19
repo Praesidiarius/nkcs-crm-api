@@ -50,9 +50,14 @@ job:
   id: "#"
   contact: Kunde
   title: Titel
+  vat:
+    vat: MwSt.
+    none: ohne MwSt.
+    default: inkl MwSt.
   form:
     section:
       basic: Stammdaten
+      settings: Einstellungen
 item:
   unit:
     unit: Einheit

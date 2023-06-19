@@ -49,6 +49,7 @@ class JobController extends AbstractApiController
         return $this->json([
             'form' => $this->jobForm->getFormFields(),
             'sections' => $this->jobForm->getFormSections(),
+            'default_values' => $this->jobForm->getFormDefaultValues(),
         ]);
     }
 
@@ -63,7 +64,7 @@ class JobController extends AbstractApiController
 
         $job = new Job();
 
-        $contactId = (int)$data['contact'];
+        $contactId = (int) $data['contact'];
         if ($contactId > 0) {
             $data['contact'] = $this->contactRepository->find($contactId);
         }
