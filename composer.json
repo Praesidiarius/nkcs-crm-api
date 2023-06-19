@@ -86,6 +86,10 @@
     },
     "require-dev": {
         "deployer/deployer": "^7.3",
-        "symfony/maker-bundle": "^1.48"
+        "phpunit/phpunit": "^9.5",
+        "symfony/browser-kit": "6.3.*",
+        "symfony/css-selector": "6.3.*",
+        "symfony/maker-bundle": "^1.48",
+        "symfony/phpunit-bridge": "^6.3"
     }
 }
