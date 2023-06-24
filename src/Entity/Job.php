@@ -46,6 +46,15 @@ class Job
     #[ORM\Column(type: Types::SMALLINT, enumType: JobVatMode::class)]
     private ?JobVatMode $vatMode = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?float $vatRate = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $vatTotal = null;
+
+    #[ORM\Column]
+    private ?float $total = 0;
+
     public function __construct()
     {
         $this->jobPositions = new ArrayCollection();
@@ -177,6 +186,42 @@ class Job
     public function setVatMode(JobVatMode $vatMode): self
     {
         $this->vatMode = $vatMode;
+
+        return $this;
+    }
+
+    public function getVatRate(): ?float
+    {
+        return $this->vatRate;
+    }
+
+    public function setVatRate(?float $vatRate): static
+    {
+        $this->vatRate = $vatRate;
+
+        return $this;
+    }
+
+    public function getVatTotal(): ?float
+    {
+        return $this->vatTotal;
+    }
+
+    public function setVatTotal(?float $vatTotal): static
+    {
+        $this->vatTotal = $vatTotal;
+
+        return $this;
+    }
+
+    public function getTotal(): ?float
+    {
+        return $this->total;
+    }
+
+    public function setTotal(float $total): static
+    {
+        $this->total = $total;
 
         return $this;
     }

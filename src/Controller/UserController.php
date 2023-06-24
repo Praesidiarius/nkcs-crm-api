@@ -17,6 +17,7 @@ class UserController extends AbstractController
             'user' => [
                 'name' => $me->getName(),
                 'function' => $me->getFunction(),
+                'email' => 'info@vivid-crm.io',
             ],
         ]);
     }

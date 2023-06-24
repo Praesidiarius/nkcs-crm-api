@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Job;
 use App\Entity\JobPosition;
+use App\Enum\JobVatMode;
 use App\Form\Job\JobType;
 use App\Repository\ContactRepository;
 use App\Repository\ItemRepository;
@@ -255,13 +256,24 @@ class JobController extends AbstractApiController
             $jobSubTotal += $jobPosition->getTotal();
         }
         $job->setSubTotal($jobSubTotal);
+        if ($job->getVatMode() === JobVatMode::VAT_DEFAULT) {
+            $job->setVatRate($this->getParameter('job.vat_rate_default'));
+            $jobVat = $jobSubTotal * ($this->getParameter('job.vat_rate_default') / 100);
+            $job->setVatTotal($jobVat);
+            $job->setTotal($jobSubTotal + $jobVat);
+        } else {
+            $job->setTotal($jobSubTotal);
+        }
         $this->jobRepository->save($job, true);
 
         return $this->json([
             'positions' => $jobPositionsNew,
             'job' => [
                 'subTotal' => $job->getSubTotal(),
-            ]
+                'vatTotal' => $job->getVatTotal(),
+                'vatRate' => $job->getVatRate(),
+                'total' => $job->getTotal(),
+            ],
         ]);
     }
 
@@ -309,6 +321,9 @@ class JobController extends AbstractApiController
             'sections' => $this->jobForm->getFormSections(),
             'position_units' => $unitsTranslated,
             'positions' => $job->getJobPositions(),
+            'vat_rate' => [
+                'default' => $this->getParameter('job.vat_rate_default')
+            ]
         ];
 
         return $this->json($data);

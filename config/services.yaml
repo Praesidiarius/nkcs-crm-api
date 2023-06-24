@@ -17,6 +17,7 @@ parameters:
     license.server_test: '%env(LICENSE_KEY_SERVER_TEST)%'
     contact.signup_enabled: '%env(CONTACT_SIGNUP_ENABLED)%'
     mailer.from: '%env(MAILER_FROM)%'
+    job.vat_rate_default: '%env(VAT_RATE_DEFAULT)%'
 
 services:
     # default configuration for services in *this* file
