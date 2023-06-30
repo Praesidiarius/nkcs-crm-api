@@ -121,6 +121,7 @@ class ContactSignupController extends AbstractApiController
         $contact->setIsCompany(true);
         $contact->setCompanyName($data['name']);
         $contact->setCompanyUid($data['uid']);
+        $contact->setContactIdentifier($data['url']);
 
         $this->contactRepository->save($contact, true);
 
@@ -133,9 +134,14 @@ class ContactSignupController extends AbstractApiController
 
         $this->addressRepository->save($address, true);
 
-        // set options for new system
-
         // start installation of new system
+        if ($this->getParameter('installer.queue_dir')) {
+            $uuid = Uuid::v4();
+            file_put_contents(
+                $this->getParameter('installer.queue_dir') . '/install_' . $uuid,
+                json_encode($data),
+            );
+        }
 
 
         return $this->json(['success' => true], 201);

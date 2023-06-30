@@ -15,18 +15,14 @@ use Stripe\Checkout\Session;
 use Stripe\Price;
 use Stripe\Stripe;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[Route('/license')]
 class LicenseController extends AbstractController
 {
     public function __construct(
@@ -39,7 +35,7 @@ class LicenseController extends AbstractController
     ) {
     }
 
-    #[Route('/check/{licenseHolder}', name: 'license_check', methods: ['GET'])]
+    #[Route('/license/check/{licenseHolder}', name: 'license_check', methods: ['GET'])]
     public function check(
         string $licenseHolder,
         Request $request,
@@ -87,12 +83,12 @@ class LicenseController extends AbstractController
     }
 
 
-    #[Route('/{_locale}/list', name: 'license_list_remote', methods: ['GET'])]
-    #[Route('/{_locale}/list/{licenseHolder}', name: 'license_list_local', methods: ['GET'])]
+    #[Route('/api/license/{_locale}/list', name: 'license_list_remote', methods: ['GET'])]
+    #[Route('/license/{_locale}/list/{licenseHolder}', name: 'license_list_local', methods: ['GET'])]
     public function list(
         Request $request,
         ?string $licenseHolder,
-    ): ResponseInterface|JsonResponse {
+    ): Response {
         $self = ($request->server->getBoolean('HTTPS') ? 'https://' : 'http://')
             . $request->server->get('HTTP_HOST');
 
@@ -101,12 +97,12 @@ class LicenseController extends AbstractController
             $this->getParameter('license.server') !== $self
         ) {
             // get license products from license server
-            return $this->httpClient->request(
+            return $this->json(json_decode($this->httpClient->request(
                 'GET',
                 $this->getParameter('license.server')
-                . '/license/list/'
+                . '/license/de/list/'
                 . $this->getParameter('license.holder')
-            );
+            )->getContent()));
         }
 
         $availableLicenses = $this->licenseProductRepository->findPurchasableLicenseProducts();
@@ -116,27 +112,27 @@ class LicenseController extends AbstractController
         ]);
     }
 
-    #[Route('/{_locale}/buy/{id}', name: 'license_buy', methods: ['GET'])]
+    #[Route('/api/license/{_locale}/buy/{productId}', name: 'license_buy', methods: ['GET'])]
     public function buy(
         Request $request,
-        LicenseProduct $licenseProduct,
+        int $productId,
     ): Response {
         // get license products from license server
         $response = $this->httpClient->request(
             'GET',
             $this->getParameter('license.server')
             . '/license/purchase-link/'
-            . $licenseProduct->getId() . '/'
+            . $productId . '/'
             . $this->getParameter('license.holder')
         );
 
         return $this->json([
             'url' => $response->toArray()['url'],
-            'product' => $licenseProduct,
+            'product' => $response->toArray()['product'],
         ]);
     }
 
-    #[Route('/success/{hash}/{checkoutSessionId}', name: 'license_buy_success', methods: ['GET'])]
+    #[Route('/license/success/{hash}/{checkoutSessionId}', name: 'license_buy_success', methods: ['GET'])]
     public function success(
         string $hash,
         string $checkoutSessionId,
@@ -170,7 +166,7 @@ class LicenseController extends AbstractController
         return new Response($this->translator->trans('license.subscription.paymentSuccess'));
     }
 
-    #[Route('/purchase-link/{id}/{licenseHolder}', name: 'license_purchase_get_checkout_url', methods: ['GET'])]
+    #[Route('/license/purchase-link/{id}/{licenseHolder}', name: 'license_purchase_get_checkout_url', methods: ['GET'])]
     public function getLicensePurchaseCheckoutUrl(
         Request $request,
         LicenseProduct $licenseProduct,
@@ -227,6 +223,7 @@ class LicenseController extends AbstractController
 
             return $this->json([
                 'url' => $checkout_session->url,
+                'product' => $licenseProduct,
             ]);
         } catch (Error $e) {
             return $this->json(['error' => $e->getMessage()]);

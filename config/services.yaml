@@ -18,6 +18,7 @@ parameters:
     contact.signup_enabled: '%env(CONTACT_SIGNUP_ENABLED)%'
     mailer.from: '%env(MAILER_FROM)%'
     job.vat_rate_default: '%env(VAT_RATE_DEFAULT)%'
+    installer.queue_dir: '%env(INSTALLER_QUEUE_DIR)%'
 
 services:
     # default configuration for services in *this* file
