@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: ContactRepository::class)]
+#[ORM\Entity(repositoryClass: LegacyContactRepository::class)]
 class Contact
 {
     #[ORM\Id]

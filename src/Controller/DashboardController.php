@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Contact;
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use App\Repository\ItemRepository;
 use App\Repository\JobRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,9 +14,9 @@ use Symfony\Component\Routing\Annotation\Route;
 class DashboardController extends AbstractController
 {
     public function __construct(
-        private readonly ContactRepository $contactRepository,
-        private readonly JobRepository $jobRepository,
-        private readonly ItemRepository $itemRepository,
+        private readonly LegacyContactRepository $contactRepository,
+        private readonly JobRepository           $jobRepository,
+        private readonly ItemRepository          $itemRepository,
     ) {
     }
 

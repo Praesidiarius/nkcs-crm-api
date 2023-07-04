@@ -6,7 +6,7 @@ use App\Entity\Job;
 use App\Entity\JobPosition;
 use App\Enum\JobVatMode;
 use App\Form\Job\JobType;
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use App\Repository\ItemRepository;
 use App\Repository\JobPositionRepository;
 use App\Repository\JobPositionUnitRepository;
@@ -26,16 +26,16 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class JobController extends AbstractApiController
 {
     public function __construct(
-        private readonly JobType $jobForm,
-        private readonly JobRepository $jobRepository,
-        private readonly JobTypeRepository $jobTypeRepository,
+        private readonly JobType                   $jobForm,
+        private readonly JobRepository             $jobRepository,
+        private readonly JobTypeRepository         $jobTypeRepository,
         private readonly JobPositionUnitRepository $jobPositionUnitRepository,
-        private readonly JobPositionRepository $jobPositionRepository,
-        private readonly ContactRepository $contactRepository,
-        private readonly UserSettingRepository $userSettings,
-        private readonly ItemRepository $itemRepository,
-        private readonly HttpClientInterface $httpClient,
-        private readonly TranslatorInterface $translator,
+        private readonly JobPositionRepository     $jobPositionRepository,
+        private readonly LegacyContactRepository   $contactRepository,
+        private readonly UserSettingRepository     $userSettings,
+        private readonly ItemRepository            $itemRepository,
+        private readonly HttpClientInterface       $httpClient,
+        private readonly TranslatorInterface       $translator,
     )
     {
         parent::__construct($this->httpClient);

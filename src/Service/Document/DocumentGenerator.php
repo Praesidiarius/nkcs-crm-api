@@ -4,7 +4,7 @@ namespace App\Service\Document;
 
 use App\Entity\Document;
 use App\Entity\DocumentTemplate;
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use App\Repository\JobRepository;
 use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\TemplateProcessor;
@@ -14,12 +14,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class DocumentGenerator
 {
     public function __construct(
-        private readonly ContactRepository $contactRepository,
-        private readonly JobRepository $jobRepository,
-        private readonly Security $security,
-        private readonly TranslatorInterface $translator,
-        private readonly string $documentBaseDir,
-        private readonly string $documentWebRoot,
+        private readonly LegacyContactRepository $contactRepository,
+        private readonly JobRepository           $jobRepository,
+        private readonly Security                $security,
+        private readonly TranslatorInterface     $translator,
+        private readonly string                  $documentBaseDir,
+        private readonly string                  $documentWebRoot,
     ) {
     }
 

@@ -6,13 +6,14 @@ use App\Controller\AbstractApiController;
 use App\Entity\Contact;
 use App\Entity\ContactAddress;
 use App\Repository\ContactAddressRepository;
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use App\Repository\SystemSettingRepository;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
 use Symfony\Component\Routing\Annotation\Route;
@@ -23,9 +24,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class ContactSignupController extends AbstractApiController
 {
     public function __construct(
-        private readonly ContactRepository $contactRepository,
+        private readonly LegacyContactRepository  $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
-        private readonly HttpClientInterface $httpClient,
+        private readonly HttpClientInterface      $httpClient,
     )
     {
         parent::__construct($this->httpClient);
@@ -79,9 +80,10 @@ class ContactSignupController extends AbstractApiController
         $emailSubject = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-subject']);
         $emailContent = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-content']);
         $emailText = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-text']);
+        $emailName = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-name']);
 
         $email = (new Email())
-            ->from($this->getParameter('mailer.from'))
+            ->from(new Address($this->getParameter('mailer.from'), $emailName->getSettingValue()))
             ->to($data['email'])
             ->priority(Email::PRIORITY_HIGH)
             ->subject($emailSubject->getSettingValue())
@@ -120,6 +122,8 @@ class ContactSignupController extends AbstractApiController
         // update contact details
         $contact->setIsCompany(true);
         $contact->setCompanyName($data['name']);
+        $contact->setFirstName($data['firstname']);
+        $contact->setLastName($data['lastname']);
         $contact->setCompanyUid($data['uid']);
         $contact->setContactIdentifier($data['url']);
 

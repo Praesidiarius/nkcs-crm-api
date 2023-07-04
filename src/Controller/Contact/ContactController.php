@@ -3,13 +3,13 @@
 namespace App\Controller\Contact;
 
 use App\Controller\AbstractApiController;
-use App\Entity\Contact;
-use App\Entity\ContactAddress;
+use App\Controller\AbstractDynamicFormController;
+use App\Form\Contact\ContactCompanyType;
 use App\Form\Contact\ContactType;
+use App\Model\DynamicDto;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\UserSettingRepository;
-use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -19,42 +19,30 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/api/contact/{_locale}')]
-class ContactController extends AbstractApiController
+class ContactController extends AbstractDynamicFormController
 {
     public function __construct(
-        private readonly ContactType $contactForm,
-        private readonly ContactRepository $contactRepository,
+        private readonly ContactType              $contactForm,
+        private readonly ContactCompanyType $companyForm,
+        private readonly ContactRepository        $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
-        private readonly UserSettingRepository $userSettings,
-        private readonly HttpClientInterface $httpClient,
-        private readonly TranslatorInterface $translator,
+        private readonly UserSettingRepository    $userSettings,
+        private readonly HttpClientInterface      $httpClient,
+        private readonly TranslatorInterface      $translator,
+        private readonly DynamicDto               $dynamicDto,
     )
     {
         parent::__construct($this->httpClient);
     }
 
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
-    public function getAddForm(): Response {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        return $this->json([
-            'form' => $this->contactForm->getFormFields(),
-            'sections' => $this->contactForm->getFormSections(),
-        ]);
+    public function getAddForm($form = null, $formKey = 'contact'): Response {
+        return parent::getAddForm($this->contactForm, 'contact');
     }
 
     #[Route('/add-company', name: 'contact_company_add', methods: ['GET'])]
-    public function getAddFormCompany(): Response {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        return $this->json([
-            'form' => $this->contactForm->getFormFields(true),
-            'sections' => $this->contactForm->getFormSections(),
-        ]);
+    public function getAddFormCompany($form = null, string $formKey = 'company'): Response {
+        return parent::getAddFormCompany($this->companyForm, 'company');
     }
 
     #[Route('/add', name: 'contact_add_save', methods: ['POST'])]
@@ -66,9 +54,11 @@ class ContactController extends AbstractApiController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
-        // todo: do this the symfony way - how?
+        $data['is_company'] = (int) $data['is_company'];
+
+        // move address related data out of data for validation
         $addressFields = ['street', 'zip', 'city'];
-        $address = new ContactAddress();
+        $addressData = [];
         $contactHasAddress = false;
 
         foreach ($addressFields as $addressField) {
@@ -76,27 +66,14 @@ class ContactController extends AbstractApiController
                 continue;
             }
             $contactHasAddress = true;
-            $setterName = 'set' . ucfirst($addressField);
-            $address->$setterName($data[$addressField]);
+            $addressData[$addressField] = $data[$addressField];
             unset($data[$addressField]);
         }
 
-        $contact = new Contact();
-
-        $form = $this->createForm(ContactType::class, $contact);
+        $form = $this->createForm($data['is_company'] === 1 ? ContactCompanyType::class : ContactType::class);
         $form->submit($data);
 
         if (!$form->isValid()) {
-            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailPrivate())) {
-                return $this->json([
-                    ['message' => $this->translator->trans('contact.form.validation.emailDuplicate')]
-                ], 400);
-            }
-            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailBusiness())) {
-                return $this->json([
-                    ['message' => $this->translator->trans('contact.form.validation.emailDuplicate')]
-                ], 400);
-            }
             if (count($form->getErrors()) > 0) {
                 return $this->json(
                     $form->getErrors(),
@@ -105,8 +82,23 @@ class ContactController extends AbstractApiController
             }
         }
 
+        $contact = $this->dynamicDto;
+
+        $contact->setData($data);
+
         // manual validation
-        if ($contact->getFirstName() === null && $contact->getLastName() === null && $contact->getCompanyName() === null) {
+        if ($contact->getTextField('email_private')) {
+            if ($this->contactRepository->isEmailAddressAlreadyInUse($contact->getTextField('email_private'))) {
+                return $this->json([
+                    ['message' => $this->translator->trans('contact.form.validation.emailDuplicate')]
+                ], 400);
+            }
+        }
+        if (
+            $contact->getTextField('first_name') === null
+            && $contact->getTextField('last_name') === null
+            && $contact->getTextField('company_name') === null
+        ) {
             return $this->json([
                 ['message' => 'You must provide a first or last name']
             ], 400);
@@ -114,35 +106,37 @@ class ContactController extends AbstractApiController
 
         // set readonly fields
         $contact->setCreatedBy($this->getUser()->getId());
-        $contact->setCreatedDate(new DateTimeImmutable());
+        $contact->setCreatedDate();
 
         // save contact
-        $this->contactRepository->save($contact, true);
-
-        // attach address to contact
-        $address->setContact($contact);
+        $contact = $this->contactRepository->save($contact);
 
         // save address
         if ($contactHasAddress) {
-            $this->addressRepository->save($address, true);
+            $addressData['contact_id'] = $contact->getId();
+            $address = $this->dynamicDto;
+            $address->setData($addressData);
+            $this->addressRepository->save($address);
         }
 
         return $this->itemResponse($contact);
     }
 
-    #[Route('/edit/{id}', name: 'contact_edit', methods: ['GET'])]
-    public function getEditForm(Contact $contact): Response {
+    #[Route('/edit/{contactId}', name: 'contact_edit', methods: ['GET'])]
+    public function getEditForm(int $contactId): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
+        $contact = $this->contactRepository->findById($contactId);
+
         return $this->itemResponse($contact);
     }
 
-    #[Route('/edit/{id}', name: 'contact_edit_save', methods: ['POST'])]
+    #[Route('/edit/{contactId}', name: 'contact_edit_save', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
-        Contact $contact,
+        int $contactId,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -158,21 +152,10 @@ class ContactController extends AbstractApiController
         unset($data['createdDate']);
         unset($data['id']);
 
-        $form = $this->createForm(ContactType::class, $contact);
+        $form = $this->createForm(ContactType::class);
         $form->submit($data);
 
         if (!$form->isValid()) {
-            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailPrivate(), $contact->getId())) {
-                return $this->json([
-                    ['message' => 'E-Mail is already used by another contact']
-                ], 400);
-            }
-            if ($this->contactRepository->checkDuplicateEmail($contact->getEmailBusiness(), $contact->getId())) {
-                return $this->json([
-                    ['message' => 'E-Mail is already used by another contact']
-                ], 400);
-            }
-
             if (count($form->getErrors()) > 0) {
                 return $this->json(
                     $form->getErrors(),
@@ -181,15 +164,21 @@ class ContactController extends AbstractApiController
             }
         }
 
-        $this->contactRepository->save($contact, true);
+        $contact = $this->dynamicDto;
+
+        $contact->setData($data);
+        $contact->setId($contactId);
+
+        $this->contactRepository->save($contact);
 
         return $this->itemResponse($contact);
     }
 
-    #[Route('/view/{id}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    #[Route('/view/{contactId}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
-        Contact $contact,
+        int $contactId,
     ): Response {
+        $contact = $this->contactRepository->findById($contactId);
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
@@ -197,19 +186,16 @@ class ContactController extends AbstractApiController
         return $this->itemResponse($contact);
     }
 
-    #[Route('/remove/{id}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    #[Route('/remove/{contactId}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
     public function delete(
-        Contact $contact,
+        int $contactId,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        $addresses = $this->addressRepository->findBy(['contact' => $contact]);
-        foreach ($addresses as $address) {
-            $this->addressRepository->remove($address);
-        }
-        $this->contactRepository->remove($contact, true);
+        $this->addressRepository->removeByContactId($contactId);
+        $this->contactRepository->removeById($contactId);
 
         return $this->json(['state' => 'success']);
     }
@@ -230,9 +216,17 @@ class ContactController extends AbstractApiController
         $page = $page ?? 1;
         $contacts = $this->contactRepository->findBySearchAttributes($page, $pageSize);
 
+        $contactsApi = [];
+        foreach ($contacts as $contactRaw) {
+            $contactApi = $this->dynamicDto;
+            $contactApi->setData($contactRaw);
+            $contactApi->serializeDataForApiByFormModel('contact');
+            $contactsApi[] = $contactApi->getDataSerialized();
+        }
+
         $data = [
             'headers' => $this->contactForm->getIndexHeaders(),
-            'items' => $contacts,
+            'items' => $contactsApi,
             'total_items' => count($contacts),
             'pagination' => [
                 'page_count' => ceil(count($contacts) / $pageSize),
@@ -241,20 +235,21 @@ class ContactController extends AbstractApiController
             ],
         ];
 
-        return $this->json($data, 200);
+        return $this->json($data);
     }
 
     private function itemResponse(
-        Contact $contact,
+        ?DynamicDto $contact,
     ): Response {
-        $addresses = $this->addressRepository->findBy(['contact' => $contact]);
-        foreach ($addresses as $address) {
-            $contact->addAddress($address);
+        if (!$contact) {
+            return $this->json(['message' => 'contact not found'], 404);
         }
 
+        $contact->serializeDataForApiByFormModel('contact');
+
         $data = [
-            'item' => $contact,
-            'form' => $this->contactForm->getFormFields($contact->isIsCompany()),
+            'item' => $contact->getDataSerialized(),
+            'form' => $this->contactForm->getFormFields($contact->getBoolField('is_company'), true),
             'sections' => $this->contactForm->getFormSections(),
         ];
 

@@ -2,65 +2,35 @@
 
 namespace App\Repository;
 
-use App\Entity\ContactAddress;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Model\DynamicDto;
+use Doctrine\DBAL\Connection;
 
-/**
- * @extends ServiceEntityRepository<ContactAddress>
- *
- * @method ContactAddress|null find($id, $lockMode = null, $lockVersion = null)
- * @method ContactAddress|null findOneBy(array $criteria, array $orderBy = null)
- * @method ContactAddress[]    findAll()
- * @method ContactAddress[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
-class ContactAddressRepository extends ServiceEntityRepository
+class ContactAddressRepository extends AbstractRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, ContactAddress::class);
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly DynamicDto $dynamicEntity,
+    ) {
+        parent::__construct($this->connection, $this->dynamicEntity);
     }
 
-    public function save(ContactAddress $entity, bool $flush = false): void
+    public function save(DynamicDto $entity): DynamicDto
     {
-        $this->getEntityManager()->persist($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        return parent::saveToTable($entity, 'contact_address');
     }
 
-    public function remove(ContactAddress $entity, bool $flush = false): void
+    public function removeByContactId(int $contactId): void
     {
-        $this->getEntityManager()->remove($entity);
+        $qb = $this->connection->createQueryBuilder();
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        $qb
+            ->delete('contact_address')
+            ->where('contact_id = :id')
+            ->setParameters([
+                'id' => $contactId,
+            ])
+        ;
+
+        $qb->executeQuery();
     }
-
-//    /**
-//     * @return ContactAddress[] Returns an array of ContactAddress objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?ContactAddress
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
 }

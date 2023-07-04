@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use App\Repository\SystemSettingRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -10,14 +10,15 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 
 #[AsCommand(name: 'installer:send-confirmation')]
 class SendInstallConfirmationCommand extends Command
 {
     public function __construct(
-        private readonly ContactRepository $contactRepository,
-        private readonly MailerInterface $mailer,
+        private readonly LegacyContactRepository $contactRepository,
+        private readonly MailerInterface         $mailer,
         private readonly SystemSettingRepository $systemSettings,
     ) {
         parent::__construct();
@@ -54,9 +55,10 @@ class SendInstallConfirmationCommand extends Command
         $emailContent = $this->systemSettings->findOneBy(['settingKey' => 'install-confirm-email-content']);
         $emailText = $this->systemSettings->findOneBy(['settingKey' => 'install-confirm-email-text']);
         $emailFrom = $this->systemSettings->findOneBy(['settingKey' => 'install-confirm-email-from']);
+        $emailName = $this->systemSettings->findOneBy(['settingKey' => 'contact-signup-email-name']);
 
         $email = (new Email())
-            ->from($emailFrom->getSettingValue())
+            ->from(new Address($emailFrom->getSettingValue(), $emailName->getSettingValue()))
             ->to($contact->getEmailPrivate())
             ->priority(Email::PRIORITY_HIGH)
             ->subject($emailSubject->getSettingValue())

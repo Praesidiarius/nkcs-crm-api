@@ -5,7 +5,7 @@ namespace App\Form\Job;
 use App\Entity\Contact;
 use App\Entity\Job;
 use App\Enum\JobVatMode;
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use App\Repository\SystemSettingRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
@@ -20,8 +20,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class JobType extends AbstractType
 {
     public function __construct(
-        private readonly TranslatorInterface $translator,
-        private readonly ContactRepository $contactRepository,
+        private readonly TranslatorInterface     $translator,
+        private readonly LegacyContactRepository $contactRepository,
         private readonly SystemSettingRepository $systemSettingRepository,
     )
     {

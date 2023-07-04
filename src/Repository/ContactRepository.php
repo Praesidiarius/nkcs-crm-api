@@ -2,95 +2,55 @@
 
 namespace App\Repository;
 
-use App\Entity\Contact;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Tools\Pagination\Paginator;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Model\DynamicDto;
+use Doctrine\DBAL\Connection;
 
-/**
- * @extends ServiceEntityRepository<Contact>
- *
- * @method Contact|null find($id, $lockMode = null, $lockVersion = null)
- * @method Contact|null findOneBy(array $criteria, array $orderBy = null)
- * @method Contact[]    findAll()
- * @method Contact[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
-class ContactRepository extends ServiceEntityRepository
+class ContactRepository extends AbstractRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Contact::class);
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly DynamicDto $dynamicEntity,
+    ) {
+        parent::__construct($this->connection, $this->dynamicEntity);
     }
 
-    public function save(Contact $entity, bool $flush = false): void
+    public function findById(int $id, string $table = 'contact'): ?DynamicDto
     {
-        $this->getEntityManager()->persist($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        return parent::findById($id, 'contact');
     }
 
-    public function remove(Contact $entity, bool $flush = false): void
+    public function removeById(int $id, string $table = 'contact'): void
     {
-        $this->getEntityManager()->remove($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        parent::removeById($id, 'contact');
     }
 
-    public function findBySearchAttributes(int $page, int $pageSize): Paginator
+    public function isEmailAddressAlreadyInUse(string $email): bool
     {
-        $qb = $this->createQueryBuilder('c')
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('id')
+            ->from('contact')
+            ->where('email_private LIKE :email')
+            ->setParameter('email', $email)
+        ;
+        return count($qb->fetchAllAssociative()) > 0;
+    }
+
+    public function findBySearchAttributes(int $page, int $pageSize): array
+    {
+        $qb = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from('contact', 'c')
             ->orderBy('c.id', 'ASC')
             ->setFirstResult(($page-1) * $pageSize)
             ->setMaxResults($pageSize)
-            ->getQuery()
         ;
 
-        return new Paginator($qb, false);
+        return $qb->fetchAllAssociative();
     }
 
-    public function checkDuplicateEmail(?string $email, int $contactId = 0): array
+    public function save(DynamicDto $entity): DynamicDto|string
     {
-        $qb = $this->createQueryBuilder('c')
-            ->where('c.emailPrivate = :email')
-            ->orWhere('c.emailBusiness = :email')
-            ->setParameter('email', $email);
-
-        if ($contactId !== 0) {
-            $qb->andWhere('c.id != :contactId');
-            $qb->setParameter('contactId', $contactId);
-        }
-
-        return $qb
-            ->getQuery()
-            ->getResult();
+        return parent::saveToTable($entity, 'contact');
     }
-
-//    /**
-//     * @return Contact[] Returns an array of Contact objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Contact
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
 }

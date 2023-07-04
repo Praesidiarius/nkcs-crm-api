@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Entity\License;
 use App\Entity\LicenseProduct;
 use App\Entity\LicensePurchase;
-use App\Repository\ContactRepository;
+use App\Repository\LegacyContactRepository;
 use App\Repository\LicenseProductRepository;
 use App\Repository\LicensePurchaseRepository;
 use App\Repository\LicenseRepository;
@@ -26,12 +26,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class LicenseController extends AbstractController
 {
     public function __construct(
-        private readonly LicenseRepository $licenseRepository,
-        private readonly LicenseProductRepository $licenseProductRepository,
+        private readonly LicenseRepository         $licenseRepository,
+        private readonly LicenseProductRepository  $licenseProductRepository,
         private readonly LicensePurchaseRepository $licensePurchaseRepository,
-        private readonly ContactRepository $contactRepository,
-        private readonly TranslatorInterface $translator,
-        private readonly HttpClientInterface $httpClient,
+        private readonly LegacyContactRepository   $contactRepository,
+        private readonly TranslatorInterface       $translator,
+        private readonly HttpClientInterface       $httpClient,
     ) {
     }
 
