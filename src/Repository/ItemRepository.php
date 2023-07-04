@@ -2,78 +2,43 @@
 
 namespace App\Repository;
 
-use App\Entity\Item;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Tools\Pagination\Paginator;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Model\DynamicDto;
+use Doctrine\DBAL\Connection;
 
-/**
- * @extends ServiceEntityRepository<Item>
- *
- * @method Item|null find($id, $lockMode = null, $lockVersion = null)
- * @method Item|null findOneBy(array $criteria, array $orderBy = null)
- * @method Item[]    findAll()
- * @method Item[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
-class ItemRepository extends ServiceEntityRepository
+class ItemRepository extends AbstractRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Item::class);
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly DynamicDto $dynamicEntity,
+    ) {
+        parent::__construct($this->connection, $this->dynamicEntity);
     }
 
-    public function save(Item $entity, bool $flush = false): void
+    public function findById(int $id, string $table = 'item'): ?DynamicDto
     {
-        $this->getEntityManager()->persist($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        return parent::findById($id, 'item');
     }
 
-    public function remove(Item $entity, bool $flush = false): void
+    public function removeById(int $id, string $table = 'item'): void
     {
-        $this->getEntityManager()->remove($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        parent::removeById($id, 'item');
     }
 
-    public function findBySearchAttributes(int $page, int $pageSize): Paginator
+    public function findBySearchAttributes(int $page, int $pageSize): array
     {
-        $qb = $this->createQueryBuilder('i')
+        $qb = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from('item', 'i')
             ->orderBy('i.id', 'ASC')
             ->setFirstResult(($page-1) * $pageSize)
             ->setMaxResults($pageSize)
-            ->getQuery()
         ;
 
-        return new Paginator($qb, false);
+        return $qb->fetchAllAssociative();
     }
 
-//    /**
-//     * @return Item[] Returns an array of Item objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('i.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Item
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    public function save(DynamicDto $entity): DynamicDto|string
+    {
+        return parent::saveToTable($entity, 'item');
+    }
 }

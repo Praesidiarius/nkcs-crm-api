@@ -19,6 +19,28 @@ class ContactAddressRepository extends AbstractRepository
         return parent::saveToTable($entity, 'contact_address');
     }
 
+    public function getPrimaryAddressForContact(int $contactId): ?DynamicDto
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from('contact_address')
+            ->where('contact_id = :contactId')
+            ->setParameters([
+                'contactId' => $contactId,
+            ])
+        ;
+
+        $rawData = $qb->fetchAssociative();
+        if ($rawData) {
+            $entity = $this->dynamicEntity;
+            $this->dynamicEntity->setData($rawData);
+            return $entity;
+        }
+
+        return null;
+    }
+
     public function removeByContactId(int $contactId): void
     {
         $qb = $this->connection->createQueryBuilder();

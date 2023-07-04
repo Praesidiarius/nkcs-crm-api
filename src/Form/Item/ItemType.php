@@ -2,147 +2,66 @@
 
 namespace App\Form\Item;
 
-use App\Entity\Item;
-use App\Entity\ItemUnit;
+use App\Entity\DynamicFormField;
+use App\Form\DynamicType;
+use App\Repository\DynamicFormFieldRepository;
+use App\Repository\DynamicFormRepository;
 use App\Repository\ItemUnitRepository;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\NumberType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class ItemType extends AbstractType
+class ItemType extends DynamicType
 {
     public function __construct(
-        private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly TranslatorInterface $translator,
         private readonly ItemUnitRepository $itemUnitRepository,
-        private readonly string $paymentStripeKey,
+        private readonly DynamicFormRepository $dynamicFormRepository,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
     )
     {
+        parent::__construct(
+            $this->translator,
+            $this->dynamicFormRepository,
+            $this->dynamicFormFieldRepository
+        );
     }
 
-    public function buildForm(FormBuilderInterface $builder, array $options): void
+    public function getFormSections(string $formKey = 'item', $withTabs = false): array
     {
-        $builder
-            ->add('name', TextType::class)
-            ->add('price', NumberType::class)
-            ->add('description', TextareaType::class)
-            ->add('unit', EntityType::class, [
-                'class' => ItemUnit::class
-            ])
-        ;
-
-        if ($this->paymentStripeKey) {
-            $builder->add('stripeEnabled', CheckboxType::class);
-        }
+        return parent::getFormSections('item', $withTabs);
     }
 
-    public function configureOptions(OptionsResolver $resolver): void
+    private function getFormFieldData(DynamicFormField $formField): mixed
     {
-        $resolver->setDefaults([
-            'data_class' => Item::class,
-            'csrf_protection' => false,
-        ]);
+        return str_replace([
+            '#units#',
+        ],[
+            json_encode($this->getUnits()),
+        ],
+            $formField->getDefaultData(),
+        );
     }
 
-    public function getFormSections(): array
-    {
-        $formSections = [
-            [
-                'text' => $this->translator->trans('item.form.section.basic'),
-                'key' => 'basic',
-            ]
-        ];
-
-        return $formSections;
-    }
-
-    public function getFormFields(): array
+    private function getUnits() : array
     {
         $itemUnits = $this->itemUnitRepository->findAll();
         $unitField = [];
-        foreach ($itemUnits as $itemUnit) {
+        foreach ($itemUnits as $unit) {
             $unitField[] = [
-                'id' => $itemUnit->getId(),
-                'text' => $this->translator->trans($itemUnit->getName())
+                'id' => $unit->getId(),
+                'text' => $this->translator->trans($unit->getName()),
             ];
         }
 
-        $formFields = [
-            [
-                'text' => $this->translator->trans('item.name'),
-                'key' => 'name',
-                'type' => 'text',
-                'section' => 'basic',
-                'cols' => 6,
-            ],
-            [
-                'text' => $this->translator->trans('item.price'),
-                'key' => 'price',
-                'type' => 'number',
-                'section' => 'basic',
-                'cols' => 4
-            ],
-            [
-                'text' => $this->translator->trans('item.unit.unit'),
-                'key' => 'unit',
-                'type' => 'select',
-                'section' => 'basic',
-                'data' => $unitField,
-                'cols' => 2,
-            ],
-            [
-                'text' => $this->translator->trans('item.description'),
-                'key' => 'description',
-                'type' => 'textarea',
-                'section' => 'basic',
-                'cols' => 12,
-            ],
-        ];
-
-        if ($this->paymentStripeKey) {
-            $formFields[] = [
-                'text' => $this->translator->trans('item.addToStripe'),
-                'key' => 'stripeEnabled',
-                'type' => 'checkbox',
-                'section' => 'basic',
-                'cols' => 12
-            ];
-        }
-
-        return $formFields;
+        return $unitField;
     }
 
-    public function getIndexHeaders(): array
+    public function getFormFields(string $formKey = 'item', bool $withTabs = true): array
     {
-        $indexHeaders = [
-            [
-                'title' => $this->translator->trans('item.name'),
-                'key' => 'name',
-                'sortable' => false,
-                'type' => 'text'
-            ],
-            [
-                'title' => $this->translator->trans('item.price'),
-                'key' => 'price',
-                'sortable' => false,
-                'type' => 'numberFloat-2'
-            ],
-            [
-                'title' => $this->translator->trans('item.unit.unit'),
-                'key' => 'unit',
-                'sortable' => false,
-                'type' => 'object',
-                'label_key' => 'name',
-            ],
-        ];
+        return parent::getFormFields('item', $withTabs);
+    }
 
-        return $indexHeaders;
+    public function getIndexHeaders(string $formKey = 'item'): array
+    {
+        return parent::getIndexHeaders('item');
     }
 }

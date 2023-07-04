@@ -46,6 +46,29 @@ class DynamicDto
         return null;
     }
 
+    public function setTextField(string $fieldKey, string $text): self
+    {
+        $this->data[$fieldKey] = $text;
+
+        return $this;
+    }
+
+    public function getPriceField(string $fieldKey): ?float
+    {
+        if (array_key_exists($fieldKey, $this->data)) {
+            return (float) $this->data[$fieldKey];
+        }
+
+        return null;
+    }
+
+    public function setPriceField(string $fieldKey, float $price): self
+    {
+        $this->data[$fieldKey] = $price;
+
+        return $this;
+    }
+
     public function getBoolField(string $fieldKey): bool
     {
         if (array_key_exists($fieldKey, $this->data)) {
@@ -53,6 +76,13 @@ class DynamicDto
         }
 
         return false;
+    }
+
+    public function getSelectField(string $fieldKey): array
+    {
+        $field = $this->dynamicFormFieldRepository->findOneBy(['fieldKey' => $fieldKey]);
+
+        return $this->getSerializedSelectFieldData($field, $this->data[$fieldKey] ?? 0);
     }
 
     public function serializeDataForApiByFormModel(string $formKey): void

@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Repository\LegacyContactRepository;
+use App\Repository\ContactRepository;
 use App\Repository\SystemSettingRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -17,7 +17,7 @@ use Symfony\Component\Mime\Email;
 class SendInstallConfirmationCommand extends Command
 {
     public function __construct(
-        private readonly LegacyContactRepository $contactRepository,
+        private readonly ContactRepository $contactRepository,
         private readonly MailerInterface         $mailer,
         private readonly SystemSettingRepository $systemSettings,
     ) {
@@ -59,21 +59,21 @@ class SendInstallConfirmationCommand extends Command
 
         $email = (new Email())
             ->from(new Address($emailFrom->getSettingValue(), $emailName->getSettingValue()))
-            ->to($contact->getEmailPrivate())
+            ->to($contact->getTextField('email_private'))
             ->priority(Email::PRIORITY_HIGH)
             ->subject($emailSubject->getSettingValue())
             ->text(str_replace([
                 '#IDENTIFIER#',
                 '#PASS#',
             ], [
-                $contact->getContactIdentifier(),
+                $contact->getTextField('identifier'),
                 $input->getArgument('password'),
             ], $emailText->getSettingValue()))
             ->html(str_replace([
                 '#IDENTIFIER#',
                 '#PASS#',
             ], [
-                $contact->getContactIdentifier(),
+                $contact->getTextField('identifier'),
                 $input->getArgument('password'),
             ], $emailContent->getSettingValue()))
         ;

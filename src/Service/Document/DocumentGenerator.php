@@ -4,6 +4,8 @@ namespace App\Service\Document;
 
 use App\Entity\Document;
 use App\Entity\DocumentTemplate;
+use App\Repository\ContactAddressRepository;
+use App\Repository\ContactRepository;
 use App\Repository\LegacyContactRepository;
 use App\Repository\JobRepository;
 use PhpOffice\PhpWord\Element\TextRun;
@@ -14,12 +16,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class DocumentGenerator
 {
     public function __construct(
-        private readonly LegacyContactRepository $contactRepository,
+        private readonly ContactRepository $contactRepository,
+        private readonly ContactAddressRepository $addressRepository,
         private readonly JobRepository           $jobRepository,
         private readonly Security                $security,
         private readonly TranslatorInterface     $translator,
         private readonly string                  $documentBaseDir,
-        private readonly string                  $documentWebRoot,
     ) {
     }
 
@@ -28,22 +30,40 @@ class DocumentGenerator
         Document $document,
         int $contactId,
     ): string {
-        $contact = $this->contactRepository->find($contactId);
+        $contact = $this->contactRepository->findById($contactId);
 
-        $fileName = $template->getName() . '-' . $contact->getName() . '-' . $document->getId() . '.docx';
-        $templateProcessor = new TemplateProcessor($this->documentBaseDir . '/templates/' . $template->getId() . '.docx');
+        $name = $contact->getBoolField('is_company')
+            ? $contact->getTextField('company_name')
+            : $this->translator->trans($contact->getSelectField('salution_id')['name'])
+                . ' '. $contact->getTextField('first_name')
+                . ' ' . $contact->getTextField('last_name')
+        ;
 
-        $primaryAddress = $contact->getAddress()->first();
+        $nameForFile = $contact->getBoolField('is_company')
+            ? $contact->getTextField('company_name')
+            : $contact->getTextField('last_name')
+        ;
 
-        $name = $contact->isIsCompany() ? $contact->getCompanyName() : $this->translator->trans($contact->getSalution()->getName()). ' '.$contact->getName();
+        $fileName = $template->getName() . '-' . $nameForFile . '-' . $document->getId() . '.docx';
+        $templateProcessor = new TemplateProcessor(
+            $this->documentBaseDir
+            . '/templates/'
+            . $template->getId()
+            . '.docx'
+        );
+
+        $primaryAddress = $this->addressRepository->getPrimaryAddressForContact($contactId);
 
         if ($primaryAddress) {
             $title = new TextRun();
             $title->addText($name);
             $title->addTextBreak();
-            $title->addText($primaryAddress->getStreet());
+            $title->addText($primaryAddress->getTextField('street'));
             $title->addTextBreak();
-            $title->addText($primaryAddress->getZip() . ' ' . $primaryAddress->getCity());
+            $title->addText(
+                $primaryAddress->getTextField('zip')
+                . ' ' . $primaryAddress->getTextField('city')
+            );
             $templateProcessor->setComplexBlock('address', $title);
         } else {
             $templateProcessor->setValue('address', '');
@@ -54,7 +74,11 @@ class DocumentGenerator
         $templateProcessor->setValue('userTitle', $this->security->getUser()->getFunction());
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
-        $templateProcessor->saveAs($this->documentBaseDir . '/' . $template->getType()->getIdentifier() . '/' . $fileName);
+        $templateProcessor->saveAs(
+            $this->documentBaseDir
+            . '/' . $template->getType()->getIdentifier()
+            . '/' . $fileName
+        );
 
         return $fileName;
     }

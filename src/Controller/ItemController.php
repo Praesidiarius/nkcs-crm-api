@@ -2,12 +2,13 @@
 
 namespace App\Controller;
 
-use App\Entity\Item;
 use App\Form\Contact\ContactType;
+use App\Form\DynamicType;
 use App\Form\Item\ItemType;
+use App\Model\DynamicDto;
+use App\Repository\AbstractRepository;
 use App\Repository\ItemRepository;
 use App\Repository\UserSettingRepository;
-use DateTimeImmutable;
 use Stripe\StripeClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,28 +18,22 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/item/{_locale}')]
-class ItemController extends AbstractApiController
+class ItemController extends AbstractDynamicFormController
 {
     public function __construct(
-        private readonly ItemType $itemType,
-        private readonly ItemRepository $itemRepository,
+        private readonly ItemType              $itemForm,
+        private readonly ItemRepository        $itemRepository,
         private readonly UserSettingRepository $userSettings,
-        private readonly HttpClientInterface $httpClient,
+        private readonly HttpClientInterface   $httpClient,
+        private readonly DynamicDto            $dynamicDto,
     )
     {
-        parent::__construct($this->httpClient);
+        parent::__construct($this->httpClient, $this->userSettings, $this->dynamicDto);
     }
 
     #[Route('/add', name: 'item_add', methods: ['GET'])]
-    public function getAddForm(): Response {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        return $this->json([
-            'form' => $this->itemType->getFormFields(),
-            'sections' => $this->itemType->getFormSections(),
-        ]);
+    public function getAddForm($form = null, $formKey = 'contact'): Response {
+        return parent::getAddForm($this->itemForm, 'item');
     }
 
     #[Route('/add', name: 'item_add_save', methods: ['POST'])]
@@ -50,9 +45,7 @@ class ItemController extends AbstractApiController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
-        $item = new Item();
-
-        $form = $this->createForm(ItemType::class, $item);
+        $form = $this->createForm(ItemType::class);
         $form->submit($data);
 
         if (!$form->isValid()) {
@@ -64,8 +57,11 @@ class ItemController extends AbstractApiController
             }
         }
 
+        $item = $this->dynamicDto;
+        $item->setData($data);
+
         // manual validation
-        if ($item->getName() === null) {
+        if ($item->getTextField('name') === null) {
             return $this->json([
                 ['message' => 'You must provide a name']
             ], 400);
@@ -73,50 +69,52 @@ class ItemController extends AbstractApiController
 
         // set readonly fields
         $item->setCreatedBy($this->getUser()->getId());
-        $item->setCreatedDate(new DateTimeImmutable());
+        $item->setCreatedDate();
 
         // save contact
-        $this->itemRepository->save($item, true);
+        $item = $this->itemRepository->save($item);
 
         /**
          * Stripe Integration
          */
-        if ($this->getParameter('payment.stripe_key') && $item->isStripeEnabled()) {
+        if ($this->getParameter('payment.stripe_key') && $item->getBoolField('stripe_enabled')) {
             $stripeClient = new StripeClient($this->getParameter('payment.stripe_secret'));
 
             $stripeProduct = $stripeClient->products->create([
-                'name' => $item->getName(),
-                'description' => $item->getDescription(),
+                'name' => $item->getTextField('name'),
+                'description' => $item->getTextField('description'),
             ]);
 
             $stripePriceData = [
                 // stripe wants amount in cents
-                'unit_amount' => $item->getPrice() * 100,
+                'unit_amount' => ($item->getPriceField('price') ?? 0) * 100,
                 'currency' => $this->getParameter('payment.currency'),
                 'product' => $stripeProduct['id']
             ];
 
-            if ($item->getUnit()->getType() === 'sub-month') {
+            if ($item->getSelectField('unit_id')['type'] === 'sub-month') {
                 $stripePriceData['recurring'] = ['interval' => 'month'];
             }
-            if ($item->getUnit()->getType() === 'sub-year') {
+            if ($item->getSelectField('unit_id')['type'] === 'sub-year') {
                 $stripePriceData['recurring'] = ['interval' => 'year'];
             }
             $stripePrice = $stripeClient->prices->create($stripePriceData);
 
-            $item->setStripePriceId($stripePrice['id']);
+            $item->setTextField('stripe_price_id', $stripePrice['id']);
 
-            $this->itemRepository->save($item, true);
+            $item = $this->itemRepository->save($item);
         }
 
         return $this->itemResponse($item);
     }
 
-    #[Route('/edit/{id}', name: 'item_edit', methods: ['GET'])]
-    public function getEditForm(Item $item): Response {
+    #[Route('/edit/{itemId}', name: 'item_edit', methods: ['GET'])]
+    public function getEditForm(int $itemId): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
+
+        $item = $this->itemRepository->findById($itemId);
 
         return $this->itemResponse($item);
     }
@@ -124,7 +122,7 @@ class ItemController extends AbstractApiController
     #[Route('/edit/{id}', name: 'item_edit_save', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
-        Item $item,
+        int $itemId,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -138,7 +136,7 @@ class ItemController extends AbstractApiController
         unset($data['createdDate']);
         unset($data['id']);
 
-        $form = $this->createForm(ContactType::class, $item);
+        $form = $this->createForm(ContactType::class);
         $form->submit($data);
 
         if (!$form->isValid()) {
@@ -150,31 +148,42 @@ class ItemController extends AbstractApiController
             }
         }
 
-        $this->itemRepository->save($item, true);
+        $item = $this->dynamicDto;
+
+        $item->setData($data);
+        $item->setId($itemId);
+
+        $item = $this->itemRepository->save($item);
 
         return $this->itemResponse($item);
     }
 
-    #[Route('/view/{id}', name: 'item_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    #[Route('/view/{entityId}', name: 'item_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
-        Item $item,
+        int $entityId,
+        ?AbstractRepository $repository = null,
+        string $formKey = 'item',
+        ?DynamicType $form = null,
     ): Response {
+        $item = $this->itemRepository->findById($entityId);
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        return $this->itemResponse($item);
+        return $this->itemResponse($item, 'item', $this->itemForm);
     }
 
-    #[Route('/remove/{id}', name: 'item_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    #[Route('/remove/{itemId}', name: 'item_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
     public function delete(
-        Item $item,
+        int $itemId,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        $this->itemRepository->remove($item, true);
+        if ($itemId > 0) {
+            $this->itemRepository->removeById($itemId);
+        }
 
         return $this->json(['state' => 'success']);
     }
@@ -183,42 +192,22 @@ class ItemController extends AbstractApiController
     #[Route('/list/{page}', name: 'item_index_with_pagination', methods: ['GET'])]
     public function list(
         ?int $page,
-    ): Response
-    {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        $pageSize = $this->userSettings->getUserSetting(
-            $this->getUser(),
-            'pagination-page-size',
-        );
-        $page = $page ?? 1;
-        $items = $this->itemRepository->findBySearchAttributes($page, $pageSize);
-
-        $data = [
-            'headers' => $this->itemType->getIndexHeaders(),
-            'items' => $items,
-            'total_items' => count($items),
-            'pagination' => [
-                'page_count' => ceil(count($items) / $pageSize),
-                'page_size' => $pageSize,
-                'page' => $page,
-            ],
-        ];
-
-        return $this->json($data, 200);
+        ?AbstractRepository $repository = null,
+        ?DynamicType $form = null,
+        string $formKey = '',
+    ): Response {
+        return parent::list($page, $this->itemRepository, $this->itemForm, 'item');
     }
 
-    private function itemResponse(
-        Item $item,
+    protected function itemResponse(
+        ?DynamicDto $dto,
+        string $formKey = 'item',
+        ?DynamicType $form = null,
     ): Response {
-        $data = [
-            'item' => $item,
-            'form' => $this->itemType->getFormFields(),
-            'sections' => $this->itemType->getFormSections(),
-        ];
-
-        return $this->json($data);
+        return parent::itemResponse(
+            $dto,
+            'item',
+            $this->itemForm
+        );
     }
 }
