@@ -2,11 +2,12 @@
 
 namespace App\Controller\Contact;
 
-use App\Controller\AbstractApiController;
 use App\Controller\AbstractDynamicFormController;
 use App\Form\Contact\ContactCompanyType;
 use App\Form\Contact\ContactType;
+use App\Form\DynamicType;
 use App\Model\DynamicDto;
+use App\Repository\AbstractRepository;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\UserSettingRepository;
@@ -32,7 +33,7 @@ class ContactController extends AbstractDynamicFormController
         private readonly DynamicDto               $dynamicDto,
     )
     {
-        parent::__construct($this->httpClient);
+        parent::__construct($this->httpClient, $this->userSettings, $this->dynamicDto);
     }
 
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
@@ -174,16 +175,23 @@ class ContactController extends AbstractDynamicFormController
         return $this->itemResponse($contact);
     }
 
-    #[Route('/view/{contactId}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    #[Route('/view/{entityId}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
-        int $contactId,
+        int $entityId,
+        ?AbstractRepository $repository = null,
+        string $formKey = 'contact',
+        ?DynamicType $form = null,
     ): Response {
-        $contact = $this->contactRepository->findById($contactId);
+        $contact = $this->contactRepository->findById($entityId);
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        return $this->itemResponse($contact);
+        if ($contact->getBoolField('is_company')) {
+            return $this->itemResponse($contact, 'company', $this->companyForm);
+        }
+
+        return $this->itemResponse($contact, 'contact', $this->companyForm);
     }
 
     #[Route('/remove/{contactId}', name: 'contact_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
@@ -204,55 +212,22 @@ class ContactController extends AbstractDynamicFormController
     #[Route('/list/{page}', name: 'contact_index_pagination', methods: ['GET'])]
     public function list(
         ?int $page,
+        ?AbstractRepository $repository = null,
+        ?DynamicType $form = null,
+        string $formKey = '',
     ): Response {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        $pageSize = $this->userSettings->getUserSetting(
-            $this->getUser(),
-            'pagination-page-size',
-        );
-        $page = $page ?? 1;
-        $contacts = $this->contactRepository->findBySearchAttributes($page, $pageSize);
-
-        $contactsApi = [];
-        foreach ($contacts as $contactRaw) {
-            $contactApi = $this->dynamicDto;
-            $contactApi->setData($contactRaw);
-            $contactApi->serializeDataForApiByFormModel('contact');
-            $contactsApi[] = $contactApi->getDataSerialized();
-        }
-
-        $data = [
-            'headers' => $this->contactForm->getIndexHeaders(),
-            'items' => $contactsApi,
-            'total_items' => count($contacts),
-            'pagination' => [
-                'page_count' => ceil(count($contacts) / $pageSize),
-                'page_size' => $pageSize,
-                'page' => $page,
-            ],
-        ];
-
-        return $this->json($data);
+        return parent::list($page, $this->contactRepository, $this->contactForm, 'contact');
     }
 
-    private function itemResponse(
-        ?DynamicDto $contact,
+    protected function itemResponse(
+        ?DynamicDto $dto,
+        string $formKey = 'contact',
+        ?DynamicType $form = null,
     ): Response {
-        if (!$contact) {
-            return $this->json(['message' => 'contact not found'], 404);
-        }
-
-        $contact->serializeDataForApiByFormModel('contact');
-
-        $data = [
-            'item' => $contact->getDataSerialized(),
-            'form' => $this->contactForm->getFormFields($contact->getBoolField('is_company'), true),
-            'sections' => $this->contactForm->getFormSections(),
-        ];
-
-        return $this->json($data);
+        return parent::itemResponse(
+            $dto,
+            'contact',
+            $dto->getBoolField('is_company') ? $this->companyForm : $this->contactForm
+        );
     }
 }
