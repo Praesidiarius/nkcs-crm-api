@@ -2,26 +2,20 @@
 
 namespace App\Form\Job;
 
-use App\Entity\Contact;
 use App\Entity\Job;
 use App\Enum\JobVatMode;
-use App\Repository\LegacyContactRepository;
+use App\Repository\ContactRepository;
 use App\Repository\SystemSettingRepository;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\EnumType;
-use Symfony\Component\Form\Extension\Core\Type\NumberType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class JobType extends AbstractType
 {
     public function __construct(
-        private readonly TranslatorInterface     $translator,
-        private readonly LegacyContactRepository $contactRepository,
+        private readonly TranslatorInterface $translator,
+        private readonly ContactRepository $contactRepository,
         private readonly SystemSettingRepository $systemSettingRepository,
     )
     {
@@ -29,20 +23,7 @@ class JobType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
-            ->add('title', TextType::class, [
-                'required' => true,
-                'invalid_message' => 'You entered an invalid value, it should include %num% letters',
-                'invalid_message_parameters' => ['%num%' => 6],
-            ])
-            ->add('contact', EntityType::class, [
-                'required' => true,
-                'class' => Contact::class,
-            ])
-            ->add('vatMode', EnumType::class, [
-                'class' => JobVatMode::class
-            ])
-        ;
+        //$builder;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -91,7 +72,11 @@ class JobType extends AbstractType
         foreach ($contacts as $contact) {
             $contactField[] = [
                 'id' => $contact->getId(),
-                'text' => $contact->getName()
+                'text' => $contact->getBoolField('is_company')
+                    ? $contact->getTextField('company_name')
+                    : $contact->getTextField('first_name')
+                        . ($contact->getTextField('last_name') ? ' ' . $contact->getTextField('last_name') : '')
+                ,
             ];
         }
 

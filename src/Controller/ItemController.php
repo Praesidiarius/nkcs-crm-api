@@ -32,7 +32,7 @@ class ItemController extends AbstractDynamicFormController
     }
 
     #[Route('/add', name: 'item_add', methods: ['GET'])]
-    public function getAddForm($form = null, $formKey = 'contact'): Response {
+    public function getAddForm($form = null, $formKey = 'item'): Response {
         return parent::getAddForm($this->itemForm, 'item');
     }
 

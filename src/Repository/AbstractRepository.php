@@ -13,6 +13,28 @@ class AbstractRepository
     ) {
     }
 
+    public function findAll(string $table): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from($table)
+        ;
+
+        $rawData = $qb->fetchAllAssociative();
+        if (count($rawData) > 0) {
+            $entities = [];
+            foreach ($rawData as $row) {
+                $entity = $this->dynamicEntity;
+                $this->dynamicEntity->setData($row);
+                $entities[] = $entity;
+            }
+            return $entities;
+        }
+
+        return [];
+    }
+
     public function findById(int $id, string $table): ?DynamicDto
     {
         $qb = $this->connection->createQueryBuilder();
@@ -22,6 +44,28 @@ class AbstractRepository
             ->where('id = :id')
             ->setParameters([
                 'id' => $id,
+            ])
+        ;
+
+        $rawData = $qb->fetchAssociative();
+        if ($rawData) {
+            $entity = $this->dynamicEntity;
+            $this->dynamicEntity->setData($rawData);
+            return $entity;
+        }
+
+        return null;
+    }
+
+    public function findByAttribute(string $attributeKey, mixed $attributeValue, string $table): ?DynamicDto
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from($table)
+            ->where($attributeKey . ' = :' . $attributeKey)
+            ->setParameters([
+                'attributeKey' => $attributeKey,
             ])
         ;
 

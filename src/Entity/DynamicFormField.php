@@ -199,4 +199,11 @@ class DynamicFormField
 
         return $this;
     }
+
+    public function setDynamicForm(DynamicForm $form): self
+    {
+        $this->dynamicForm = $form;
+
+        return $this;
+    }
 }

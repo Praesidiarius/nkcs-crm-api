@@ -219,6 +219,11 @@ class ContactController extends AbstractDynamicFormController
         return parent::list($page, $this->contactRepository, $this->contactForm, 'contact');
     }
 
+    #[Route('/settings', name: 'contact_settings', methods: ['GET'])]
+    public function settings(): Response {
+        return $this->json(['dev' => $this->isGranted('ROLE_DEVELOPER')]);
+    }
+
     protected function itemResponse(
         ?DynamicDto $dto,
         string $formKey = 'contact',

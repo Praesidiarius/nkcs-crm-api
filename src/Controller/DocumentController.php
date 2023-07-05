@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Entity\Document;
 use App\Entity\DocumentTemplate;
+use App\Entity\DynamicForm;
 use App\Form\Document\DocumentTemplateType;
 use App\Repository\DocumentRepository;
 use App\Repository\DocumentTemplateRepository;
 use App\Repository\DocumentTypeRepository;
+use App\Repository\DynamicFormFieldRepository;
 use App\Repository\UserSettingRepository;
 use App\Service\Document\DocumentGenerator;
 use App\Service\Document\TemplateManager;
@@ -33,10 +35,28 @@ class DocumentController extends AbstractApiController
         private readonly DocumentGenerator $documentGenerator,
         private readonly HttpClientInterface $httpClient,
         private readonly TemplateManager $templateManager,
+        private readonly DynamicFormFieldRepository $formFieldRepository,
         private readonly string $documentBaseDir,
     )
     {
         parent::__construct($this->httpClient);
+    }
+
+    private function getDynamicPlaceHolders(string $formKey): array
+    {
+        $contactDynamicPlacerholders = [];
+        $contactFormFields = $this->formFieldRepository->getUserFieldsByFormKey($formKey);
+        foreach ($contactFormFields as $field) {
+            if ($field->getFieldType() === 'hidden' ||$field->getFieldType() === 'table') {
+                continue;
+            }
+            $contactDynamicPlacerholders[] = [
+                'key' => '${'.substr($formKey, 0, 1) .'_' . $field->getFieldKey() . '}',
+                'description' => $field->getLabel(),
+            ];
+        }
+
+        return $contactDynamicPlacerholders;
     }
 
     #[Route('/add', name: 'document_template_add', methods: ['GET'])]
@@ -59,11 +79,20 @@ class DocumentController extends AbstractApiController
                     ]
                 ],
                 [
-                    'name' => 'Kundendokumente - Allgemein',
+                    'name' => 'Kundendokumente',
                     'key' => 'general',
                     'placeholders' => [
                         ['key' => '${salution}', 'description' => 'Anrede mit Namen des Kontaktes'],
                         ['key' => '${address}', 'description' => 'Adresse des Kontaktes'],
+                        ...$this->getDynamicPlaceHolders('contact'),
+                        ...$this->getDynamicPlaceHolders('contactAddress')
+                    ]
+                ],
+                [
+                    'name' => 'Artikeldokumente',
+                    'key' => 'general',
+                    'placeholders' => [
+                        ...$this->getDynamicPlaceHolders('item')
                     ]
                 ],
                 [
@@ -71,10 +100,11 @@ class DocumentController extends AbstractApiController
                     'key' => 'general',
                     'placeholders' => [
                         ['key' => '${id}', 'description' => 'Auftrags-Nr'],
-                        ['key' => '${salution}', 'description' => 'Anrede mit Namen des Kunden'],
                         ['key' => '${address}', 'description' => 'Adresse des Kunden'],
                         ['key' => '${subTotal}', 'description' => 'Sub-Total des Auftrags (ohne Steuern/Zulagen)'],
                         ['key' => '${total}', 'description' => 'Total des Auftrags (inkl. Steuern/Zulagen)'],
+                        ...$this->getDynamicPlaceHolders('contact'),
+                        ...$this->getDynamicPlaceHolders('contactAddress')
                     ]
                 ],
                 [

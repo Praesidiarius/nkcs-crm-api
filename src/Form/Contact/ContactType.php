@@ -30,7 +30,7 @@ class ContactType extends DynamicType
         return parent::getFormSections('contact', $withTabs);
     }
 
-    private function getFormFieldData(DynamicFormField $formField): mixed
+    protected function getFormFieldData(DynamicFormField $formField): mixed
     {
         return str_replace([
                 '#salutions#',

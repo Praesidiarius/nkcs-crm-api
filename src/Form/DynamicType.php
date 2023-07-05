@@ -6,9 +6,12 @@ use App\Entity\DynamicFormField;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CurrencyType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -42,6 +45,15 @@ class DynamicType extends AbstractType
                     break;
                 case 'email':
                     $builder->add($field['key'], EmailType::class);
+                    break;
+                case 'currency':
+                    $builder->add($field['key'], CurrencyType::class);
+                    break;
+                case 'date':
+                    $builder->add($field['key'], DateType::class);
+                    break;
+                case 'textarea':
+                    $builder->add($field['key'], TextareaType::class);
                     break;
                 default:
                     break;
@@ -78,7 +90,7 @@ class DynamicType extends AbstractType
         return $formSections;
     }
 
-    private function getFormFieldData(DynamicFormField $formField): mixed
+    protected function getFormFieldData(DynamicFormField $formField): mixed
     {
         return [];
     }
@@ -103,7 +115,7 @@ class DynamicType extends AbstractType
                 'section' => $dynamicFormField->getSection()->getSectionKey(),
                 'cols' => $dynamicFormField->getColumns(),
                 'data' => is_array($this->getFormFieldData($dynamicFormField))
-                    ? '----' : json_decode($this->getFormFieldData($dynamicFormField)),
+                    ? $this->getFormFieldData($dynamicFormField) : json_decode($this->getFormFieldData($dynamicFormField)),
             ];
 
             if ($dynamicFormField->getFieldType() === 'table') {

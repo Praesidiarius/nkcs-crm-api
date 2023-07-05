@@ -30,7 +30,7 @@ class ItemType extends DynamicType
         return parent::getFormSections('item', $withTabs);
     }
 
-    private function getFormFieldData(DynamicFormField $formField): mixed
+    protected function getFormFieldData(DynamicFormField $formField): mixed
     {
         return str_replace([
             '#units#',

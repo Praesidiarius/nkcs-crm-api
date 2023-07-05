@@ -14,9 +14,29 @@ class ContactRepository extends AbstractRepository
         parent::__construct($this->connection, $this->dynamicEntity);
     }
 
+    public function getDynamicDto(): DynamicDto
+    {
+        return $this->dynamicEntity;
+    }
+
+    public function findAll(string $table = 'contact'): array
+    {
+        return parent::findAll('contact');
+    }
+
     public function findById(int $id, string $table = 'contact'): ?DynamicDto
     {
         return parent::findById($id, 'contact');
+    }
+
+    public function findByEmail(string $email): ?DynamicDto
+    {
+        return parent::findByAttribute('email_private', $email, 'contact');
+    }
+
+    public function findBySignupToken(string $token): ?DynamicDto
+    {
+        return parent::findByAttribute('signup_token', $token, 'contact');
     }
 
     public function removeById(int $id, string $table = 'contact'): void

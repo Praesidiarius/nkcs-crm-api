@@ -24,13 +24,15 @@ class DynamicFormFieldRepository extends ServiceEntityRepository
         parent::__construct($registry, DynamicFormField::class);
     }
 
-    public function save(DynamicFormField $entity, bool $flush = false): void
+    public function save(DynamicFormField $entity, bool $flush = false): DynamicFormField
     {
         $this->getEntityManager()->persist($entity);
 
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+
+        return $entity;
     }
 
     public function remove(DynamicFormField $entity, bool $flush = false): void

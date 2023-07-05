@@ -3,9 +3,8 @@
 namespace App\Controller\Contact;
 
 use App\Controller\AbstractApiController;
-use App\Entity\Contact;
-use App\Entity\ContactAddress;
 use App\Repository\ContactAddressRepository;
+use App\Repository\ContactRepository;
 use App\Repository\LegacyContactRepository;
 use App\Repository\SystemSettingRepository;
 use DateTimeImmutable;
@@ -24,7 +23,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class ContactSignupController extends AbstractApiController
 {
     public function __construct(
-        private readonly LegacyContactRepository  $contactRepository,
+        private readonly ContactRepository  $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
         private readonly HttpClientInterface      $httpClient,
     )
@@ -53,7 +52,7 @@ class ContactSignupController extends AbstractApiController
             throw new HttpException(400, 'Please provide a valid e-mail');
         }
 
-        $contactExists = $this->contactRepository->findOneBy(['emailPrivate' => $data['email']]);
+        $contactExists = $this->contactRepository->findByEmail($data['email']);
         if ($contactExists) {
             throw new HttpException(400, 'E-Mail already exists');
         }
@@ -68,14 +67,14 @@ class ContactSignupController extends AbstractApiController
         $hasher = $factory->getPasswordHasher('common');
         $hash = str_replace(['$', '/','\\','.'], [], $hasher->hash($signupCode));
 
-        $contact = new Contact();
-        $contact->setEmailPrivate($data['email']);
-        $contact->setCreatedDate(new DateTimeImmutable());
+        $contact = $this->contactRepository->getDynamicDto();
+        $contact->setTextField('email_private', $data['email']);
+        $contact->setCreatedDate();
         $contact->setCreatedBy(0);
-        $contact->setSignupDate(new DateTimeImmutable());
-        $contact->setSignupToken($hash);
+        $contact->setDateField('signup_date',new DateTimeImmutable());
+        $contact->setTextField('signup_token', $hash);
 
-        $this->contactRepository->save($contact, true);
+        $this->contactRepository->save($contact);
 
         $emailSubject = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-subject']);
         $emailContent = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-content']);
@@ -113,30 +112,31 @@ class ContactSignupController extends AbstractApiController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
-        $contact = $this->contactRepository->findOneBy(['signupToken' => $hash]);
+        $contact = $this->contactRepository->findBySignupToken($hash);
 
         if (!$contact) {
             throw new HttpException(404, 'invalid signup token');
         }
 
         // update contact details
-        $contact->setIsCompany(true);
-        $contact->setCompanyName($data['name']);
-        $contact->setFirstName($data['firstname']);
-        $contact->setLastName($data['lastname']);
-        $contact->setCompanyUid($data['uid']);
-        $contact->setContactIdentifier($data['url']);
+        $contact->setBoolField('is_company', true);
+        $contact->setTextField('company_name', $data['name']);
+        $contact->setTextField('first_name', $data['firstname']);
+        $contact->setTextField('last_name', $data['lastname']);
+        $contact->setTextField('company_uid', $data['uid']);
+        $contact->setTextField('contact_identifier', $data['url']);
 
-        $this->contactRepository->save($contact, true);
+        $this->contactRepository->save($contact);
 
         // add address
-        $address = new ContactAddress();
-        $address->setContact($contact);
-        $address->setZip($data['zip']);
-        $address->setCity($data['city']);
-        $address->setStreet($data['street']);
+        $address = $this->contactRepository->getDynamicDto();
+        $address->setData([]);
+        $address->setSelectField('contact_id', $contact->getId());
+        $address->setIntField('zip', (int) $data['zip']);
+        $address->setTextField('city', $data['city']);
+        $address->setTextField('street', $data['street']);
 
-        $this->addressRepository->save($address, true);
+        $this->addressRepository->save($address);
 
         // start installation of new system
         if ($this->getParameter('installer.queue_dir')) {

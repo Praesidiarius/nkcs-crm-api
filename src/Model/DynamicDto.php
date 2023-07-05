@@ -4,6 +4,7 @@ namespace App\Model;
 
 use App\Entity\DynamicFormField;
 use App\Repository\DynamicFormFieldRepository;
+use DateTimeInterface;
 use Doctrine\DBAL\Connection;
 
 class DynamicDto
@@ -53,6 +54,20 @@ class DynamicDto
         return $this;
     }
 
+    public function setIntField(string $fieldKey, int $value): self
+    {
+        $this->data[$fieldKey] = $value;
+
+        return $this;
+    }
+
+    public function setDateField(string $fieldKey, DateTimeInterface $dateTime): self
+    {
+        $this->data[$fieldKey] = $dateTime->format('Y-m-d');
+
+        return $this;
+    }
+
     public function getPriceField(string $fieldKey): ?float
     {
         if (array_key_exists($fieldKey, $this->data)) {
@@ -78,11 +93,25 @@ class DynamicDto
         return false;
     }
 
+    public function setBoolField(string $fieldKey, bool $active): self
+    {
+        $this->data[$fieldKey] = (int) $active;
+
+        return $this;
+    }
+
     public function getSelectField(string $fieldKey): array
     {
         $field = $this->dynamicFormFieldRepository->findOneBy(['fieldKey' => $fieldKey]);
 
         return $this->getSerializedSelectFieldData($field, $this->data[$fieldKey] ?? 0);
+    }
+
+    public function setSelectField(string $fieldKey, int $value): self
+    {
+        $this->data[$fieldKey] = $value;
+
+        return $this;
     }
 
     public function serializeDataForApiByFormModel(string $formKey): void
@@ -103,11 +132,18 @@ class DynamicDto
                             : $this->data[$field->getFieldKey()]
                     ) ?? 0,
                 ),
+                'currency' => $this->getSerializedCurrencyFieldData($field, $this->data[$field->getFieldKey()] ?? 0),
                 default => array_key_exists($field->getFieldKey(), $this->data)
                     ? $this->data[$field->getFieldKey()]
                     : '-'
             };
         }
+    }
+
+    private function getSerializedCurrencyFieldData(DynamicFormField $currencyField, float $value): float
+    {
+        $this->serializedData[$currencyField->getFieldKey() . '_text'] = 'CHF ' . number_format($value, 2, '.', '\'');
+        return $value;
     }
 
     private function getSerializedSelectFieldData(DynamicFormField $selectField, int $selectedValue): array

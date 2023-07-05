@@ -4,8 +4,10 @@ namespace App\Service\Document;
 
 use App\Entity\Document;
 use App\Entity\DocumentTemplate;
+use App\Model\DynamicDto;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
+use App\Repository\DynamicFormFieldRepository;
 use App\Repository\LegacyContactRepository;
 use App\Repository\JobRepository;
 use PhpOffice\PhpWord\Element\TextRun;
@@ -21,6 +23,7 @@ class DocumentGenerator
         private readonly JobRepository           $jobRepository,
         private readonly Security                $security,
         private readonly TranslatorInterface     $translator,
+        private readonly DynamicFormFieldRepository $formFieldRepository,
         private readonly string                  $documentBaseDir,
     ) {
     }
@@ -73,6 +76,9 @@ class DocumentGenerator
         $templateProcessor->setValue('userName', $this->security->getUser()->getName());
         $templateProcessor->setValue('userTitle', $this->security->getUser()->getFunction());
         $templateProcessor->setValue('date', date('d.m.Y', time()));
+
+        $this->replaceDynamicPlaceHolders('contact', $templateProcessor, $contact);
+        $this->replaceDynamicPlaceHolders('contactAddress', $templateProcessor, $contact);
 
         $templateProcessor->saveAs(
             $this->documentBaseDir
@@ -174,6 +180,21 @@ class DocumentGenerator
         );
 
         return base64_encode($fileContent);
+    }
+
+    private function replaceDynamicPlaceHolders(string $formKey, TemplateProcessor &$templateProcessor, DynamicDto $data): void
+    {
+        $contactFormFields = $this->formFieldRepository->getUserFieldsByFormKey($formKey);
+        foreach ($contactFormFields as $field) {
+            if ($field->getFieldType() === 'hidden') {
+                continue;
+            }
+            $fieldValue = match ($field->getFieldType()) {
+                'date' => date('d.m.Y', strtotime($data->getTextField($field->getFieldKey()))),
+                default => $data->getTextField($field->getFieldKey())
+            };
+            $templateProcessor->setValue(substr($formKey,0,1). '_' . $field->getFieldKey(), $fieldValue);
+        }
     }
 
 }

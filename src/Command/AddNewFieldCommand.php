@@ -2,8 +2,15 @@
 
 namespace App\Command;
 
+use App\Entity\DynamicFormField;
+use App\Entity\DynamicFormFieldRelation;
+use App\Repository\DynamicFormFieldRelationRepository;
+use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
 use App\Repository\DynamicFormSectionRepository;
+use App\Repository\SystemSettingRepository;
+use App\Repository\UserRepository;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -14,9 +21,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'installer:add-field')]
 class AddNewFieldCommand extends Command
 {
+    private readonly InputInterface $input;
     public function __construct(
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormSectionRepository $dynamicFormSectionRepository,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly DynamicFormFieldRelationRepository $fieldRelationRepository,
+        private readonly SystemSettingRepository $systemSettings,
+        private readonly Connection $connection,
+        private readonly UserRepository $userRepository,
     ) {
         parent::__construct();
     }
@@ -36,6 +49,7 @@ class AddNewFieldCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->input = $input;
         // required options
         $requiredOptions = ['table', 'form', 'type', 'section'];
         foreach ($requiredOptions as $option) {
@@ -70,6 +84,21 @@ class AddNewFieldCommand extends Command
             return Command::FAILURE;
         }
 
+        $fieldKey = $input->getArgument('key');
+        $tableName = $input->getOption('table');
+
+        $allowedTables = $this->systemSettings->findOneBy(['settingKey' => 'add-field-allowed-tables']);
+        $allowedTables = json_decode($allowedTables->getSettingValue());
+
+        if (!in_array($tableName, $allowedTables)) {
+            $output->writeln([
+                'Its not allowed to add fields to ' . $tableName,
+                '============',
+                '',
+            ]);
+            return Command::FAILURE;
+        }
+
         // start
         $output->writeln([
             'Add new ' . $input->getOption('type') . ' field to '
@@ -80,10 +109,38 @@ class AddNewFieldCommand extends Command
         ]);
 
         // alter table sql
-
-        // insert to dynamic_form
+        $output->writeln([
+            'Alter Table ' . $input->getOption('table'),
+        ]);
+        $this->connection->executeQuery('ALTER TABLE `' . $tableName . '` ADD `' . $fieldKey . '` ' . strtoupper($this->getRowDataTypeForDB()) . ' NULL; ');
 
         // insert to dynamic_form_field
+        $output->writeln([
+            'Safe new field ' . $input->getArgument('label'),
+        ]);
+        $field = new DynamicFormField();
+        $field->setDynamicForm($form);
+        $field->setSection($section);
+        $field->setColumns($columns);
+        $field->setFieldKey($fieldKey);
+        $field->setLabel($input->getArgument('label'));
+        $field->setFieldType($input->getOption('type'));
+
+        $field = $this->dynamicFormFieldRepository->save($field, true);
+
+        // add to users
+        $output->writeln([
+            'Add field to users ' . $input->getArgument('label'),
+        ]);
+        foreach ($this->userRepository->findAll() as $user) {
+            $relation = new DynamicFormFieldRelation();
+            $relation->setField($field);
+            $relation->setUser($user);
+            $relation->setSortId(0);
+
+            $this->fieldRelationRepository->save($relation, true);
+        }
+
 
         // done
         $output->writeln([
@@ -106,5 +163,17 @@ class AddNewFieldCommand extends Command
         }
 
         return true;
+    }
+
+    private function getRowDataTypeForDB(): string
+    {
+        return match ($this->input->getOption('type')) {
+            'select' => 'int',
+            'date' => 'date',
+            'currency' => 'float',
+            'textarea' => 'text',
+            'datetime' => 'datetime',
+            default => 'string'
+        };
     }
 }
