@@ -29,6 +29,8 @@ jobs:
       run: php -r "file_exists('.env.test.local') || copy('.env.test', '.env.test.local');"
     - uses: php-actions/composer@v6 # or alternative dependency management
     - uses: php-actions/phpstan@v3
+      with:
+          path: src/
     - name: Create Database
       run: |
         mkdir -p data
