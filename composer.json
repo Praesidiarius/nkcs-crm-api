@@ -35,7 +35,8 @@
         "symfony/translation": "6.3.*",
         "symfony/uid": "6.3.*",
         "symfony/validator": "6.3.*",
-        "symfony/yaml": "6.3.*"
+        "symfony/yaml": "6.3.*",
+        "zircote/swagger-php": "^4.7"
     },
     "config": {
         "allow-plugins": {

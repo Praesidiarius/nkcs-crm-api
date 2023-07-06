@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+  title: 'NKCS CRM API'
+  version: 0.2.1
+paths:
+  '/api/contact/{_locale}/add':
+    get:
+      operationId: ba56c5c3636b1c3430195ee542254e4e
+      parameters:
+        -
+          name: _locale
+          in: path
+          description: language
+          example: de
+      responses:
+        '200':
+          description: 'init add form successfully'
+          content:
+            application/json:
+              schema:
+                default:
+                  form: []
+                  sections: []
+        '402':
+          description: 'no valid license found'
+        '404':
+          description: 'form not found found'
+      security:
+        -
+          securityScheme: token
+          type: apiKey
+          name: Authorization
+          in: header

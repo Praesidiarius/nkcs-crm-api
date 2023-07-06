@@ -18,6 +18,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use OpenApi\Attributes as OA;
 
 #[Route('/api/contact/{_locale}')]
 class ContactController extends AbstractDynamicFormController
@@ -37,6 +38,21 @@ class ContactController extends AbstractDynamicFormController
     }
 
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
+    #[OA\Get(path: '/api/contact/{_locale}/add', security: [
+        new OA\SecurityScheme(securityScheme: 'token', type: 'apiKey', name: 'Authorization', in: 'header')
+    ], parameters: [
+        new OA\Parameter(name: '_locale', description: 'language', in: 'path', example: 'de')
+    ])]
+    #[OA\Response(
+        response: '200',
+        description: 'init add form successfully',
+        content: new OA\JsonContent(default: [
+            'form' => [],
+            'sections' => [],
+        ])
+    )]
+    #[OA\Response(response: '402', description: 'no valid license found')]
+    #[OA\Response(response: '404', description: 'form not found found')]
     public function getAddForm($form = null, $formKey = 'contact'): Response {
         return parent::getAddForm($this->contactForm, 'contact');
     }
