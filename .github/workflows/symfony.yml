@@ -37,6 +37,7 @@ jobs:
           ${{ runner.os }}-php-
     - name: Install Dependencies
       run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+    - uses: php-actions/phpstan@v3
     - name: Create Database
       run: |
         mkdir -p data
