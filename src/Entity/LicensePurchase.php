@@ -17,9 +17,8 @@ class LicensePurchase
     #[ORM\Column(length: 100)]
     private ?string $holder = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Contact $contact = null;
+    #[ORM\Column(nullable: false)]
+    private ?int $contact = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
@@ -54,14 +53,14 @@ class LicensePurchase
         return $this;
     }
 
-    public function getContact(): ?Contact
+    public function getContact(): ?int
     {
         return $this->contact;
     }
 
-    public function setContact(?Contact $contact): self
+    public function setContact(?int $contactId): self
     {
-        $this->contact = $contact;
+        $this->contact = $contactId;
 
         return $this;
     }

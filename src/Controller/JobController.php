@@ -6,7 +6,6 @@ use App\Entity\Job;
 use App\Entity\JobPosition;
 use App\Enum\JobVatMode;
 use App\Form\Job\JobType;
-use App\Repository\LegacyContactRepository;
 use App\Repository\ItemRepository;
 use App\Repository\JobPositionRepository;
 use App\Repository\JobPositionUnitRepository;
@@ -31,7 +30,6 @@ class JobController extends AbstractApiController
         private readonly JobTypeRepository         $jobTypeRepository,
         private readonly JobPositionUnitRepository $jobPositionUnitRepository,
         private readonly JobPositionRepository     $jobPositionRepository,
-        private readonly LegacyContactRepository   $contactRepository,
         private readonly UserSettingRepository     $userSettings,
         private readonly ItemRepository            $itemRepository,
         private readonly HttpClientInterface       $httpClient,
@@ -67,7 +65,7 @@ class JobController extends AbstractApiController
 
         $contactId = (int) $data['contact'];
         if ($contactId > 0) {
-            $data['contact'] = $this->contactRepository->find($contactId);
+            $data['contact'] = $contactId;
         }
 
         $form = $this->createForm(JobType::class, $job);

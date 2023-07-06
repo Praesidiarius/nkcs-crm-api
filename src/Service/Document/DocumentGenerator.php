@@ -8,7 +8,6 @@ use App\Model\DynamicDto;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
-use App\Repository\LegacyContactRepository;
 use App\Repository\JobRepository;
 use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\TemplateProcessor;

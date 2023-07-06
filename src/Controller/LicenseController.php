@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Entity\License;
 use App\Entity\LicenseProduct;
 use App\Entity\LicensePurchase;
-use App\Repository\LegacyContactRepository;
+use App\Repository\ContactRepository;
 use App\Repository\LicenseProductRepository;
 use App\Repository\LicensePurchaseRepository;
 use App\Repository\LicenseRepository;
@@ -29,7 +29,7 @@ class LicenseController extends AbstractController
         private readonly LicenseRepository         $licenseRepository,
         private readonly LicenseProductRepository  $licenseProductRepository,
         private readonly LicensePurchaseRepository $licensePurchaseRepository,
-        private readonly LegacyContactRepository   $contactRepository,
+        private readonly ContactRepository   $contactRepository,
         private readonly TranslatorInterface       $translator,
         private readonly HttpClientInterface       $httpClient,
     ) {
@@ -188,13 +188,17 @@ class LicenseController extends AbstractController
             }
             $price = Price::retrieve($licenseProduct->getItem()->getStripePriceId());
             $hash = Uuid::v4();
-            $contact = $this->contactRepository->findOneBy(['contactIdentifier' => $licenseHolder]);
+            $contact = $this->contactRepository->findByAttribute(
+                'identifier',
+                $licenseHolder,
+                'contact'
+            );
             if (!$contact) {
                 return $this->json(['error' => 'contact not found']);
             }
 
             $purchase = new LicensePurchase();
-            $purchase->setContact($contact);
+            $purchase->setContact($contact->getId());
             $purchase->setHolder($licenseHolder);
             $purchase->setHash($hash);
             $purchase->setProduct($licenseProduct);

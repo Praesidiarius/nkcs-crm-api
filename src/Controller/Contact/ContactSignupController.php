@@ -5,7 +5,6 @@ namespace App\Controller\Contact;
 use App\Controller\AbstractApiController;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
-use App\Repository\LegacyContactRepository;
 use App\Repository\SystemSettingRepository;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
