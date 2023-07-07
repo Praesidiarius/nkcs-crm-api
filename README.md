@@ -1,5 +1,7 @@
 # NKCS CRM Api
 > Simple, light and extensible api based on the symfony framework
+>
+> [![CI Status](https://github.com/Praesidiarius/nkcs-crm-api/workflows/CI/badge.svg)](https://github.com/Praesidiarius/nkcs-crm-api/actions)
 
 ## Install
 - ``composer install``
