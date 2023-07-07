@@ -3,7 +3,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Symfony
+name: CI
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
       run: sudo /etc/init.d/mysql start
 
     - name: Create test database
-      run : mysql --host mydb -uroot -ppassword -e "CREATE DATABASE `db_test`"
+      run : mysql -uroot -ppassword -e "CREATE DATABASE `db_test`"
     - name: init test data
       run: mysql "db_test" -uroot -proot < data/sql/db_test.sql
       
