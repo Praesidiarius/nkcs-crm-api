@@ -36,7 +36,7 @@ jobs:
       run: sudo /etc/init.d/mysql start
 
     - name: Create test database
-      run : mysql -uroot -proot -e "CREATE DATABASE `db_test`"
+      run : mysql -uroot -proot -e "CREATE DATABASE `db_test`;"
     - name: init test data
       run: mysql "db_test" -uroot -proot < data/sql/db_test.sql
       
