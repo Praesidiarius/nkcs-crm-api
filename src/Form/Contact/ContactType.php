@@ -37,7 +37,7 @@ class ContactType extends DynamicType
             ],[
                 json_encode($this->getSalutions()),
             ],
-            $formField->getDefaultData(),
+            $formField->getDefaultData() ?? '',
         );
     }
 
