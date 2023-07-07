@@ -40,5 +40,5 @@ jobs:
       
     - name: Execute tests (Unit and Feature tests) via PHPUnit
       env:
-        DATABASE_URL: mysql://root:root@127.0.0.1:3306/nkcs_test?serverVersion=mysql-5.7
+        DATABASE_URL: mysql://root:root@127.0.0.1:3306/nkcs_test?serverVersion=5.7
       run: vendor/bin/phpunit
