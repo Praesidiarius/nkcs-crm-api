@@ -37,7 +37,7 @@ class ItemType extends DynamicType
         ],[
             json_encode($this->getUnits()),
         ],
-            $formField->getDefaultData(),
+            $formField->getDefaultData() ?? '',
         );
     }
 

@@ -5,7 +5,7 @@ namespace App\Tests\Controller;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ContactControllerTest extends WebTestCase
+class ItemControllerTest extends WebTestCase
 {
 
     public function setUp(): void
@@ -37,7 +37,7 @@ class ContactControllerTest extends WebTestCase
     {
         $this->logInAuthorizedUser('ROLE_ADMIN');
 
-        $this->client->request('GET', '/api/contact/de/list');
+        $this->client->request('GET', '/api/item/de/list');
 
         $this->assertResponseIsSuccessful();
 
@@ -55,7 +55,7 @@ class ContactControllerTest extends WebTestCase
     {
         $this->logInAuthorizedUser('ROLE_ADMIN');
 
-        $this->client->request('GET', '/api/contact/de/add');
+        $this->client->request('GET', '/api/item/de/add');
 
         $this->assertResponseIsSuccessful();
 
@@ -65,22 +65,5 @@ class ContactControllerTest extends WebTestCase
         $this->assertIsArray($responseData);
         $this->assertArrayHasKey('form', $responseData);
         $this->assertArrayHasKey('sections', $responseData);
-    }
-
-    public function testAddCompanyForm(): void
-    {
-        $this->logInAuthorizedUser('ROLE_ADMIN');
-
-        $this->client->request('GET', '/api/contact/de/add-company');
-
-        $this->assertResponseIsSuccessful();
-
-        $this->assertSame(200, $this->client->getResponse()->getStatusCode());
-        $responseData = json_decode($this->client->getResponse()->getContent(), true);
-
-        $this->assertIsArray($responseData);
-        $this->assertArrayHasKey('form', $responseData);
-        $this->assertArrayHasKey('sections', $responseData);
-
     }
 }

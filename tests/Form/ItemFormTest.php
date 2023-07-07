@@ -2,27 +2,27 @@
 
 namespace App\Tests\Form;
 
-use App\Form\Contact\ContactType;
+use App\Form\Item\ItemType;
 use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class ContactFormTest extends KernelTestCase
+class ItemFormTest extends KernelTestCase
 {
     use MatchesSnapshots;
 
-    private readonly ContactType $contactForm;
+    private readonly ItemType $itemForm;
 
     public function setUp(): void
     {
         self::bootKernel();
         $container = static::getContainer();
-        $this->contactForm = $container->get(ContactType::class);
+        $this->itemForm = $container->get(ItemType::class);
 
         parent::setUp();
     }
 
     public function testFormFields() {
-        $formFields = $this->contactForm->getFormFields();
+        $formFields = $this->itemForm->getFormFields();
 
         $this->assertIsArray($formFields);
 
@@ -30,7 +30,7 @@ class ContactFormTest extends KernelTestCase
     }
 
     public function testFormSections() {
-        $formSections = $this->contactForm->getFormSections();
+        $formSections = $this->itemForm->getFormSections();
 
         $this->assertIsArray($formSections);
 
@@ -38,7 +38,7 @@ class ContactFormTest extends KernelTestCase
     }
 
     public function testIndexHeaders() {
-        $indexHeaders = $this->contactForm->getIndexHeaders();
+        $indexHeaders = $this->itemForm->getIndexHeaders();
 
         $this->assertIsArray($indexHeaders);
 

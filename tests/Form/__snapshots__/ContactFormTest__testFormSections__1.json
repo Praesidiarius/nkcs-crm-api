@@ -1,0 +1,14 @@
+[
+    {
+        "text": "Kontaktdaten",
+        "key": "contactBasic",
+        "isTab": false,
+        "test": false
+    },
+    {
+        "text": "Adressen",
+        "key": "contactAddress",
+        "isTab": false,
+        "test": false
+    }
+]
