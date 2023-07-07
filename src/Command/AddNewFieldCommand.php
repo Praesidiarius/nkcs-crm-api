@@ -29,7 +29,6 @@ class AddNewFieldCommand extends Command
         private readonly SystemSettingRepository $systemSettings,
         private readonly Connection $connection,
         private readonly UserRepository $userRepository,
-        private InputInterface $input,
     ) {
         parent::__construct();
     }
@@ -49,7 +48,6 @@ class AddNewFieldCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->input = $input;
         // required options
         $requiredOptions = ['table', 'form', 'type', 'section'];
         foreach ($requiredOptions as $option) {
@@ -112,7 +110,7 @@ class AddNewFieldCommand extends Command
         $output->writeln([
             'Alter Table ' . $input->getOption('table'),
         ]);
-        $this->connection->executeQuery('ALTER TABLE `' . $tableName . '` ADD `' . $fieldKey . '` ' . strtoupper($this->getRowDataTypeForDB()) . ' NULL; ');
+        $this->connection->executeQuery('ALTER TABLE `' . $tableName . '` ADD `' . $fieldKey . '` ' . strtoupper($this->getRowDataTypeForDB($input)) . ' NULL; ');
 
         // insert to dynamic_form_field
         $output->writeln([
@@ -165,7 +163,7 @@ class AddNewFieldCommand extends Command
         return true;
     }
 
-    private function getRowDataTypeForDB(): string
+    private function getRowDataTypeForDB($input): string
     {
         return match ($this->input->getOption('type')) {
             'select' => 'int',

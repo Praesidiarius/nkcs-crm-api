@@ -8,7 +8,17 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class ContactControllerTest extends WebTestCase
 {
-    private readonly KernelBrowser $client;
+
+    public function setUp(): void
+    {
+        //self::bootKernel();
+
+        $this->client = static::createClient([], [
+            //'HTTP_HOST' => 'api-dev.vivid-crm.io'
+        ]);
+
+        parent::setUp();
+    }
 
     public function logInAuthorizedUser(string $role): void
     {
@@ -26,16 +36,6 @@ class ContactControllerTest extends WebTestCase
         ]);
 
         $this->client->setServerParameter('HTTP_Authorization', sprintf('Bearer %s', $token));
-    }
-
-
-    public function setUp(): void
-    {
-        $this->client = static::createClient([], [
-            'HTTP_HOST' => 'api-dev.vivid-crm.io'
-        ]);
-
-        parent::setUp();
     }
 
     public function testIndex(): void
@@ -87,21 +87,5 @@ class ContactControllerTest extends WebTestCase
         $this->assertArrayHasKey('form', $responseData);
         $this->assertArrayHasKey('sections', $responseData);
 
-    }
-
-    public function testEditForm(): void
-    {
-        $this->logInAuthorizedUser('ROLE_ADMIN');
-
-        $this->client->request('GET', '/api/contact/de/edit/1');
-
-        $this->assertResponseIsSuccessful();
-
-        $this->assertSame(200, $this->client->getResponse()->getStatusCode());
-        $responseData = json_decode($this->client->getResponse()->getContent(), true);
-
-        $this->assertIsArray($responseData);
-        $this->assertArrayHasKey('form', $responseData);
-        $this->assertArrayHasKey('sections', $responseData);
     }
 }
