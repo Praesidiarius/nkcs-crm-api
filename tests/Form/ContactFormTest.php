@@ -29,7 +29,7 @@ class ContactFormTest extends KernelTestCase
 
         $this->assertIsArray($formFields);
 
-        $this->assertMatchesSnapshot($formFields);
+        $this->assertMatchesJsonSnapshot($formFields);
     }
 
     public function testCompanyFormFields() {
@@ -37,7 +37,7 @@ class ContactFormTest extends KernelTestCase
 
         $this->assertIsArray($formFields);
 
-        $this->assertMatchesSnapshot($formFields);
+        $this->assertMatchesJsonSnapshot($formFields);
     }
 
     public function testFormSections() {
