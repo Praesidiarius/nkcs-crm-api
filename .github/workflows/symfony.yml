@@ -44,8 +44,4 @@ jobs:
     - name: Execute tests (Unit and Feature tests) via PHPUnit
       env:
         DATABASE_URL: mysql://root:root@127.0.0.1:3306/nkcs?serverVersion=5.7
-        JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
-        JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
-        JWT_PASSPHRASE: 4a6efcc52d3a785113cb4caab67bc3417209613a4e9114ae3104dafc792a63d7
-        
       run: vendor/bin/phpunit
