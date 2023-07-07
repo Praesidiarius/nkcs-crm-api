@@ -13,8 +13,8 @@ class JobPosition
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne]
-    private ?Item $item = null;
+    #[ORM\Column(nullable: true)]
+    private ?int $itemId = null;
 
     #[ORM\Column(nullable: true)]
     private ?float $price = null;
@@ -38,14 +38,14 @@ class JobPosition
         return $this->id;
     }
 
-    public function getItem(): ?Item
+    public function getItem(): ?int
     {
-        return $this->item;
+        return $this->itemId;
     }
 
-    public function setItem(?Item $item): self
+    public function setItem(?int $itemId): self
     {
-        $this->item = $item;
+        $this->itemId = $itemId;
 
         return $this;
     }

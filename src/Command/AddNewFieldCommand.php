@@ -21,7 +21,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'installer:add-field')]
 class AddNewFieldCommand extends Command
 {
-    private readonly InputInterface $input;
     public function __construct(
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormSectionRepository $dynamicFormSectionRepository,
@@ -30,6 +29,7 @@ class AddNewFieldCommand extends Command
         private readonly SystemSettingRepository $systemSettings,
         private readonly Connection $connection,
         private readonly UserRepository $userRepository,
+        private InputInterface $input,
     ) {
         parent::__construct();
     }

@@ -23,9 +23,8 @@ class License
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dateValid = null;
 
-    #[ORM\ManyToOne(inversedBy: 'licenses')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Contact $contact = null;
+    #[ORM\Column(nullable: false)]
+    private int $contactId = 0;
 
     #[ORM\Column(length: 255)]
     private ?string $urlApi = null;
@@ -81,14 +80,14 @@ class License
         return $this;
     }
 
-    public function getContact(): ?Contact
+    public function getContact(): ?int
     {
-        return $this->contact;
+        return $this->contactId;
     }
 
-    public function setContact(?Contact $contact): self
+    public function setContact(?int $contactId): self
     {
-        $this->contact = $contact;
+        $this->contactId = $contactId;
 
         return $this;
     }

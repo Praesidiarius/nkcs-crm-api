@@ -13,20 +13,20 @@ class LicenseProduct
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    private ?Item $item = null;
+    #[ORM\Column]
+    private ?int $item = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getItem(): ?Item
+    public function getItem(): ?int
     {
         return $this->item;
     }
 
-    public function setItem(?Item $item): self
+    public function setItem(?int $item): self
     {
         $this->item = $item;
 

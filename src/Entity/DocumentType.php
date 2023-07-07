@@ -3,10 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\DocumentTypeRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Ignore;
 
 #[ORM\Entity(repositoryClass: DocumentTypeRepository::class)]
 class DocumentType
@@ -21,11 +18,6 @@ class DocumentType
 
     #[ORM\Column(length: 50)]
     private ?string $identifier = null;
-
-    public function __construct()
-    {
-        $this->documents = new ArrayCollection();
-    }
 
     public function getId(): ?int
     {

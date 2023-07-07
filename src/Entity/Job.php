@@ -36,9 +36,8 @@ class Job
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?DateTimeInterface $createdDate = null;
 
-    #[ORM\ManyToOne(inversedBy: 'jobs')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Contact $contact = null;
+    #[ORM\Column(nullable: false)]
+    private ?int $contactId = null;
 
     #[ORM\Column]
     private ?float $subTotal = 0;
@@ -154,14 +153,14 @@ class Job
         return $this;
     }
 
-    public function getContact(): ?Contact
+    public function getContact(): ?int
     {
-        return $this->contact;
+        return $this->contactId;
     }
 
-    public function setContact(?Contact $contact): self
+    public function setContact(?int $contactId): self
     {
-        $this->contact = $contact;
+        $this->contactId = $contactId;
 
         return $this;
     }
