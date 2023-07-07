@@ -165,7 +165,7 @@ class AddNewFieldCommand extends Command
 
     private function getRowDataTypeForDB($input): string
     {
-        return match ($this->input->getOption('type')) {
+        return match ($input->getOption('type')) {
             'select' => 'int',
             'date' => 'date',
             'currency' => 'float',
