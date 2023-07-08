@@ -13,6 +13,26 @@ class AbstractRepository
     ) {
     }
 
+    public function findMostRecent(string $table): ?DynamicDto
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from($table)
+            ->orderBy('id', 'DESC')
+        ;
+
+        $raw = $qb->fetchAssociative();
+        if (!$raw) {
+            return null;
+        }
+
+        $entity = $this->dynamicEntity;
+        $this->dynamicEntity->setData($raw);
+
+        return $entity;
+    }
+
     public function findAll(string $table): array
     {
         $qb = $this->connection->createQueryBuilder();

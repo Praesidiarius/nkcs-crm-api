@@ -25,6 +25,11 @@ class ContactRepository extends AbstractRepository
         return parent::findAll('contact');
     }
 
+    public function findMostRecent(string $table = 'contact'): ?DynamicDto
+    {
+        return parent::findMostRecent('contact');
+    }
+
     public function findById(int $id, string $table = 'contact'): ?DynamicDto
     {
         return parent::findById($id, 'contact');

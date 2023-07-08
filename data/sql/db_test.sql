@@ -17,7 +17,6 @@ CREATE TABLE `contact` (
                          `last_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                          `is_company` tinyint(1) NOT NULL,
                          `email_private` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `email_business` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                          `created_by` int(11) NOT NULL,
                          `created_date` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
                          `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -25,8 +24,8 @@ CREATE TABLE `contact` (
                          `company_uid` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                          `contact_identifier` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                          `signup_token` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `signup_date` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
-                         `birthday` date DEFAULT NULL,
+                         `signup_date_step1` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+                         `signup_date_step2` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
                          `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -148,15 +147,17 @@ INSERT INTO `dynamic_form_field_relation` (`id`, `field_id`, `user_id`, `sort_id
                                                                                                       (5, 5, 1, 4, 0),
                                                                                                       (6, 6, 1, 5, 0),
                                                                                                       (7, 7, 1, 6, 0),
-                                                                                                      (8, 10, 1, 7, 0),
-                                                                                                      (9, 11, 1, 8, 0),
-                                                                                                      (10, 12, 1, 9, 0),
-                                                                                                      (11, 13, 1, 10, 0),
-                                                                                                      (12, 14, 1, 11, 0),
-                                                                                                      (13, 18, 1, 12, 0),
-                                                                                                      (14, 19, 1, 13, 1),
-                                                                                                      (15, 20, 1, 14, 0),
-                                                                                                      (16, 21, 1, 15, 0);
+                                                                                                      (8, 8, 1, 7, 0),
+                                                                                                      (9, 9, 1, 8, 0),
+                                                                                                      (10, 10, 1, 9, 0),
+                                                                                                      (11, 11, 1, 10, 0),
+                                                                                                      (12, 12, 1, 11, 0),
+                                                                                                      (13, 13, 1, 12, 0),
+                                                                                                      (14, 14, 1, 13, 0),
+                                                                                                      (15, 18, 1, 14, 0),
+                                                                                                      (16, 19, 1, 15, 1),
+                                                                                                      (17, 20, 1, 16, 0),
+                                                                                                      (18, 21, 1, 17, 0);
 
 CREATE TABLE `dynamic_form_section` (
                                       `id` int(11) NOT NULL,
@@ -247,7 +248,12 @@ CREATE TABLE `system_setting` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `system_setting` (`id`, `setting_key`, `setting_value`) VALUES
-  (1, 'add-field-allowed-tables', '[\"contact\",\"item\"]');
+  (1, 'add-field-allowed-tables', '[\"contact\",\"item\"]'),
+  (2, 'contact-signup-email-subject', 'NKCS Test Signup'),
+  (3, 'contact-signup-email-content', 'Signup here: http://example.com/step2/#HASH#'),
+  (4, 'contact-signup-email-text', 'Signup here: http://example.com/step2/#HASH#'),
+  (5, 'contact-signup-email-name', 'NKCS CRM');
+  ;
 
 CREATE TABLE `user` (
                       `id` int(11) NOT NULL,
@@ -393,7 +399,7 @@ ALTER TABLE `dynamic_form_field`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 ALTER TABLE `dynamic_form_field_relation`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `dynamic_form_section`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
@@ -417,7 +423,7 @@ ALTER TABLE `job_type`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `system_setting`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 ALTER TABLE `user`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;

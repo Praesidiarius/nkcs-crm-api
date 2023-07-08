@@ -10,6 +10,7 @@ use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
+use App\Repository\DynamicFormFieldRepository;
 use App\Repository\UserSettingRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -32,6 +33,7 @@ class ContactController extends AbstractDynamicFormController
         private readonly HttpClientInterface      $httpClient,
         private readonly TranslatorInterface      $translator,
         private readonly DynamicDto               $dynamicDto,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
     )
     {
         parent::__construct($this->httpClient, $this->userSettings, $this->dynamicDto);
@@ -74,7 +76,11 @@ class ContactController extends AbstractDynamicFormController
         $data['is_company'] = (int) $data['is_company'];
 
         // move address related data out of data for validation
-        $addressFields = ['street', 'zip', 'city'];
+        $addressForm = $this->dynamicFormFieldRepository->getUserFieldsByFormKey('contactAddress');
+        $addressFields = [];
+        foreach ($addressForm as $addressField) {
+            $addressFields[] = $addressField->getFieldKey();
+        }
         $addressData = [];
         $contactHasAddress = false;
 
@@ -87,7 +93,9 @@ class ContactController extends AbstractDynamicFormController
             unset($data[$addressField]);
         }
 
-        $form = $this->createForm($data['is_company'] === 1 ? ContactCompanyType::class : ContactType::class);
+        $form = $this->createForm($data['is_company'] === 1
+            ? ContactCompanyType::class : ContactType::class);
+
         $form->submit($data);
 
         if (!$form->isValid()) {
