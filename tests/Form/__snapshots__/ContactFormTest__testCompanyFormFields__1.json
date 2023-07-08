@@ -1,0 +1,68 @@
+[
+    {
+        "text": "Firma",
+        "key": "company_name",
+        "type": "text",
+        "section": "contactBasic",
+        "cols": 12,
+        "data": []
+    },
+    {
+        "text": "E-Mail Adresse",
+        "key": "email_private",
+        "type": "email",
+        "section": "contactBasic",
+        "cols": 8,
+        "data": []
+    },
+    {
+        "text": "Tel",
+        "key": "phone",
+        "type": "phone",
+        "section": "contactBasic",
+        "cols": 4,
+        "data": []
+    },
+    {
+        "text": "addresses",
+        "key": "address",
+        "type": "table",
+        "section": "contactAddress",
+        "cols": 12,
+        "data": [],
+        "fields": [
+            {
+                "text": "Strasse",
+                "key": "street",
+                "value": "street",
+                "type": "text",
+                "section": "contactAddress",
+                "cols": 6
+            },
+            {
+                "text": "PLZ",
+                "key": "zip",
+                "value": "zip",
+                "type": "zip",
+                "section": "contactAddress",
+                "cols": 1
+            },
+            {
+                "text": "Ort",
+                "key": "city",
+                "value": "city",
+                "type": "city",
+                "section": "contactAddress",
+                "cols": 5
+            }
+        ]
+    },
+    {
+        "text": "",
+        "key": "is_company",
+        "type": "hidden",
+        "section": "contactBasic",
+        "cols": 0,
+        "data": []
+    }
+]

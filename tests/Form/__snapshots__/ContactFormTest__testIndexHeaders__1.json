@@ -1,0 +1,8 @@
+[
+    {
+        "title": "Anrede",
+        "key": "salution_id",
+        "sortable": false,
+        "type": "select"
+    }
+]
