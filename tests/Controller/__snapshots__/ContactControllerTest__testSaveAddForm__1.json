@@ -1,0 +1,122 @@
+{
+    "item": {
+        "id": 1,
+        "salution_id": {
+            "id": 0,
+            "name": "-"
+        },
+        "first_name": "-",
+        "last_name": "-",
+        "email_private": "-",
+        "phone": "-",
+        "address": "-",
+        "is_company": "-"
+    },
+    "form": [
+        {
+            "text": "Anrede",
+            "key": "salution_id",
+            "type": "select",
+            "section": "contactBasic",
+            "cols": 2,
+            "data": [
+                {
+                    "id": 1,
+                    "text": "Herr"
+                },
+                {
+                    "id": 2,
+                    "text": "Frau"
+                }
+            ]
+        },
+        {
+            "text": "Vorname",
+            "key": "first_name",
+            "type": "text",
+            "section": "contactBasic",
+            "cols": 5,
+            "data": null
+        },
+        {
+            "text": "Nachname",
+            "key": "last_name",
+            "type": "text",
+            "section": "contactBasic",
+            "cols": 5,
+            "data": null
+        },
+        {
+            "text": "E-Mail Adresse",
+            "key": "email_private",
+            "type": "email",
+            "section": "contactBasic",
+            "cols": 8,
+            "data": null
+        },
+        {
+            "text": "Tel",
+            "key": "phone",
+            "type": "phone",
+            "section": "contactBasic",
+            "cols": 4,
+            "data": null
+        },
+        {
+            "text": "addresses",
+            "key": "address",
+            "type": "table",
+            "section": "contactAddress",
+            "cols": 12,
+            "data": null,
+            "fields": [
+                {
+                    "text": "Strasse",
+                    "key": "street",
+                    "value": "street",
+                    "type": "text",
+                    "section": "contactAddress",
+                    "cols": 6
+                },
+                {
+                    "text": "PLZ",
+                    "key": "zip",
+                    "value": "zip",
+                    "type": "zip",
+                    "section": "contactAddress",
+                    "cols": 1
+                },
+                {
+                    "text": "Ort",
+                    "key": "city",
+                    "value": "city",
+                    "type": "city",
+                    "section": "contactAddress",
+                    "cols": 5
+                }
+            ]
+        },
+        {
+            "text": "",
+            "key": "is_company",
+            "type": "hidden",
+            "section": "contactBasic",
+            "cols": 0,
+            "data": null
+        }
+    ],
+    "sections": [
+        {
+            "text": "Kontaktdaten",
+            "key": "contactBasic",
+            "isTab": false,
+            "test": false
+        },
+        {
+            "text": "Adressen",
+            "key": "contactAddress",
+            "isTab": false,
+            "test": false
+        }
+    ]
+}

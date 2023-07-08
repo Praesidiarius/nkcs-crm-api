@@ -65,7 +65,7 @@ class AbstractRepository
             ->from($table)
             ->where($attributeKey . ' = :' . $attributeKey)
             ->setParameters([
-                'attributeKey' => $attributeKey,
+                $attributeKey => $attributeValue,
             ])
         ;
 

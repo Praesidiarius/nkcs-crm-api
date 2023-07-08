@@ -127,9 +127,9 @@ class DynamicDto
                 'select' => $this->getSerializedSelectFieldData(
                     $field,
                     (
-                        is_array($this->data[$field->getFieldKey()])
+                        is_array($this->data[$field->getFieldKey()] ?? false)
                             ? $this->data[$field->getFieldKey()]['id']
-                            : $this->data[$field->getFieldKey()]
+                            : $this->data[$field->getFieldKey()] ?? 0
                     ) ?? 0,
                 ),
                 'currency' => $this->getSerializedCurrencyFieldData($field, $this->data[$field->getFieldKey()] ?? 0),

@@ -10,6 +10,7 @@ class ContactRepository extends AbstractRepository
     public function __construct(
         private readonly Connection $connection,
         private readonly DynamicDto $dynamicEntity,
+        private readonly ContactAddressRepository $addressRepository,
     ) {
         parent::__construct($this->connection, $this->dynamicEntity);
     }
@@ -41,6 +42,9 @@ class ContactRepository extends AbstractRepository
 
     public function removeById(int $id, string $table = 'contact'): void
     {
+        $address = $this->addressRepository->findByAttribute('contact_id', $id, 'contact_address');
+        parent::removeById($address->getId(), 'contact_address');
+
         parent::removeById($id, 'contact');
     }
 

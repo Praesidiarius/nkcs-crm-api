@@ -1,0 +1,20 @@
+[
+    {
+        "title": "Anrede",
+        "key": "salution_id",
+        "sortable": false,
+        "type": "select"
+    },
+    {
+        "title": "Vorname",
+        "key": "first_name",
+        "sortable": false,
+        "type": "text"
+    },
+    {
+        "title": "Nachname",
+        "key": "last_name",
+        "sortable": false,
+        "type": "text"
+    }
+]
