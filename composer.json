@@ -87,7 +87,6 @@
         }
     },
     "require-dev": {
-        "deployer/deployer": "^7.3",
         "fzaninotto/faker": "^1.5",
         "phpunit/phpunit": "^10.2.3",
         "spatie/phpunit-snapshot-assertions": "^5.0",
