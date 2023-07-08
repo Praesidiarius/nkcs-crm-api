@@ -1,1 +1,8 @@
-[]
+[
+    {
+        "title": "Name",
+        "key": "name",
+        "sortable": false,
+        "type": "text"
+    }
+]
