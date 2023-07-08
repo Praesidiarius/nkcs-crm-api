@@ -1,13 +1,5 @@
 [
     {
-        "text": "",
-        "key": "is_company",
-        "type": "hidden",
-        "section": "contactBasic",
-        "cols": 0,
-        "data": null
-    },
-    {
         "text": "Anrede",
         "key": "salution_id",
         "type": "select",
@@ -89,5 +81,13 @@
                 "cols": 5
             }
         ]
+    },
+    {
+        "text": "",
+        "key": "is_company",
+        "type": "hidden",
+        "section": "contactBasic",
+        "cols": 0,
+        "data": null
     }
 ]
