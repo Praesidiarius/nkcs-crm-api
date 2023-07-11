@@ -93,7 +93,9 @@ class AbstractApiController extends AbstractController
             $this->updateLicenseExtendedInfo();
         }
 
-        return $this->licenseExtendedInfo['license']['isTrial'] && count($this->licenseExtendedInfo['future']) === 0;
+        return ($this->licenseExtendedInfo['license']['isTrial'] ?? false)
+            && count($this->licenseExtendedInfo['future']) === 0
+            ;
     }
 
     protected function getLicenseValidUntilDate(): string

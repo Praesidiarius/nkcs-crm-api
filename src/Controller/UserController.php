@@ -16,6 +16,7 @@ class UserController extends AbstractApiController
         $userApiData = [
             'user' => [
                 'name' => $me->getName(),
+                'firstName' => $me->getFirstName(),
                 'function' => $me->getFunction(),
                 'email' => $me->getEmail(),
             ],

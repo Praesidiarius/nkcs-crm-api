@@ -76,7 +76,8 @@ INSERT INTO `dynamic_form` (`id`, `label`, `form_key`) VALUES
 (1, 'contact.contact', 'contact'),
 (2, 'contact.contact.address', 'contactAddress'),
 (3, 'contact.contact', 'company'),
-(4, 'item.item', 'item');
+(4, 'contact.contact.address', 'companyAddress'),
+(5, 'item.item', 'item');
 
 CREATE TABLE `dynamic_form_field` (
                                     `id` int(11) NOT NULL,
@@ -107,13 +108,13 @@ INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynami
  (12, NULL, 6, 3, 'email.address', 'email_private', 'email', 8, NULL, NULL, NULL),
  (13, NULL, 6, 3, 'phone', 'phone', 'phone', 4, NULL, NULL, NULL),
  (14, NULL, 7, 3, 'addresses', 'address', 'table', 12, NULL, NULL, NULL),
- (15, 14, 7, 3, 'address.street', 'street', 'text', 6, NULL, NULL, NULL),
- (16, 14, 7, 3, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL),
- (17, 14, 7, 3, 'address.city', 'city', 'city', 5, NULL, NULL, NULL),
+ (15, 14, 7, 4, 'address.street', 'street', 'text', 6, NULL, NULL, NULL),
+ (16, 14, 7, 4, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL),
+ (17, 14, 7, 4, 'address.city', 'city', 'city', 5, NULL, NULL, NULL),
  (18, NULL, 6, 3, NULL, 'is_company', 'hidden', 0, '1', NULL, NULL),
- (19, NULL, 10, 4, 'item.name', 'name', 'text', 6, NULL, NULL, NULL),
- (20, NULL, 10, 4, 'item.unit', 'unit_id', 'select', 2, '#units#', 'item_unit', 'name'),
- (21, NULL, 10, 4, 'item.price', 'price', 'currency', 2, '', '', '');
+ (19, NULL, 10, 5, 'item.name', 'name', 'text', 6, NULL, NULL, NULL),
+ (20, NULL, 10, 5, 'item.unit', 'unit_id', 'select', 2, '#units#', 'item_unit', 'name'),
+ (21, NULL, 10, 5, 'item.price', 'price', 'currency', 2, '', '', '');
 
 CREATE TABLE `dynamic_form_field_relation` (
                                              `id` int(11) NOT NULL,
@@ -136,9 +137,9 @@ INSERT INTO `dynamic_form_section` (`id`, `parent_section_id`, `section_label`, 
 (2, 1, 'contact.form.section.basic', 'contactBasic', 1),
 (3, 1, 'contact.form.section.addresses', 'contactAddress', 1),
 (4, NULL, 'contact.form.section.history', 'contactHistory', 1),
-(5, NULL, 'contact.form.section.contact', 'contactMain', 3),
-(6, 1, 'contact.form.section.basic', 'contactBasic', 3),
-(7, 1, 'contact.form.section.addresses', 'contactAddress', 3),
+(5, NULL, 'contact.form.section.contact', 'contactCompanyMain', 3),
+(6, 5, 'contact.form.section.basic', 'contactCompanyBasic', 3),
+(7, 5, 'contact.form.section.addresses', 'contactCompanyAddress', 3),
 (8, NULL, 'contact.form.section.history', 'contactHistory', 3),
 (9, NULL, 'item.item', 'itemMain', 4),
 (10, 9, 'item.form.section.basic', 'itemBasic', 4);

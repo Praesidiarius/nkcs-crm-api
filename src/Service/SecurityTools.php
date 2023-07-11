@@ -2,8 +2,15 @@
 
 namespace App\Service;
 
+use Symfony\Component\HttpFoundation\Request;
+
 class SecurityTools
 {
+    public function __construct(
+        private readonly string $licenseAllowedClients
+    ) {
+    }
+
     private function xssCheck(array $aValsToCheck = []): bool
     {
         $aBlacklist = ['script>','src=','<script','</sc','=//'];
@@ -79,5 +86,23 @@ class SecurityTools
         }
 
         return 'ok';
+    }
+
+    public function checkIpRestrictedAccess(Request $request): bool
+    {
+        $ipWhiteList = $this->licenseAllowedClients;
+        $ipWhiteList = explode(',', $ipWhiteList);
+        $wthIp = $request->server->get('REMOTE_ADDR');
+        $secResult = $this->basicInputCheck([$wthIp]);
+        if($secResult !== 'ok') {
+            return false;
+        }
+        if(empty($wthIp) || strlen($wthIp) < 10) {
+            return false;
+        }
+        if(!in_array($wthIp, $ipWhiteList)) {
+            return false;
+        }
+        return true;
     }
 }

@@ -8,9 +8,11 @@ use App\Entity\LicensePurchase;
 use App\Repository\ContactRepository;
 use App\Repository\ItemRepository;
 use App\Repository\ItemUnitRepository;
+use App\Repository\LicenseClientNotificationRepository;
 use App\Repository\LicenseProductRepository;
 use App\Repository\LicensePurchaseRepository;
 use App\Repository\LicenseRepository;
+use App\Service\SecurityTools;
 use DateTime;
 use DateTimeImmutable;
 use Error;
@@ -36,6 +38,7 @@ class LicenseController extends AbstractController
         private readonly TranslatorInterface $translator,
         private readonly HttpClientInterface $httpClient,
         private readonly ItemRepository $itemRepository,
+        private readonly SecurityTools $securityTools,
     ) {
     }
 
@@ -49,6 +52,11 @@ class LicenseController extends AbstractController
             . $request->server->get('HTTP_HOST');
 
         if ($this->getParameter('license.server') != $self) {
+            throw new NotFoundHttpException();
+        }
+
+        // access to license server is only allowed from instance servers
+        if (!$this->securityTools->checkIpRestrictedAccess($request)) {
             throw new NotFoundHttpException();
         }
 
@@ -98,6 +106,11 @@ class LicenseController extends AbstractController
             . $request->server->get('HTTP_HOST');
 
         if ($this->getParameter('license.server') != $self) {
+            throw new NotFoundHttpException();
+        }
+
+        // access to license server is only allowed from instance servers
+        if (!$this->securityTools->checkIpRestrictedAccess($request)) {
             throw new NotFoundHttpException();
         }
 
@@ -198,6 +211,11 @@ class LicenseController extends AbstractController
             )->getContent()));
         }
 
+        // access to license server is only allowed from instance servers
+        if (!$this->securityTools->checkIpRestrictedAccess($request)) {
+            throw new NotFoundHttpException();
+        }
+
         $availableLicenses = $this->licenseProductRepository->findPurchasableLicenseProducts();
 
         return $this->json([
@@ -294,6 +312,11 @@ class LicenseController extends AbstractController
             throw new NotFoundHttpException();
         }
 
+        // access to license server is only allowed from instance servers
+        if (!$this->securityTools->checkIpRestrictedAccess($request)) {
+            throw new NotFoundHttpException();
+        }
+
         Stripe::setApiKey($this->getParameter('payment.stripe_secret'));
 
         try {
@@ -356,5 +379,41 @@ class LicenseController extends AbstractController
         } catch (Error $e) {
             return $this->json(['error' => $e->getMessage()]);
         }
+    }
+
+    #[Route('/api/license/{_locale}/notifications', name: 'license_notifications_remote', methods: ['GET'])]
+    #[Route('/license/{_locale}/notifications/{licenseHolder}', name: 'license_notifications_local', methods: ['GET'])]
+    public function notifications(
+        Request $request,
+        LicenseClientNotificationRepository $clientNotificationRepository,
+        ?string $licenseHolder,
+    ): Response
+    {
+        $self = ($request->server->getBoolean('HTTPS') ? 'https://' : 'http://')
+            . $request->server->get('HTTP_HOST');
+
+        if (
+            // if we are not on license server, redirect its response
+            $this->getParameter('license.server') !== $self
+        ) {
+            // get license products from license server
+            return $this->json(json_decode($this->httpClient->request(
+                'GET',
+                $this->getParameter('license.server')
+                . '/license/de/notifications/'
+                . $this->getParameter('license.holder')
+            )->getContent()));
+        }
+
+        // access to license server is only allowed from instance servers
+        if (!$this->securityTools->checkIpRestrictedAccess($request)) {
+            throw new NotFoundHttpException();
+        }
+
+        $myNotifications = $clientNotificationRepository->getOpenNotifications($licenseHolder);
+
+        return $this->json([
+            'notifications' => $myNotifications
+        ]);
     }
 }

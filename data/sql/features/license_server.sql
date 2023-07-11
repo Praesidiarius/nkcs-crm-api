@@ -31,6 +31,21 @@ CREATE TABLE `license_purchase` (
                                   `checkout_id` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `license_client_notification` (
+                                             `id` int(11) NOT NULL,
+                                             `title` varchar(80) NOT NULL,
+                                             `summary` varchar(80) NOT NULL,
+                                             `text` text NOT NULL,
+                                             `date` datetime NOT NULL,
+                                             `client` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `license_client_notification_status` (
+                                                    `notification_id` int(11) NOT NULL,
+                                                    `client` varchar(50) NOT NULL,
+                                                    `status` varchar(10) NOT NULL,
+                                                    `date` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE `license`
   ADD PRIMARY KEY (`id`),
@@ -46,6 +61,11 @@ ALTER TABLE `license_purchase`
   ADD KEY `IDX_9D47400CE7A1254A` (`contact_id`),
   ADD KEY `IDX_9D47400C4584665A` (`product_id`);
 
+ALTER TABLE `license_client_notification`
+  ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `license_client_notification_status`
+  ADD PRIMARY KEY (`notification_id`,`client`);
 
 ALTER TABLE `license`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
@@ -55,4 +75,8 @@ ALTER TABLE `license_product`
 
 ALTER TABLE `license_purchase`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `license_client_notification`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 COMMIT;
