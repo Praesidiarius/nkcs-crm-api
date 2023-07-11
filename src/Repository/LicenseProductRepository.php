@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\LicenseProduct;
+use App\Model\DynamicDto;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,7 +17,10 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class LicenseProductRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(
+        ManagerRegistry $registry,
+        private readonly ItemRepository $itemRepository,
+    )
     {
         parent::__construct($registry, LicenseProduct::class);
     }
@@ -41,12 +45,32 @@ class LicenseProductRepository extends ServiceEntityRepository
 
     public function findPurchasableLicenseProducts(): array
     {
-        return $this->createQueryBuilder('l')
+        $result = $this->createQueryBuilder('l')
             ->andWhere('l.item IS NOT NULL')
             ->orderBy('l.id', 'ASC')
             ->getQuery()
             ->getResult()
         ;
+
+        $licenseProducts = [];
+        if (count($result) > 0) {
+            foreach ($result as $licenseProduct) {
+                $item = $this->itemRepository->findById($licenseProduct->getItem());
+                $itemData = $item->getData();
+                $licenseProducts[] = [
+                    'id' => $licenseProduct->getId(),
+                    'item' => [
+                        'id' => $itemData['id'],
+                        'name' => $itemData['name'],
+                        'price' => $itemData['price'],
+                        'description' => $itemData['description'],
+                        'unit' => $item->getSelectField('unit_id'),
+                    ],
+                ];
+            }
+        }
+
+        return $licenseProducts;
     }
 
 //    /**

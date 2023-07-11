@@ -9,9 +9,14 @@ class ItemRepository extends AbstractRepository
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly DynamicDto $dynamicEntity,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
     ) {
-        parent::__construct($this->connection, $this->dynamicEntity);
+        parent::__construct($this->connection, $this->dynamicFormFieldRepository);
+    }
+
+    public function getDynamicDto(): DynamicDto
+    {
+        return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
     public function findById(int $id, string $table = 'item'): ?DynamicDto

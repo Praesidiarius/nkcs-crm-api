@@ -11,6 +11,7 @@ use App\Repository\ItemUnitRepository;
 use App\Repository\LicenseProductRepository;
 use App\Repository\LicensePurchaseRepository;
 use App\Repository\LicenseRepository;
+use DateTime;
 use DateTimeImmutable;
 use Error;
 use Stripe\Checkout\Session;
@@ -28,12 +29,13 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class LicenseController extends AbstractController
 {
     public function __construct(
-        private readonly LicenseRepository         $licenseRepository,
-        private readonly LicenseProductRepository  $licenseProductRepository,
+        private readonly LicenseRepository $licenseRepository,
+        private readonly LicenseProductRepository $licenseProductRepository,
         private readonly LicensePurchaseRepository $licensePurchaseRepository,
-        private readonly ContactRepository   $contactRepository,
-        private readonly TranslatorInterface       $translator,
-        private readonly HttpClientInterface       $httpClient,
+        private readonly ContactRepository $contactRepository,
+        private readonly TranslatorInterface $translator,
+        private readonly HttpClientInterface $httpClient,
+        private readonly ItemRepository $itemRepository,
     ) {
     }
 
@@ -50,7 +52,7 @@ class LicenseController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        $license = $this->licenseRepository->findOneBy(['holder' => $licenseHolder]);
+        $license = $this->licenseRepository->findActiveLicense($licenseHolder);
         if (!$license) {
             return $this->json([
                 'license' => [
@@ -67,7 +69,8 @@ class LicenseController extends AbstractController
                     'isValid' => false,
                     'dateValid' => $license->getDateValid()
                         ? $license->getDateValid()->format('Y-m-d H:i:s')
-                        : 'lifetime'
+                        : 'lifetime',
+                    'isTrial' => $license->getComment() === 'trial'
                 ],
                 'message' => $this->translator->trans('license.messages.expired'),
             ]);
@@ -78,8 +81,96 @@ class LicenseController extends AbstractController
                 'isValid' => true,
                 'dateValid' => $license->getDateValid()
                     ? $license->getDateValid()->format('Y-m-d H:i:s')
-                    : 'lifetime'
+                    : 'lifetime',
+                'isTrial' => $license->getComment() === 'trial',
             ],
+            'message' => '',
+        ]);
+    }
+
+    #[Route('/license/info/{licenseHolder}', name: 'license_info', methods: ['GET'])]
+    public function info(
+        string $licenseHolder,
+        Request $request,
+    ) : Response {
+        // make sure we are on the license server instance
+        $self = ($request->server->getBoolean('HTTPS') ? 'https://' : 'http://')
+            . $request->server->get('HTTP_HOST');
+
+        if ($this->getParameter('license.server') != $self) {
+            throw new NotFoundHttpException();
+        }
+
+        $license = $this->licenseRepository->findActiveLicense($licenseHolder);
+        if (!$license) {
+            return $this->json([
+                'license' => [
+                    'isValid' => false,
+                    'dateValid' => '0000-00-00',
+                ],
+                'message' => 'license not found'
+            ]);
+        }
+
+        $futureLicences = $this->licenseRepository->findFutureLicenses($licenseHolder, $license->getId());
+        $futureLicenseData = [];
+        foreach ($futureLicences as $futureLicence) {
+            $licenseProductItem = $this->itemRepository->findById($futureLicence->getProduct()->getItem());
+            $licenseProductItemData = $licenseProductItem->getData();
+
+            $futureLicenseData[] = [
+                'dateValid' => $futureLicence->getDateValid()->format('d.m.Y'),
+                'dateStart' => $futureLicence->getDateStart()->format('d.m.Y'),
+                'product' => [
+                    'name' => $licenseProductItemData['name']
+                ]
+            ];
+        }
+
+        $archivedLicences = $this->licenseRepository->findArchivedLicenses($licenseHolder);
+        $archivedLicenseData = [];
+        foreach ($archivedLicences as $archivedLicence) {
+            $licenseProductItem = $this->itemRepository->findById($archivedLicence->getProduct()->getItem());
+            $licenseProductItemData = $licenseProductItem->getData();
+
+            $archivedLicenseData[] = [
+                'dateValid' => $archivedLicence->getDateValid()->format('d.m.Y'),
+                'dateStart' => $archivedLicence->getDateStart()->format('d.m.Y'),
+                'product' => [
+                    'name' => $licenseProductItemData['name']
+                ]
+            ];
+        }
+
+        if (!$license->isValid()) {
+            return $this->json([
+                'license' => [
+                    'isValid' => false,
+                    'dateValid' => $license->getDateValid()
+                        ? $license->getDateValid()->format('Y-m-d H:i:s')
+                        : 'lifetime',
+                    'isTrial' => $license->getComment() === 'trial'
+                ],
+                'message' => $this->translator->trans('license.messages.expired'),
+            ]);
+        }
+
+        $licenseProductItem = $this->itemRepository->findById($license->getProduct()->getItem());
+        $licenseProductItemData = $licenseProductItem->getData();
+
+        return $this->json([
+            'license' => [
+                'isValid' => true,
+                'dateValid' => $license->getDateValid()
+                    ? $license->getDateValid()->format('Y-m-d H:i:s')
+                    : 'lifetime',
+                'isTrial' => $license->getComment() === 'trial',
+                'product' => [
+                    'name' => $licenseProductItemData['name']
+                ]
+            ],
+            'future' => $futureLicenseData,
+            'archive' => $archivedLicenseData,
             'message' => '',
         ]);
     }
@@ -153,16 +244,30 @@ class LicenseController extends AbstractController
         $purchase->setCheckoutId($checkoutSessionId);
         $purchase->setDateCompleted(new DateTimeImmutable());
 
+        $oldLicense = $this->licenseRepository->findOneBy(['holder' => $purchase->getHolder()],['dateValid' => 'DESC']);
+        $licenseStartDate = new DateTime();
+        if ($oldLicense) {
+            // if there is an existing license, start new license start date after
+            if ($oldLicense->getDateValid()->getTimestamp() > (new DateTime())->getTimestamp()) {
+                $licenseStartDate->setTimestamp($oldLicense->getDateValid()->getTimestamp());
+            }
+        }
+
         $license = new License();
         $license->setHolder($purchase->getHolder());
         $license->setProduct($purchase->getProduct());
         $license->setContact($purchase->getContact());
         $license->setDateCreated(new DateTimeImmutable());
+        $license->setDateStart($licenseStartDate);
         if ($itemUnit->getType() === 'sub-month') {
-            $license->setDateValid(new DateTimeImmutable(date('Y-m-d H:i:s', strtotime('+30 days'))));
+            $licenseValidDate = clone $licenseStartDate;
+            $licenseValidDate->modify('+30 days');
+            $license->setDateValid($licenseValidDate);
         }
         if ($itemUnit->getType() === 'sub-year') {
-            $license->setDateValid(new DateTimeImmutable(date('Y-m-d H:i:s', strtotime('+365 days'))));
+            $licenseValidDate = clone $licenseStartDate;
+            $licenseValidDate->modify('+365 days');
+            $license->setDateValid($licenseValidDate);
         }
         // todo: remove these fields if not really needed
         $license->setUrlApi('');
@@ -222,20 +327,31 @@ class LicenseController extends AbstractController
                 'cancel_url' => $self . '/license/cancel',
             ];
 
-            $itemUnit = $itemUnitRepository->find($licenseItem->getSelectField('unit_id')['id']);
+            $itemUnit = $itemUnitRepository->find($licenseItem->getTextField('unit_id'));
 
             if (
-                $itemUnit->getType() === 'sub-month'
-                || $itemUnit->getType() === 'sub-year'
+                $itemUnit?->getType() === 'sub-month'
+                || $itemUnit?->getType() === 'sub-year'
             ) {
                 $sessionData['mode'] = 'subscription';
             }
 
             $checkout_session = Session::create($sessionData);
 
+            $itemData = $licenseItem->getData();
+
             return $this->json([
                 'url' => $checkout_session->url,
-                'product' => $licenseProduct,
+                'product' => [
+                    'id' => $licenseProduct->getId(),
+                    'item' =>  [
+                        'id' => $itemData['id'],
+                        'name' => $itemData['name'],
+                        'price' => $itemData['price'],
+                        'description' => $itemData['description'],
+                        'unit' => $licenseItem->getSelectField('unit_id'),
+                    ]
+                ],
             ]);
         } catch (Error $e) {
             return $this->json(['error' => $e->getMessage()]);

@@ -13,7 +13,7 @@ class LicenseProduct
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'item_id')]
     private ?int $item = null;
 
     public function getId(): ?int

@@ -183,10 +183,6 @@ CREATE TABLE `item` (
                       `stripe_enabled` tinyint(1) NOT NULL DEFAULT 0,
                       `stripe_price_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                       `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                      `price_buy` float DEFAULT NULL,
-                      `price_sell` float DEFAULT NULL,
-                      `price_retail` float DEFAULT NULL,
-                      `price_my_cost` float DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `item_unit` (
@@ -249,6 +245,7 @@ CREATE TABLE `user` (
                       `username` varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
                       `roles` longtext COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '(DC2Type:json)',
                       `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                      `email` VARCHAR(255) NOT NULL,
                       `first_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
                       `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                       `function` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL

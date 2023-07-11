@@ -9,9 +9,15 @@ class ContactAddressRepository extends AbstractRepository
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly DynamicDto $dynamicEntity,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+
     ) {
-        parent::__construct($this->connection, $this->dynamicEntity);
+        parent::__construct($this->connection, $this->dynamicFormFieldRepository);
+    }
+
+    public function getDynamicDto(): DynamicDto
+    {
+        return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
     public function save(DynamicDto $entity): DynamicDto
@@ -33,8 +39,8 @@ class ContactAddressRepository extends AbstractRepository
 
         $rawData = $qb->fetchAssociative();
         if ($rawData) {
-            $entity = $this->dynamicEntity;
-            $this->dynamicEntity->setData($rawData);
+            $entity = $this->getDynamicDto();
+            $entity->setData($rawData);
             return $entity;
         }
 

@@ -17,7 +17,7 @@ class LicensePurchase
     #[ORM\Column(length: 100)]
     private ?string $holder = null;
 
-    #[ORM\Column(nullable: false)]
+    #[ORM\Column(name: 'contact_id', nullable: false)]
     private ?int $contact = null;
 
     #[ORM\ManyToOne]

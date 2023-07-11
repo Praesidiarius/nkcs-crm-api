@@ -9,7 +9,7 @@ class AbstractRepository
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly DynamicDto $dynamicEntity,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
     ) {
     }
 
@@ -27,8 +27,8 @@ class AbstractRepository
             return null;
         }
 
-        $entity = $this->dynamicEntity;
-        $this->dynamicEntity->setData($raw);
+        $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $entity->setData($raw);
 
         return $entity;
     }
@@ -45,8 +45,8 @@ class AbstractRepository
         if (count($rawData) > 0) {
             $entities = [];
             foreach ($rawData as $row) {
-                $entity = $this->dynamicEntity;
-                $this->dynamicEntity->setData($row);
+                $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+                $entity->setData($row);
                 $entities[] = $entity;
             }
             return $entities;
@@ -69,8 +69,8 @@ class AbstractRepository
 
         $rawData = $qb->fetchAssociative();
         if ($rawData) {
-            $entity = $this->dynamicEntity;
-            $this->dynamicEntity->setData($rawData);
+            $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+            $entity->setData($rawData);
             return $entity;
         }
 
@@ -91,8 +91,8 @@ class AbstractRepository
 
         $rawData = $qb->fetchAssociative();
         if ($rawData) {
-            $entity = $this->dynamicEntity;
-            $this->dynamicEntity->setData($rawData);
+            $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+            $entity->setData($rawData);
             return $entity;
         }
 

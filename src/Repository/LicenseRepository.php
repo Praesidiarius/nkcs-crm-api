@@ -30,6 +30,60 @@ class LicenseRepository extends ServiceEntityRepository
         }
     }
 
+    public function findActiveLicense(string $licenseHolder): ?License
+    {
+        $qb = $this->createQueryBuilder('l');
+
+        $qb
+            ->where('l.holder = :holder')
+            ->andWhere('l.dateValid >= :currentDate')
+            ->orderBy('l.id', 'ASC')
+            ->setMaxResults(1)
+            ->setParameters([
+                'holder' => $licenseHolder,
+                'currentDate' => new \DateTime(),
+            ])
+        ;
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    public function findFutureLicenses(string $licenseHolder, int $activeLicenseId): array
+    {
+        $qb = $this->createQueryBuilder('l');
+
+        $qb
+            ->where('l.holder = :holder')
+            ->andWhere('l.dateValid >= :currentDate')
+            ->andWhere('l.id != :activeLicense')
+            ->orderBy('l.id', 'ASC')
+            ->setParameters([
+                'holder' => $licenseHolder,
+                'currentDate' => new \DateTime(),
+                'activeLicense' => $activeLicenseId,
+            ])
+        ;
+
+        return $qb->getQuery()->getResult() ?? [];
+    }
+
+    public function findArchivedLicenses(string $licenseHolder): array
+    {
+        $qb = $this->createQueryBuilder('l');
+
+        $qb
+            ->where('l.holder = :holder')
+            ->andWhere('l.dateValid < :currentDate')
+            ->orderBy('l.id', 'ASC')
+            ->setParameters([
+                'holder' => $licenseHolder,
+                'currentDate' => new \DateTime(),
+            ])
+        ;
+
+        return $qb->getQuery()->getResult() ?? [];
+    }
+
     public function remove(License $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);

@@ -9,15 +9,15 @@ class ContactRepository extends AbstractRepository
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly DynamicDto $dynamicEntity,
         private readonly ContactAddressRepository $addressRepository,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
     ) {
-        parent::__construct($this->connection, $this->dynamicEntity);
+        parent::__construct($this->connection, $this->dynamicFormFieldRepository);
     }
 
     public function getDynamicDto(): DynamicDto
     {
-        return $this->dynamicEntity;
+        return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
     public function findAll(string $table = 'contact'): array

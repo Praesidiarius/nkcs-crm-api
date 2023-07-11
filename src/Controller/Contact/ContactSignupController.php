@@ -185,6 +185,8 @@ class ContactSignupController extends AbstractApiController
         // start installation of new system
         if ($this->getParameter('installer.queue_dir')) {
             $uuid = Uuid::v4();
+            $data['email'] = $contact->getTextField('email_private');
+
             file_put_contents(
                 $this->getParameter('installer.queue_dir') . '/install_' . $uuid,
                 json_encode($data),

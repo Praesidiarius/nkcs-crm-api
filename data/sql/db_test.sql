@@ -260,6 +260,7 @@ CREATE TABLE `user` (
                       `username` varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
                       `roles` longtext COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '(DC2Type:json)',
                       `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                      `email` VARCHAR(255) NOT NULL,
                       `first_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
                       `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                       `function` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL
