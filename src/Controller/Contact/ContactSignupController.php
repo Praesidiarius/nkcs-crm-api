@@ -135,13 +135,17 @@ class ContactSignupController extends AbstractApiController
 
         $secResult = $this->securityTools->basicInputCheck($checkFields);
         if($secResult !== 'ok') {
-            throw new HttpException(404, 'invalid signup token');
+            throw new HttpException(404, 'signup.error.invalidToken');
         }
 
         $contact = $this->contactRepository->findBySignupToken($hash);
 
         if (!$contact) {
-            throw new HttpException(404, 'invalid signup token');
+            throw new HttpException(404, 'signup.error.invalidToken');
+        }
+
+        if ($contact->getTextField('signup_date_step2')) {
+            throw new HttpException(400, 'signup.error.alreadyFinished');
         }
 
         if (!ctype_alpha($data['url'])) {
@@ -149,6 +153,7 @@ class ContactSignupController extends AbstractApiController
         }
 
         $urlSanitized = str_replace(['ä','ü','ö'], ['ae','ue','oe'], strtolower(explode(' ', $data['url'])[0]));
+        $data['url'] = $urlSanitized;
 
         $alreadyExists = $this->contactRepository->findByAttribute('contact_identifier', $urlSanitized, 'contact');
         if ($alreadyExists) {
