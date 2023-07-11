@@ -6,6 +6,8 @@ use App\Entity\License;
 use App\Entity\LicenseProduct;
 use App\Entity\LicensePurchase;
 use App\Repository\ContactRepository;
+use App\Repository\ItemRepository;
+use App\Repository\ItemUnitRepository;
 use App\Repository\LicenseProductRepository;
 use App\Repository\LicensePurchaseRepository;
 use App\Repository\LicenseRepository;
@@ -136,12 +138,17 @@ class LicenseController extends AbstractController
     public function success(
         string $hash,
         string $checkoutSessionId,
+        ItemRepository $itemRepository,
+        ItemUnitRepository $itemUnitRepository,
     ) : Response {
         $purchase = $this->licensePurchaseRepository->findOneBy(['hash' => $hash]);
 
         if ($purchase->getCheckoutId()) {
             return new Response($this->translator->trans('license.subscription.alreadyProcessed'));
         }
+
+        $licenseItem = $itemRepository->findById($purchase->getProduct()->getItem());
+        $itemUnit = $itemUnitRepository->find($licenseItem->getSelectField('unit_id')['id']);
 
         $purchase->setCheckoutId($checkoutSessionId);
         $purchase->setDateCompleted(new DateTimeImmutable());
@@ -151,10 +158,10 @@ class LicenseController extends AbstractController
         $license->setProduct($purchase->getProduct());
         $license->setContact($purchase->getContact());
         $license->setDateCreated(new DateTimeImmutable());
-        if ($license->getProduct()->getItem()->getUnit()->getType() === 'sub-month') {
+        if ($itemUnit->getType() === 'sub-month') {
             $license->setDateValid(new DateTimeImmutable(date('Y-m-d H:i:s', strtotime('+30 days'))));
         }
-        if ($license->getProduct()->getItem()->getUnit()->getType() === 'sub-year') {
+        if ($itemUnit->getType() === 'sub-year') {
             $license->setDateValid(new DateTimeImmutable(date('Y-m-d H:i:s', strtotime('+365 days'))));
         }
         // todo: remove these fields if not really needed
@@ -170,6 +177,8 @@ class LicenseController extends AbstractController
     public function getLicensePurchaseCheckoutUrl(
         Request $request,
         LicenseProduct $licenseProduct,
+        ItemRepository $itemRepository,
+        ItemUnitRepository $itemUnitRepository,
         string $licenseHolder,
     ): Response {
         // make sure we are on the license server instance
@@ -183,16 +192,13 @@ class LicenseController extends AbstractController
         Stripe::setApiKey($this->getParameter('payment.stripe_secret'));
 
         try {
-            if (!$licenseProduct->getItem()?->getStripePriceId()) {
+            $licenseItem = $itemRepository->findById($licenseProduct->getItem());
+            if (!$licenseItem) {
                 return $this->json(['error' => 'invalid license item']);
             }
-            $price = Price::retrieve($licenseProduct->getItem()->getStripePriceId());
+            $price = Price::retrieve($licenseItem->getTextField('stripe_price_id'));
             $hash = Uuid::v4();
-            $contact = $this->contactRepository->findByAttribute(
-                'identifier',
-                $licenseHolder,
-                'contact'
-            );
+            $contact = $this->contactRepository->findByAttribute('contact_identifier', $licenseHolder);
             if (!$contact) {
                 return $this->json(['error' => 'contact not found']);
             }
@@ -216,9 +222,11 @@ class LicenseController extends AbstractController
                 'cancel_url' => $self . '/license/cancel',
             ];
 
+            $itemUnit = $itemUnitRepository->find($licenseItem->getSelectField('unit_id')['id']);
+
             if (
-                $licenseProduct->getItem()->getUnit()->getType() === 'sub-month'
-                || $licenseProduct->getItem()->getUnit()->getType() === 'sub-year'
+                $itemUnit->getType() === 'sub-month'
+                || $itemUnit->getType() === 'sub-year'
             ) {
                 $sessionData['mode'] = 'subscription';
             }

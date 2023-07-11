@@ -39,9 +39,10 @@ class SendInstallConfirmationCommand extends Command
             '',
         ]);
 
-        $contact = $this->contactRepository->findOneBy([
-            'contactIdentifier' => $input->getArgument('identifier')
-        ]);
+        $contact = $this->contactRepository->findByAttribute(
+            'contact_identifier',
+            $input->getArgument('identifier')
+        );
 
         if (!$contact) {
             $output->writeln([
@@ -66,14 +67,14 @@ class SendInstallConfirmationCommand extends Command
                 '#IDENTIFIER#',
                 '#PASS#',
             ], [
-                $contact->getTextField('identifier'),
+                $contact->getTextField('contact_identifier'),
                 $input->getArgument('password'),
             ], $emailText->getSettingValue()))
             ->html(str_replace([
                 '#IDENTIFIER#',
                 '#PASS#',
             ], [
-                $contact->getTextField('identifier'),
+                $contact->getTextField('contact_identifier'),
                 $input->getArgument('password'),
             ], $emailContent->getSettingValue()))
         ;

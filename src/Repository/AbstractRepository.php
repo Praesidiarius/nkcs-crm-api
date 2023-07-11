@@ -77,7 +77,7 @@ class AbstractRepository
         return null;
     }
 
-    public function findByAttribute(string $attributeKey, mixed $attributeValue, string $table): ?DynamicDto
+    protected function findByAttribute(string $attributeKey, mixed $attributeValue, string $table): ?DynamicDto
     {
         $qb = $this->connection->createQueryBuilder();
         $qb

@@ -35,6 +35,11 @@ class ContactRepository extends AbstractRepository
         return parent::findById($id, 'contact');
     }
 
+    public function findByAttribute(string $attributeKey, mixed $attributeValue, string $table = 'contact'): ?DynamicDto
+    {
+        return parent::findByAttribute($attributeKey, $attributeValue, 'contact');
+    }
+
     public function findByEmail(string $email): ?DynamicDto
     {
         return parent::findByAttribute('email_private', $email, 'contact');
