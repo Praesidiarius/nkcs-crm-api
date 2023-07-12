@@ -4,9 +4,12 @@ namespace App\Tests\Form;
 
 use App\Form\Contact\ContactCompanyType;
 use App\Form\Contact\ContactType;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
+#[CoversClass(ContactType::class)]
+#[CoversClass(ContactCompanyType::class)]
 class ContactFormTest extends KernelTestCase
 {
     use MatchesSnapshots;
