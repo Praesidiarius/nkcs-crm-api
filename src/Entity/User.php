@@ -29,9 +29,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: false)]
     private string $email = '';
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Worktime::class, orphanRemoval: true)]
-    private Collection $worktimes;
-
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserSetting::class, orphanRemoval: true)]
     private Collection $userSettings;
 
@@ -46,7 +43,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->worktimes = new ArrayCollection();
         $this->userSettings = new ArrayCollection();
     }
 
@@ -130,36 +126,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
-    }
-
-    /**
-     * @return Collection<int, Worktime>
-     */
-    public function getWorktimes(): Collection
-    {
-        return $this->worktimes;
-    }
-
-    public function addWorktime(Worktime $worktime): self
-    {
-        if (!$this->worktimes->contains($worktime)) {
-            $this->worktimes->add($worktime);
-            $worktime->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeWorktime(Worktime $worktime): self
-    {
-        if ($this->worktimes->removeElement($worktime)) {
-            // set the owning side to null (unless already changed)
-            if ($worktime->getUser() === $this) {
-                $worktime->setUser(null);
-            }
-        }
-
-        return $this;
     }
 
     /**

@@ -30,9 +30,24 @@ class JobRepository extends AbstractRepository
         );
     }
 
+    public function findAll(string $table = 'job'): array
+    {
+        return parent::findAll('job');
+    }
+
+    public function findMostRecent(string $table = 'job'): ?DynamicDto
+    {
+        return parent::findMostRecent('job');
+    }
+
     public function findById(int $id, string $table = 'job'): ?DynamicDto
     {
         return parent::findById($id, 'job');
+    }
+
+    public function findByAttribute(string $attributeKey, mixed $attributeValue, string $table = 'job'): ?DynamicDto
+    {
+        return parent::findByAttribute($attributeKey, $attributeValue, 'job');
     }
 
     public function removeById(int $id, string $table = 'job'): void

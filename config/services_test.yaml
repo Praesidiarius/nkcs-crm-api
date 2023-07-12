@@ -1,0 +1,44 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    api.activated_modules: '%env(ACTIVATED_MODULES)%'
+    api.base_url: '%env(NKCS_API_BASE_URL)%'
+    document.base_dir: '%env(NKCS_DATA_DIR)%'
+    document.web_root: '%env(NKCS_DATA_WEBROOT)%'
+    payment.stripe_key: '%env(STRIPE_KEY)%'
+    payment.stripe_secret: '%env(STRIPE_SECRET)%'
+    payment.currency: '%env(SYSTEM_PAYMENTS_CURRENCY)%'
+    license.server: '%env(LICENSE_KEY_SERVER)%'
+    license.holder: '%env(LICENSE_KEY_HOLDER)%'
+    license.cache: '%env(LICENSE_KEY_CACHE)%'
+    license.server_test: '%env(LICENSE_KEY_SERVER_TEST)%'
+    license.allowed_clients: '%env(LICENSE_KEY_ALLOWED_CLIENTS)%'
+    contact.signup_enabled: '%env(CONTACT_SIGNUP_ENABLED)%'
+    mailer.from: '%env(MAILER_FROM)%'
+    job.vat_rate_default: '%env(VAT_RATE_DEFAULT)%'
+    installer.queue_dir: '%env(INSTALLER_QUEUE_DIR)%'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        public: true
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            $documentBaseDir: '%document.base_dir%'
+            $licenseAllowedClients: '%license.allowed_clients%'
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones

@@ -53,7 +53,9 @@ class ContactRepository extends AbstractRepository
     public function removeById(int $id, string $table = 'contact'): void
     {
         $address = $this->addressRepository->findByAttribute('contact_id', $id, 'contact_address');
-        parent::removeById($address->getId(), 'contact_address');
+        if ($address) {
+            parent::removeById($address->getId(), 'contact_address');
+        }
 
         parent::removeById($id, 'contact');
     }

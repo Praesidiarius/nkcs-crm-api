@@ -19,9 +19,24 @@ class ItemRepository extends AbstractRepository
         return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
+    public function findAll(string $table = 'item'): array
+    {
+        return parent::findAll('item');
+    }
+
+    public function findMostRecent(string $table = 'item'): ?DynamicDto
+    {
+        return parent::findMostRecent('item');
+    }
+
     public function findById(int $id, string $table = 'item'): ?DynamicDto
     {
         return parent::findById($id, 'item');
+    }
+
+    public function findByAttribute(string $attributeKey, mixed $attributeValue, string $table = 'item'): ?DynamicDto
+    {
+        return parent::findByAttribute($attributeKey, $attributeValue, 'item');
     }
 
     public function removeById(int $id, string $table = 'item'): void

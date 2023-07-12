@@ -5,7 +5,7 @@ CREATE TABLE `job`
 (
   `id`           int(11)        NOT NULL,
   `type_id`      int(11)        NOT NULL,
-  `contact_id`   int(11)        NOT NULL,
+  `contact_id`   int(11)                 DEFAULT NULL,
   `title`        varchar(100)            DEFAULT NULL,
   `created_by`   int(11)        NOT NULL,
   `created_date` datetime       NOT NULL COMMENT '(DC2Type:datetime_immutable)',
