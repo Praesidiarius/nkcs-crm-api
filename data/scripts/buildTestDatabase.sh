@@ -5,12 +5,18 @@ DEV_PASSWORD="\$2y\$13\$cMyLSyniGkyrM2IhCm68vejEqypYm6vGCsngOgc4VARcSeky2yAw6"
 DB_NAME="nkcs_test"
 DB_USER="root"
 DB_PASS="root"
-SQL_TEMPLATE_DIR=./../sql
+SQL_TEMPLATE_DIR="$(pwd)/../sql"
+
+# make sure sql template directory exists before running the script
+if [ ! -d "${SQL_TEMPLATE_DIR}" ]; then
+  echo "SQL Template Directory not found: ${SQL_TEMPLATE_DIR}"
+  exit
+fi
 
 mysql -u${DB_USER} -p${DB_PASS} -e "DROP DATABASE IF EXISTS ${DB_NAME}"
 mysql -u${DB_USER} -p${DB_PASS} -e "CREATE DATABASE ${DB_NAME} /*\!40100 DEFAULT CHARACTER SET utf8 */;"
 
-CREATE_USER_SQL=$(cat $SQL_TEMPLATE_DIR/db_live_user_template.sql)
+CREATE_USER_SQL=$(cat "${SQL_TEMPLATE_DIR}"/db_live_user_template.sql)
 CREATE_USER_SQL=$(echo "${CREATE_USER_SQL}" | sed -r "s|##USERNAME##|dev|g")
 CREATE_USER_SQL=$(echo "${CREATE_USER_SQL}" | sed -r "s|##PASSWORD##|${DEV_PASSWORD}|g")
 CREATE_USER_SQL=$(echo "${CREATE_USER_SQL}" | sed -r "s|##FIRST##|Dev|g")
