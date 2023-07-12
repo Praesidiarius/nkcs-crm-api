@@ -1,0 +1,14 @@
+[
+    {
+        "title": "Titel",
+        "key": "title",
+        "sortable": false,
+        "type": "text"
+    },
+    {
+        "title": "Kunde",
+        "key": "contact_id",
+        "sortable": false,
+        "type": "autocomplete"
+    }
+]

@@ -2,13 +2,16 @@
 
 namespace App\Tests\Controller;
 
+use App\Controller\Contact\ContactController;
 use App\Repository\ContactRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Faker\Factory;
 
+#[CoversClass(ContactController::class)]
 class ContactControllerTest extends WebTestCase
 {
     use MatchesSnapshots;

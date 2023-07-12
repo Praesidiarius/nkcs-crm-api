@@ -2,13 +2,16 @@
 
 namespace App\Tests\Controller;
 
+use App\Controller\ItemController;
 use App\Repository\ItemRepository;
 use Faker\Factory;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+#[CoversClass(ItemController::class)]
 class ItemControllerTest extends WebTestCase
 {
     use MatchesSnapshots;

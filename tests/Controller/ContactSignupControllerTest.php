@@ -2,13 +2,16 @@
 
 namespace App\Tests\Controller;
 
+use App\Controller\Contact\ContactSignupController;
 use App\Model\DynamicDto;
 use App\Repository\ContactRepository;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Faker\Factory;
 
+#[CoversClass(ContactSignupController::class)]
 class ContactSignupControllerTest extends WebTestCase
 {
     use MatchesSnapshots;

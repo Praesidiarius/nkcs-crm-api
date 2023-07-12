@@ -1,0 +1,32 @@
+[
+    {
+        "text": "Titel",
+        "key": "title",
+        "type": "text",
+        "section": "jobType1Basic",
+        "cols": 6,
+        "data": null
+    },
+    {
+        "text": "Kunde",
+        "key": "contact_id",
+        "type": "autocomplete",
+        "section": "jobType1Basic",
+        "cols": 6,
+        "data": []
+    },
+    {
+        "text": "MwSt.",
+        "key": "vat_mode",
+        "type": "select",
+        "section": "jobType1Basic",
+        "cols": 3,
+        "data": [
+            {
+                "id": 0,
+                "text": "ohne MwSt."
+            }
+        ],
+        "default": 0
+    }
+]
