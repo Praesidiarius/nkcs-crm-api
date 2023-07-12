@@ -82,10 +82,12 @@ CREATE TABLE `dynamic_form` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `dynamic_form` (`id`, `label`, `form_key`) VALUES
-                                                         (1, 'contact.contact', 'contact'),
-                                                         (2, 'contact.contact.address', 'contactAddress'),
-                                                         (3, 'contact.contact', 'company'),
-                                                         (4, 'item.item', 'item');
+(1, 'contact.contact', 'contact'),
+(2, 'contact.contact.address', 'contactAddress'),
+(3, 'contact.contact', 'company'),
+(4, 'contact.contact.address', 'companyAddress'),
+(5, 'item.item', 'item'),
+(6, 'job.job', 'jobType1');
 
 CREATE TABLE `dynamic_form_field` (
                                     `id` int(11) NOT NULL,
@@ -199,14 +201,14 @@ CREATE TABLE `job` (
                      `id` int(11) NOT NULL,
                      `type_id` int(11) NOT NULL,
                      `contact_id` int(11) NOT NULL,
-                     `title` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+                     `title` varchar(100) DEFAULT NULL,
                      `created_by` int(11) NOT NULL,
                      `created_date` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
-                     `sub_total` double NOT NULL,
+                     `sub_total` decimal(10,0) NOT NULL DEFAULT 0,
                      `vat_mode` smallint(6) NOT NULL,
                      `vat_rate` double DEFAULT NULL,
                      `vat_total` double DEFAULT NULL,
-                     `total` double NOT NULL
+                     `total` double NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `job_position` (
@@ -217,11 +219,6 @@ CREATE TABLE `job_position` (
                               `price` double DEFAULT NULL,
                               `comment` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                               `amount` double DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `job_position_unit` (
-                                   `id` int(11) NOT NULL,
-                                   `name` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `job_type` (
@@ -338,9 +335,6 @@ ALTER TABLE `job_position`
   ADD KEY `IDX_216B418EBE04EA9` (`job_id`),
   ADD KEY `IDX_216B418EF8BD700D` (`unit_id`);
 
-ALTER TABLE `job_position_unit`
-  ADD PRIMARY KEY (`id`);
-
 ALTER TABLE `job_type`
   ADD PRIMARY KEY (`id`);
 
@@ -402,9 +396,6 @@ ALTER TABLE `job`
 ALTER TABLE `job_position`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
-ALTER TABLE `job_position_unit`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
 ALTER TABLE `job_type`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -456,7 +447,7 @@ ALTER TABLE `job`
 ALTER TABLE `job_position`
   ADD CONSTRAINT `FK_216B418E126F525E` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`),
   ADD CONSTRAINT `FK_216B418EBE04EA9` FOREIGN KEY (`job_id`) REFERENCES `job` (`id`),
-  ADD CONSTRAINT `FK_216B418EF8BD700D` FOREIGN KEY (`unit_id`) REFERENCES `job_position_unit` (`id`);
+  ADD CONSTRAINT `FK_216B418EF8BD700D` FOREIGN KEY (`unit_id`) REFERENCES `item_unit` (`id`);
 
 ALTER TABLE `user_setting`
   ADD CONSTRAINT `FK_C779A692A76ED395` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);

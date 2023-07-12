@@ -2,78 +2,59 @@
 
 namespace App\Repository;
 
-use App\Entity\Job;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Tools\Pagination\Paginator;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Model\DynamicDto;
+use App\Model\JobDto;
+use Doctrine\DBAL\Connection;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @extends ServiceEntityRepository<Job>
- *
- * @method Job|null find($id, $lockMode = null, $lockVersion = null)
- * @method Job|null findOneBy(array $criteria, array $orderBy = null)
- * @method Job[]    findAll()
- * @method Job[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
-class JobRepository extends ServiceEntityRepository
+class JobRepository extends AbstractRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Job::class);
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly TranslatorInterface $translator,
+        private readonly JobPositionRepository $jobPositionRepository,
+        private readonly ItemRepository $itemRepository,
+    ) {
+        parent::__construct($this->connection, $this->dynamicFormFieldRepository);
     }
 
-    public function save(Job $entity, bool $flush = false): void
+    public function getDynamicDto(): DynamicDto
     {
-        $this->getEntityManager()->persist($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        return new JobDto(
+            $this->dynamicFormFieldRepository,
+            $this->connection,
+            $this->translator,
+            $this->jobPositionRepository,
+            $this->itemRepository,
+        );
     }
 
-    public function remove(Job $entity, bool $flush = false): void
+    public function findById(int $id, string $table = 'job'): ?DynamicDto
     {
-        $this->getEntityManager()->remove($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        return parent::findById($id, 'job');
     }
 
-    public function findBySearchAttributes(int $page, int $pageSize): Paginator
+    public function removeById(int $id, string $table = 'job'): void
     {
-        $qb = $this->createQueryBuilder('j')
+        parent::removeById($id, 'job');
+    }
+
+    public function findBySearchAttributes(int $page, int $pageSize): array
+    {
+        $qb = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from('job', 'j')
             ->orderBy('j.id', 'ASC')
             ->setFirstResult(($page-1) * $pageSize)
             ->setMaxResults($pageSize)
-            ->getQuery()
         ;
 
-        return new Paginator($qb, false);
+        return $qb->fetchAllAssociative();
     }
 
-//    /**
-//     * @return Job[] Returns an array of Job objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('j')
-//            ->andWhere('j.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('j.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Job
-//    {
-//        return $this->createQueryBuilder('j')
-//            ->andWhere('j.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    public function save(DynamicDto $entity): DynamicDto|string
+    {
+        return parent::saveToTable($entity, 'job');
+    }
 }

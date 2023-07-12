@@ -7,6 +7,7 @@ use App\Form\DynamicType;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
 use App\Repository\ItemUnitRepository;
+use App\Repository\SystemSettingRepository;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ItemType extends DynamicType
@@ -16,12 +17,14 @@ class ItemType extends DynamicType
         private readonly ItemUnitRepository $itemUnitRepository,
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly SystemSettingRepository $systemSettings,
     )
     {
         parent::__construct(
             $this->translator,
             $this->dynamicFormRepository,
-            $this->dynamicFormFieldRepository
+            $this->dynamicFormFieldRepository,
+            $this->systemSettings,
         );
     }
 
@@ -30,15 +33,12 @@ class ItemType extends DynamicType
         return parent::getFormSections('item', $withTabs);
     }
 
-    protected function getFormFieldData(DynamicFormField $formField): mixed
+    protected function getDynamicListData(DynamicFormField $formField): array
     {
-        return str_replace([
-            '#units#',
-        ],[
-            json_encode($this->getUnits()),
-        ],
-            $formField->getDefaultData() ?? '',
-        );
+        return match ($formField->getRelatedTable()) {
+            'item_unit' => $this->getUnits(),
+            default => parent::getDynamicListData($formField)
+        };
     }
 
     private function getUnits() : array

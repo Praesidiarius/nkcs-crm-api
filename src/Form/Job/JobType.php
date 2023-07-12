@@ -2,70 +2,109 @@
 
 namespace App\Form\Job;
 
-use App\Entity\Job;
+use App\Entity\DynamicFormField;
 use App\Enum\JobVatMode;
+use App\Form\DynamicType;
 use App\Repository\ContactRepository;
+use App\Repository\DynamicFormFieldRepository;
+use App\Repository\DynamicFormRepository;
 use App\Repository\SystemSettingRepository;
-use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class JobType extends AbstractType
+class JobType extends DynamicType
 {
     public function __construct(
         private readonly TranslatorInterface $translator,
+        private readonly DynamicFormRepository $dynamicFormRepository,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly ContactRepository $contactRepository,
-        private readonly SystemSettingRepository $systemSettingRepository,
+        private readonly SystemSettingRepository $systemSettings,
     )
     {
+        parent::__construct(
+            $this->translator,
+            $this->dynamicFormRepository,
+            $this->dynamicFormFieldRepository,
+            $this->systemSettings,
+        );
     }
 
-    public function buildForm(FormBuilderInterface $builder, array $options): void
+    public function getFormSections(string $formKey = 'job', $withTabs = false): array
     {
-        //$builder;
+        return parent::getFormSections('jobType1', $withTabs);
     }
 
-    public function configureOptions(OptionsResolver $resolver): void
+    protected function getDynamicListData(DynamicFormField $formField): array
     {
-        $resolver->setDefaults([
-            'data_class' => Job::class,
-            'csrf_protection' => false,
-        ]);
+        return match ($formField->getRelatedTable()) {
+            'contact' => $this->getContacts(),
+            'enum' => $this->getEnumListData($formField),
+            default => parent::getDynamicListData($formField)
+        };
     }
 
-    public function getFormSections(): array
+    private function getEnumListData(DynamicFormField $formField): array
     {
-        $formSections = [
-            [
-                'text' => $this->translator->trans('job.form.section.basic'),
-                'key' => 'basic',
-            ],
-            [
-                'text' => $this->translator->trans('job.form.section.settings'),
-                'key' => 'settings',
-            ]
-        ];
+        $data = [];
+        switch ($formField->getRelatedTableCol()) {
+            case 'JobVatMode':
+                $isVatEnabled = (bool) $this->systemSettings
+                    ->findSettingByKey('job-vat-enabled'
+                    )?->getSettingValue() ?? false
+                ;
 
-        return $formSections;
+                if ($isVatEnabled) {
+                    $data[] = [
+                        'id' => JobVatMode::VAT_EXCLUDED->value,
+                        'text' => $this->translator->trans('job.vatMode.' . JobVatMode::VAT_EXCLUDED->name),
+                    ];
+                    $data[] = [
+                        'id' => JobVatMode::VAT_INCLUDED->value,
+                        'text' => $this->translator->trans('job.vatMode.' . JobVatMode::VAT_INCLUDED->name),
+                    ];
+                } else {
+                    $data[] = [
+                        'id' => JobVatMode::VAT_NONE->value,
+                        'text' => $this->translator->trans('job.vatMode.' . JobVatMode::VAT_NONE->name),
+                    ];
+                }
+                break;
+            default:
+                break;
+        }
+        return $data;
     }
 
-    public function getFormDefaultValues(): array
+    protected function getFormFieldDefaultData(DynamicFormField $formField): string|int|float|null
     {
-        $defaultValues = [];
+        return match($formField->getFieldKey()) {
+            'vat_mode' => $this->getDefaultVatMode(),
+            default => parent::getFormFieldDefaultData($formField)
+        };
+    }
 
-        $formFields = $this->getFormFields();
+    private function getDefaultVatMode(): int
+    {
+        $isVatEnabled = (bool) $this->systemSettings
+            ->findSettingByKey('job-vat-enabled'
+            )?->getSettingValue() ?? false
+        ;
 
-        foreach ($formFields as $field) {
-            if (array_key_exists('default', $field)) {
-                $defaultValues[$field['key']] = $field['default'];
-            }
+        if (!$isVatEnabled) {
+            return JobVatMode::VAT_NONE->value;
         }
 
-        return $defaultValues;
+        // cast system setting to enum to be sure its valid
+        $vatDefaultMode = JobVatMode::from(
+            (int) $this->systemSettings
+                ->findSettingByKey('job-vat-default'
+                )?->getSettingValue() ?? JobVatMode::VAT_EXCLUDED->value
+        );
+
+        return $vatDefaultMode->value;
     }
 
-    public function getFormFields(): array
+    private function getContacts() : array
     {
         $contacts = $this->contactRepository->findAll();
         $contactField = [];
@@ -75,74 +114,20 @@ class JobType extends AbstractType
                 'text' => $contact->getBoolField('is_company')
                     ? $contact->getTextField('company_name')
                     : $contact->getTextField('first_name')
-                        . ($contact->getTextField('last_name') ? ' ' . $contact->getTextField('last_name') : '')
-                ,
+                    . ($contact->getTextField('last_name') ? ' ' . $contact->getTextField('last_name') : '')
             ];
         }
 
-        $vatDefaultMode = $this->systemSettingRepository
-            ->findSettingByKey('job-vat-default-mode')
-            ?->getSettingValue()
-            ?? 0
-        ;
-
-        $formFields = [
-            [
-                'text' => $this->translator->trans('job.title'),
-                'key' => 'title',
-                'type' => 'text',
-                'section' => 'basic',
-                'cols' => 6,
-            ],
-            [
-                'text' => $this->translator->trans('job.contact'),
-                'key' => 'contact',
-                'type' => 'autocomplete',
-                'section' => 'basic',
-                'data' => $contactField,
-                'cols' => 6,
-            ],
-            [
-                'text' => $this->translator->trans('job.vat.vat'),
-                'key' => 'vatMode',
-                'type' => 'select',
-                'section' => 'settings',
-                'default' => (int) $vatDefaultMode,
-                'data' => [
-                    ['id' => JobVatMode::VAT_NONE, 'text' => $this->translator->trans('job.vat.none')],
-                    ['id' => JobVatMode::VAT_DEFAULT, 'text' => $this->translator->trans('job.vat.default')],
-                ],
-                'cols' => 6,
-            ],
-        ];
-
-        return $formFields;
+        return $contactField;
     }
 
-    public function getIndexHeaders(): array
+    public function getFormFields(string $formKey = 'job', bool $withTabs = true): array
     {
-        $indexHeaders = [
-            [
-                'title' => $this->translator->trans('job.id'),
-                'key' => 'id',
-                'sortable' => false,
-                'type' => 'text',
-                'width' => '25px',
-            ],
-            [
-                'title' => $this->translator->trans('job.title'),
-                'key' => 'title',
-                'sortable' => false,
-                'type' => 'text'
-            ],
-            [
-                'title' => $this->translator->trans('job.contact'),
-                'key' => 'contact',
-                'sortable' => false,
-                'type' => 'select'
-            ],
-        ];
+        return parent::getFormFields('jobType1', $withTabs);
+    }
 
-        return $indexHeaders;
+    public function getIndexHeaders(string $formKey = 'job'): array
+    {
+        return parent::getIndexHeaders('jobType1');
     }
 }

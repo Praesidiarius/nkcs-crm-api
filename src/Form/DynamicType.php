@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\DynamicFormField;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
+use App\Repository\SystemSettingRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CurrencyType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -24,6 +25,7 @@ class DynamicType extends AbstractType
         //private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly SystemSettingRepository $systemSettings,
     )
     {
     }
@@ -34,6 +36,7 @@ class DynamicType extends AbstractType
         foreach ($formFields as $field) {
             switch ($field['type']) {
                 case 'select':
+                case 'autocomplete':
                     $builder->add($field['key'], NumberType::class);
                     break;
                 case 'hidden':
@@ -70,7 +73,6 @@ class DynamicType extends AbstractType
 
     public function getFormSections(string $formKey, $withTabs = false): array
     {
-
         $dynamicSections = $this->dynamicFormRepository->findOneBy(['formKey' => $formKey])->getDynamicFormSections();
         $formSections = [];
         foreach ($dynamicSections as $dynamicSection) {
@@ -83,16 +85,44 @@ class DynamicType extends AbstractType
                 'text' => $this->translator->trans($dynamicSection->getSectionLabel()),
                 'key' => $dynamicSection->getSectionKey(),
                 'isTab' => $dynamicSection->getParentSection() === null,
-                'test' => $withTabs
             ];
         }
 
         return $formSections;
     }
 
-    protected function getFormFieldData(DynamicFormField $formField): mixed
+    protected function getFormFieldData(DynamicFormField $formField): array|string
+    {
+        if ($formField->getFieldType() === 'select' || $formField->getFieldType() === 'autocomplete') {
+            return $this->getDynamicListData($formField);
+        }
+        return $formField->getDefaultData() ?? '';
+    }
+
+    public function getFormDefaultValues(string $formKey): array
+    {
+        $defaultValues = [];
+
+        $formFields = $this->getFormFields($formKey);
+
+        foreach ($formFields as $field) {
+            if (array_key_exists('default', $field)) {
+                $defaultValues[$field['key']] = $field['default'];
+            }
+        }
+
+        return $defaultValues;
+    }
+
+
+    protected function getDynamicListData(DynamicFormField $formField): array
     {
         return [];
+    }
+
+    protected function getFormFieldDefaultData(DynamicFormField $formField): string|int|float|null
+    {
+        return $formField->getDefaultData();
     }
 
     public function getFormFields(string $formKey, bool $withTabs = true): array
@@ -112,11 +142,15 @@ class DynamicType extends AbstractType
                 'text' => $this->translator->trans($dynamicFormField->getLabel()),
                 'key' => $dynamicFormField->getFieldKey(),
                 'type' => $dynamicFormField->getFieldType(),
-                'section' => $dynamicFormField->getSection()->getSectionKey(),
+                'section' => $dynamicFormField->getSection()?->getSectionKey() ?? 'none',
                 'cols' => $dynamicFormField->getColumns(),
                 'data' => is_array($this->getFormFieldData($dynamicFormField))
                     ? $this->getFormFieldData($dynamicFormField) : json_decode($this->getFormFieldData($dynamicFormField)),
             ];
+
+            if ($dynamicFormField->getDefaultData()) {
+                $fieldApiData['default'] = $this->getFormFieldDefaultData($dynamicFormField);
+            }
 
             if ($dynamicFormField->getFieldType() === 'table') {
                 $rowFields = $this->dynamicFormFieldRepository->findBy(['parentField' => $dynamicFormField]);
@@ -128,7 +162,7 @@ class DynamicType extends AbstractType
                         'key' => $rowField->getFieldKey(),
                         'value' => $rowField->getFieldKey(),
                         'type' => $rowField->getFieldType(),
-                        'section' => $rowField->getSection()->getSectionKey(),
+                        'section' => $rowField->getSection()?->getSectionKey() ?? 'none',
                         'cols' => $rowField->getColumns(),
                     ];
                 }

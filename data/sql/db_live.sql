@@ -7,39 +7,6 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
-CREATE TABLE `contact` (
-                         `id` int(11) NOT NULL,
-                         `salution_id` int(11) DEFAULT NULL,
-                         `first_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `last_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `is_company` tinyint(1) NOT NULL,
-                         `email_private` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `created_by` int(11) NOT NULL,
-                         `created_date` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
-                         `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `company_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `company_uid` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                         `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `contact_address` (
-                                 `id` int(11) NOT NULL,
-                                 `contact_id` int(11) DEFAULT NULL,
-                                 `street` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                                 `zip` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                                 `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                                 `country` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `contact_salution` (
-                                  `id` int(11) NOT NULL,
-                                  `name` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `contact_salution` (`id`, `name`) VALUES
-                                                (1, 'contact.salution.mr'),
-                                                (2, 'contact.salution.mrs');
-
 CREATE TABLE `document` (
                           `id` int(11) NOT NULL,
                           `type_id` int(11) NOT NULL,
@@ -62,27 +29,16 @@ CREATE TABLE `document_type` (
                                `identifier` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `document_type` (`id`, `name`, `identifier`) VALUES
-(1, 'document.type.contact', 'contact'),
-(2, 'document.type.job', 'job');
-
 CREATE TABLE `dynamic_form` (
                               `id` int(11) NOT NULL,
                               `label` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                               `form_key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `dynamic_form` (`id`, `label`, `form_key`) VALUES
-(1, 'contact.contact', 'contact'),
-(2, 'contact.contact.address', 'contactAddress'),
-(3, 'contact.contact', 'company'),
-(4, 'contact.contact.address', 'companyAddress'),
-(5, 'item.item', 'item');
-
 CREATE TABLE `dynamic_form_field` (
                                     `id` int(11) NOT NULL,
                                     `parent_field_id` int(11) DEFAULT NULL,
-                                    `section_id` int(11) NOT NULL,
+                                    `section_id` int(11) DEFAULT NULL,
                                     `dynamic_form_id` int(11) NOT NULL,
                                     `label` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                                     `field_key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -90,31 +46,9 @@ CREATE TABLE `dynamic_form_field` (
                                     `columns` int(11) NOT NULL,
                                     `default_data` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                                     `related_table` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                                    `related_table_col` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+                                    `related_table_col` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+                                    `on_index_default` INT(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`, `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`) VALUES
- (1, NULL, 2, 1, 'salution', 'salution_id', 'select', 2, '#salutions#', 'contact_salution', 'name'),
- (2, NULL, 2, 1, 'firstname', 'first_name', 'text', 5, NULL, NULL, NULL),
- (3, NULL, 2, 1, 'lastname', 'last_name', 'text', 5, NULL, NULL, NULL),
- (4, NULL, 2, 1, 'email.address', 'email_private', 'email', 8, NULL, NULL, NULL),
- (5, NULL, 2, 1, 'phone', 'phone', 'phone', 4, NULL, NULL, NULL),
- (6, NULL, 3, 1, 'addresses', 'address', 'table', 12, NULL, NULL, NULL),
- (7, 6, 3, 2, 'address.street', 'street', 'text', 6, NULL, NULL, NULL),
- (8, 6, 3, 2, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL),
- (9, 6, 3, 2, 'address.city', 'city', 'city', 5, NULL, NULL, NULL),
- (10, NULL, 2, 1, NULL, 'is_company', 'hidden', 0, '', NULL, NULL),
- (11, NULL, 6, 3, 'company', 'company_name', 'text', 12, NULL, NULL, NULL),
- (12, NULL, 6, 3, 'email.address', 'email_private', 'email', 8, NULL, NULL, NULL),
- (13, NULL, 6, 3, 'phone', 'phone', 'phone', 4, NULL, NULL, NULL),
- (14, NULL, 7, 3, 'addresses', 'address', 'table', 12, NULL, NULL, NULL),
- (15, 14, 7, 4, 'address.street', 'street', 'text', 6, NULL, NULL, NULL),
- (16, 14, 7, 4, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL),
- (17, 14, 7, 4, 'address.city', 'city', 'city', 5, NULL, NULL, NULL),
- (18, NULL, 6, 3, NULL, 'is_company', 'hidden', 0, '1', NULL, NULL),
- (19, NULL, 10, 5, 'item.name', 'name', 'text', 6, NULL, NULL, NULL),
- (20, NULL, 10, 5, 'item.unit', 'unit_id', 'select', 2, '#units#', 'item_unit', 'name'),
- (21, NULL, 10, 5, 'item.price', 'price', 'currency', 2, '', '', '');
 
 CREATE TABLE `dynamic_form_field_relation` (
                                              `id` int(11) NOT NULL,
@@ -131,81 +65,6 @@ CREATE TABLE `dynamic_form_section` (
                                       `section_key` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
                                       `form_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `dynamic_form_section` (`id`, `parent_section_id`, `section_label`, `section_key`, `form_id`) VALUES
-(1, NULL, 'contact.form.section.contact', 'contactMain', 1),
-(2, 1, 'contact.form.section.basic', 'contactBasic', 1),
-(3, 1, 'contact.form.section.addresses', 'contactAddress', 1),
-(4, NULL, 'contact.form.section.history', 'contactHistory', 1),
-(5, NULL, 'contact.form.section.contact', 'contactCompanyMain', 3),
-(6, 5, 'contact.form.section.basic', 'contactCompanyBasic', 3),
-(7, 5, 'contact.form.section.addresses', 'contactCompanyAddress', 3),
-(8, NULL, 'contact.form.section.history', 'contactHistory', 3),
-(9, NULL, 'item.item', 'itemMain', 4),
-(10, 9, 'item.form.section.basic', 'itemBasic', 4);
-
-CREATE TABLE `item` (
-                      `id` int(11) NOT NULL,
-                      `unit_id` int(11) NOT NULL,
-                      `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-                      `price` double NOT NULL,
-                      `created_by` int(11) NOT NULL,
-                      `created_date` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
-                      `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `item_unit` (
-                           `id` int(11) NOT NULL,
-                           `name` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-                           `type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `item_unit` (`id`, `name`, `type`) VALUES
-(1, 'item.unit.piece', NULL),
-(2, 'item.unit.hour', NULL);
-
-CREATE TABLE `job` (
-                     `id` int(11) NOT NULL,
-                     `type_id` int(11) NOT NULL,
-                     `contact_id` int(11) NOT NULL,
-                     `title` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                     `created_by` int(11) NOT NULL,
-                     `created_date` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
-                     `sub_total` double NOT NULL,
-                     `vat_mode` smallint(6) NOT NULL,
-                     `vat_rate` double DEFAULT NULL,
-                     `vat_total` double DEFAULT NULL,
-                     `total` double NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `job_position` (
-                              `id` int(11) NOT NULL,
-                              `item_id` int(11) DEFAULT NULL,
-                              `job_id` int(11) NOT NULL,
-                              `unit_id` int(11) NOT NULL,
-                              `price` double DEFAULT NULL,
-                              `comment` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-                              `amount` double DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `job_position_unit` (
-                                   `id` int(11) NOT NULL,
-                                   `name` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `job_position_unit` (`id`, `name`) VALUES
-(1, 'job.unit.piece'),
-(2, 'job.unit.hour');
-
-CREATE TABLE `job_type` (
-                          `id` int(11) NOT NULL,
-                          `type_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-                          `type_value` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `job_type` (`id`, `type_key`, `type_value`) VALUES
-(1, 'job', 'Job'),
-(2, 'offer', 'Offer');
 
 CREATE TABLE `system_setting` (
                                 `id` int(11) NOT NULL,
@@ -234,17 +93,6 @@ CREATE TABLE `user_setting` (
                               `setting_key` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
                               `setting_value` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-ALTER TABLE `contact`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `IDX_4C62E6382C2D130` (`salution_id`);
-
-ALTER TABLE `contact_address`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `IDX_97614E00E7A1254A` (`contact_id`);
-
-ALTER TABLE `contact_salution`
-  ADD PRIMARY KEY (`id`);
 
 ALTER TABLE `document`
   ADD PRIMARY KEY (`id`),
@@ -276,30 +124,6 @@ ALTER TABLE `dynamic_form_section`
   ADD PRIMARY KEY (`id`),
   ADD KEY `IDX_7FDFF3E99F60672A` (`parent_section_id`);
 
-ALTER TABLE `item`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `IDX_1F1B251EF8BD700D` (`unit_id`);
-
-ALTER TABLE `item_unit`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `job`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `IDX_FBD8E0F8C54C8C93` (`type_id`),
-  ADD KEY `IDX_FBD8E0F8E7A1254A` (`contact_id`);
-
-ALTER TABLE `job_position`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `IDX_216B418E126F525E` (`item_id`),
-  ADD KEY `IDX_216B418EBE04EA9` (`job_id`),
-  ADD KEY `IDX_216B418EF8BD700D` (`unit_id`);
-
-ALTER TABLE `job_position_unit`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `job_type`
-  ADD PRIMARY KEY (`id`);
-
 ALTER TABLE `system_setting`
   ADD PRIMARY KEY (`id`);
 
@@ -310,15 +134,6 @@ ALTER TABLE `user`
 ALTER TABLE `user_setting`
   ADD PRIMARY KEY (`id`),
   ADD KEY `IDX_C779A692A76ED395` (`user_id`);
-
-ALTER TABLE `contact`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `contact_address`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `contact_salution`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 ALTER TABLE `document`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
@@ -341,24 +156,6 @@ ALTER TABLE `dynamic_form_field_relation`
 ALTER TABLE `dynamic_form_section`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
-ALTER TABLE `item`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `item_unit`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
-ALTER TABLE `job`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `job_position`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `job_position_unit`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
-ALTER TABLE `job_type`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
 ALTER TABLE `system_setting`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
@@ -367,12 +164,6 @@ ALTER TABLE `user`
 
 ALTER TABLE `user_setting`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `contact`
-  ADD CONSTRAINT `FK_4C62E6382C2D130` FOREIGN KEY (`salution_id`) REFERENCES `contact_salution` (`id`);
-
-ALTER TABLE `contact_address`
-  ADD CONSTRAINT `FK_97614E00E7A1254A` FOREIGN KEY (`contact_id`) REFERENCES `contact` (`id`);
 
 ALTER TABLE `document`
   ADD CONSTRAINT `FK_D8698A765DA0FB8` FOREIGN KEY (`template_id`) REFERENCES `document_template` (`id`),
@@ -392,18 +183,6 @@ ALTER TABLE `dynamic_form_field_relation`
 
 ALTER TABLE `dynamic_form_section`
   ADD CONSTRAINT `FK_7FDFF3E99F60672A` FOREIGN KEY (`parent_section_id`) REFERENCES `dynamic_form_section` (`id`);
-
-ALTER TABLE `item`
-  ADD CONSTRAINT `FK_1F1B251EF8BD700D` FOREIGN KEY (`unit_id`) REFERENCES `item_unit` (`id`);
-
-ALTER TABLE `job`
-  ADD CONSTRAINT `FK_FBD8E0F8C54C8C93` FOREIGN KEY (`type_id`) REFERENCES `job_type` (`id`),
-  ADD CONSTRAINT `FK_FBD8E0F8E7A1254A` FOREIGN KEY (`contact_id`) REFERENCES `contact` (`id`);
-
-ALTER TABLE `job_position`
-  ADD CONSTRAINT `FK_216B418E126F525E` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`),
-  ADD CONSTRAINT `FK_216B418EBE04EA9` FOREIGN KEY (`job_id`) REFERENCES `job` (`id`),
-  ADD CONSTRAINT `FK_216B418EF8BD700D` FOREIGN KEY (`unit_id`) REFERENCES `job_position_unit` (`id`);
 
 ALTER TABLE `user_setting`
   ADD CONSTRAINT `FK_C779A692A76ED395` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);

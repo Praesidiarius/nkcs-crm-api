@@ -61,6 +61,11 @@ class DynamicDto
         return $this;
     }
 
+    public function getIntField(string $fieldKey): int
+    {
+        return (int) $this->data[$fieldKey] ?? 0;
+    }
+
     public function setDateField(string $fieldKey, DateTimeInterface $dateTime): self
     {
         $this->data[$fieldKey] = $dateTime->format('Y-m-d');
@@ -124,7 +129,7 @@ class DynamicDto
 
         foreach ($formFields as $field) {
             $this->serializedData[$field->getFieldKey()] = match ($field->getFieldType()) {
-                'select' => $this->getSerializedSelectFieldData(
+                'select', 'autocomplete' => $this->getSerializedSelectFieldData(
                     $field,
                     (
                         is_array($this->data[$field->getFieldKey()] ?? false)
@@ -146,7 +151,7 @@ class DynamicDto
         return $value;
     }
 
-    private function getSerializedSelectFieldData(DynamicFormField $selectField, int $selectedValue): array
+    protected function getSerializedSelectFieldData(DynamicFormField $selectField, int $selectedValue): array
     {
         $qb = $this->connection->createQueryBuilder();
 

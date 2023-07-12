@@ -19,6 +19,12 @@ class DashboardController extends AbstractController
         $widgetData = [];
         if (in_array('contact', $activeModules)) {
             $widgetData['contact_counter'] = 0;
+            $widgetData['contact_chart'] = [
+                'data' => [],
+                'labels' => [],
+                'current_amount' => 0,
+                'current_change' => 0,
+            ];
         }
         if (in_array('item', $activeModules)) {
             $widgetData['item_counter'] = 0;

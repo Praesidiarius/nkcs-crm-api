@@ -13,6 +13,11 @@ class AbstractRepository
     ) {
     }
 
+    public function getDynamicDto(): DynamicDto
+    {
+        return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+    }
+
     public function findMostRecent(string $table): ?DynamicDto
     {
         $qb = $this->connection->createQueryBuilder();
@@ -27,7 +32,7 @@ class AbstractRepository
             return null;
         }
 
-        $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $entity = $this->getDynamicDto();
         $entity->setData($raw);
 
         return $entity;
@@ -45,7 +50,7 @@ class AbstractRepository
         if (count($rawData) > 0) {
             $entities = [];
             foreach ($rawData as $row) {
-                $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+                $entity = $this->getDynamicDto();
                 $entity->setData($row);
                 $entities[] = $entity;
             }
@@ -69,7 +74,7 @@ class AbstractRepository
 
         $rawData = $qb->fetchAssociative();
         if ($rawData) {
-            $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+            $entity = $this->getDynamicDto();
             $entity->setData($rawData);
             return $entity;
         }
@@ -91,7 +96,7 @@ class AbstractRepository
 
         $rawData = $qb->fetchAssociative();
         if ($rawData) {
-            $entity = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+            $entity = $this->getDynamicDto();
             $entity->setData($rawData);
             return $entity;
         }

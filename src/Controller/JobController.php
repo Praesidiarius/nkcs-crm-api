@@ -2,17 +2,20 @@
 
 namespace App\Controller;
 
-use App\Entity\Job;
 use App\Entity\JobPosition;
 use App\Enum\JobVatMode;
+use App\Form\DynamicType;
 use App\Form\Job\JobType;
+use App\Model\DynamicDto;
+use App\Model\JobDto;
+use App\Repository\AbstractRepository;
+use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
+use App\Repository\ItemUnitRepository;
 use App\Repository\JobPositionRepository;
-use App\Repository\JobPositionUnitRepository;
 use App\Repository\JobRepository;
-use App\Repository\JobTypeRepository;
 use App\Repository\UserSettingRepository;
-use DateTimeImmutable;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -22,34 +25,31 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/api/job/{_locale}')]
-class JobController extends AbstractApiController
+class JobController extends AbstractDynamicFormController
 {
     public function __construct(
-        private readonly JobType                   $jobForm,
-        private readonly JobRepository             $jobRepository,
-        private readonly JobTypeRepository         $jobTypeRepository,
-        private readonly JobPositionUnitRepository $jobPositionUnitRepository,
-        private readonly JobPositionRepository     $jobPositionRepository,
-        private readonly UserSettingRepository     $userSettings,
-        private readonly ItemRepository            $itemRepository,
-        private readonly HttpClientInterface       $httpClient,
-        private readonly TranslatorInterface       $translator,
-    )
-    {
-        parent::__construct($this->httpClient);
+        private readonly JobType $jobForm,
+        private readonly JobRepository $jobRepository,
+        private readonly JobPositionRepository $jobPositionRepository,
+        private readonly UserSettingRepository $userSettings,
+        private readonly ItemRepository $itemRepository,
+        private readonly ItemUnitRepository $itemUnitRepository,
+        private readonly HttpClientInterface $httpClient,
+        private readonly TranslatorInterface $translator,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly Connection $connection,
+    ) {
+        parent::__construct(
+            $this->httpClient,
+            $this->userSettings,
+            $this->dynamicFormFieldRepository,
+            $this->connection,
+        );
     }
 
     #[Route('/add', name: 'job_add', methods: ['GET'])]
-    public function getAddForm(): Response {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        return $this->json([
-            'form' => $this->jobForm->getFormFields(),
-            'sections' => $this->jobForm->getFormSections(),
-            'default_values' => $this->jobForm->getFormDefaultValues(),
-        ]);
+    public function getAddForm($form = null, $formKey = 'job'): Response {
+        return parent::getAddForm($this->jobForm, 'jobType1');
     }
 
     #[Route('/add', name: 'job_add_save', methods: ['POST'])]
@@ -61,14 +61,7 @@ class JobController extends AbstractApiController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
-        $job = new Job();
-
-        $contactId = (int) $data['contact'];
-        if ($contactId > 0) {
-            $data['contact'] = $contactId;
-        }
-
-        $form = $this->createForm(JobType::class, $job);
+        $form = $this->createForm(JobType::class);
         $form->submit($data);
 
         if (!$form->isValid()) {
@@ -88,34 +81,36 @@ class JobController extends AbstractApiController
             ], 400);
         } **/
 
+        $job = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $job->setData($data);
 
-        $tempType = $this->jobTypeRepository->find(1);
-        $job->setType($tempType);
-        $job->setContact($data['contact']);
+        $job->setSelectField('type_id', 1);
 
         // set readonly fields
         $job->setCreatedBy($this->getUser()->getId());
-        $job->setCreatedDate(new DateTimeImmutable());
+        $job->setCreatedDate();
 
         // save job
-        $this->jobRepository->save($job, true);
+        $this->jobRepository->save($job);
 
         return $this->itemResponse($job);
     }
 
-    #[Route('/edit/{id}', name: 'job_edit', methods: ['GET'])]
-    public function getEditForm(Job $job): Response {
+    #[Route('/edit/{jobId}', name: 'job_edit', methods: ['GET'])]
+    public function getEditForm(int $jobId): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
+        $job = $this->jobRepository->findById($jobId);
+
         return $this->itemResponse($job);
     }
 
-    #[Route('/edit/{id}', name: 'job_edit_save', methods: ['POST'])]
+    #[Route('/edit/{jobId}', name: 'job_edit_save', methods: ['POST'])]
     public function saveEditForm(
         Request $request,
-        Job $job,
+        int $jobId,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
@@ -129,7 +124,7 @@ class JobController extends AbstractApiController
         unset($data['createdDate']);
         unset($data['id']);
 
-        $form = $this->createForm(JobType::class, $job);
+        $form = $this->createForm(JobType::class);
         $form->submit($data);
 
         if (!$form->isValid()) {
@@ -141,31 +136,46 @@ class JobController extends AbstractApiController
             }
         }
 
-        $this->jobRepository->save($job, true);
+        $job = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $job->setData($data);
+        $job->setId($jobId);
+
+        $this->jobRepository->save($job);
 
         return $this->itemResponse($job);
     }
 
-    #[Route('/view/{id}', name: 'job_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    #[Route('/view/{entityId}', name: 'job_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
-        Job $job,
+        int $entityId,
+        ?AbstractRepository $repository = null,
+        string $formKey = 'item',
+        ?DynamicType $form = null,
     ): Response {
+        $job = $this->jobRepository->findById($entityId);
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        return $this->itemResponse($job);
+        $extraData = [
+            'positions' => $job->getJobPositions(),
+            'position_units' => $this->listUnits()
+        ];
+
+        return $this->itemResponse($job, 'job', $this->jobForm, $extraData);
     }
 
-    #[Route('/remove/{id}', name: 'job_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    #[Route('/remove/{jobId}', name: 'job_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
     public function delete(
-        Job $job,
+        int $jobId,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        $this->jobRepository->remove($job, true);
+        if ($jobId > 0) {
+            $this->jobRepository->removeById($jobId);
+        }
 
         return $this->json(['state' => 'success']);
     }
@@ -174,30 +184,41 @@ class JobController extends AbstractApiController
     #[Route('/list/{page}', name: 'job_index_with_pagination', methods: ['GET'])]
     public function list(
         ?int $page,
+        ?AbstractRepository $repository = null,
+        ?DynamicType $form = null,
+        string $formKey = 'jobType1',
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        $pageSize = $this->userSettings->getUserSetting(
+        $pageSize = $this->userSettingRepository->getUserSetting(
             $this->getUser(),
             'pagination-page-size',
         );
         $page = $page ?? 1;
-        $jobs = $this->jobRepository->findBySearchAttributes($page, $pageSize);
+        $items = $this->jobRepository->findBySearchAttributes($page, $pageSize);
+
+        $itemsApi = [];
+        foreach ($items as $itemRaw) {
+            $itemApi = $this->jobRepository->getDynamicDto();
+            $itemApi->setData($itemRaw);
+            $itemApi->serializeDataForApiByFormModel($formKey);
+            $itemsApi[] = $itemApi->getDataSerialized();
+        }
 
         $data = [
-            'headers' => $this->jobForm->getIndexHeaders(),
-            'items' => $jobs,
-            'total_items' => count($jobs),
+            'headers' => $this->jobForm->getIndexHeaders($formKey),
+            'items' => $itemsApi,
+            'total_items' => count($items),
             'pagination' => [
-                'page_count' => ceil(count($jobs) / $pageSize),
+                'page_count' => ceil(count($items) / $pageSize),
                 'page_size' => $pageSize,
                 'page' => $page,
             ],
         ];
 
-        return $this->json($data, 200);
+        return $this->json($data);
     }
 
     #[Route('/position', name: 'job_position_add', methods: ['POST'])]
@@ -222,17 +243,22 @@ class JobController extends AbstractApiController
             ], 400);
         }
 
-        $job = $this->jobRepository->find($jobId);
+        $job = $this->jobRepository->findById($jobId);
 
-        $position->setJob($job);
+        $position->setJobId($jobId);
         $position->setComment($data['title']);
         $position->setAmount($data['amount']);
 
         $itemId = (int) $data['item'];
         if ($itemId > 0) {
-            $item = $this->itemRepository->find($itemId);
-            $position->setItem($item);
-            $unit = $this->jobPositionUnitRepository->find(1);
+            $item = $this->itemRepository->findById($itemId);
+            if (!$item) {
+                return $this->json([
+                    ['message' => 'item not found']
+                ], 404);
+            }
+            $unit = $this->itemUnitRepository->find($item->getIntField('unit_id'));
+            $position->setItemId($itemId);
             $position->setUnit($unit);
         } else {
             if ($unitId <= 0) {
@@ -240,7 +266,7 @@ class JobController extends AbstractApiController
                     ['message' => 'Invalid Unit']
                 ], 400);
             }
-            $unit = $this->jobPositionUnitRepository->find($unitId);
+            $unit = $this->itemUnitRepository->find($unitId);
             $position->setUnit($unit);
             $position->setPrice($data['price']);
         }
@@ -253,37 +279,31 @@ class JobController extends AbstractApiController
         foreach ($jobPositionsNew as $jobPosition) {
             $jobSubTotal += $jobPosition->getTotal();
         }
-        $job->setSubTotal($jobSubTotal);
-        if ($job->getVatMode() === JobVatMode::VAT_DEFAULT) {
-            $job->setVatRate($this->getParameter('job.vat_rate_default'));
+        $job->setPriceField('sub_total',$jobSubTotal);
+        if ($job->getIntField('vat_mode') !== JobVatMode::VAT_NONE->value) {
+            $job->setPriceField('vat_rate', $this->getParameter('job.vat_rate_default'));
             $jobVat = $jobSubTotal * ($this->getParameter('job.vat_rate_default') / 100);
-            $job->setVatTotal($jobVat);
-            $job->setTotal($jobSubTotal + $jobVat);
+            $job->setPriceField('vat_total', $jobVat);
+            $job->setPriceField('total', $jobSubTotal + $jobVat);
         } else {
-            $job->setTotal($jobSubTotal);
+            $job->setPriceField('total', $jobSubTotal);
         }
-        $this->jobRepository->save($job, true);
+        $this->jobRepository->save($job);
 
         return $this->json([
             'positions' => $jobPositionsNew,
             'job' => [
-                'subTotal' => $job->getSubTotal(),
-                'vatTotal' => $job->getVatTotal(),
-                'vatRate' => $job->getVatRate(),
-                'total' => $job->getTotal(),
+                'subTotal' => $job->getPriceField('sub_total'),
+                'vatTotal' => $job->getPriceField('vat_total'),
+                'vatRate' => $job->getPriceField('vat_rate'),
+                'total' => $job->getPriceField('total'),
             ],
         ]);
     }
 
-    #[Route('/unit', name: 'job_unit_list', methods: ['GET'])]
-    public function listUnits(
-        Request $request,
-    ): Response {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        $units = $this->jobPositionUnitRepository->findAll();
+    private function listUnits(): array
+    {
+        $units = $this->itemUnitRepository->findAll();
         $unitsTranslated = [];
 
         foreach ($units as $unit) {
@@ -293,37 +313,20 @@ class JobController extends AbstractApiController
             ];
         }
 
-        $data = [
-            'items' => $unitsTranslated,
-        ];
-
-        return $this->json($data);
+        return $unitsTranslated;
     }
 
-    private function itemResponse(
-        Job $job,
+    protected function itemResponse(
+        ?DynamicDto $dto,
+        string $formKey = 'jobType1',
+        ?DynamicType $form = null,
+        array $extraData = []
     ): Response {
-        $units = $this->jobPositionUnitRepository->findAll();
-        $unitsTranslated = [];
-
-        foreach ($units as $unit) {
-            $unitsTranslated[] = [
-                'id' => $unit->getId(),
-                'text' => $this->translator->trans($unit->getName()),
-            ];
-        }
-
-        $data = [
-            'item' => $job,
-            'form' => $this->jobForm->getFormFields(),
-            'sections' => $this->jobForm->getFormSections(),
-            'position_units' => $unitsTranslated,
-            'positions' => $job->getJobPositions(),
-            'vat_rate' => [
-                'default' => $this->getParameter('job.vat_rate_default')
-            ]
-        ];
-
-        return $this->json($data);
+        return parent::itemResponse(
+            $dto,
+            'jobType1',
+            $this->jobForm,
+            $extraData
+        );
     }
 }

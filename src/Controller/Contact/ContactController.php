@@ -12,6 +12,7 @@ use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\UserSettingRepository;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -32,11 +33,15 @@ class ContactController extends AbstractDynamicFormController
         private readonly UserSettingRepository    $userSettings,
         private readonly HttpClientInterface      $httpClient,
         private readonly TranslatorInterface      $translator,
-        private readonly DynamicDto               $dynamicDto,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
-    )
-    {
-        parent::__construct($this->httpClient, $this->userSettings, $this->dynamicDto);
+        private readonly Connection $connection,
+    ) {
+        parent::__construct(
+            $this->httpClient,
+            $this->userSettings,
+            $this->dynamicFormFieldRepository,
+            $this->connection,
+        );
     }
 
     #[Route('/add', name: 'contact_add', methods: ['GET'])]
@@ -107,8 +112,7 @@ class ContactController extends AbstractDynamicFormController
             }
         }
 
-        $contact = $this->dynamicDto;
-
+        $contact = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
         $contact->setData($data);
 
         // manual validation
@@ -139,7 +143,7 @@ class ContactController extends AbstractDynamicFormController
         // save address
         if ($contactHasAddress) {
             $addressData['contact_id'] = $contact->getId();
-            $address = $this->dynamicDto;
+            $address = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
             $address->setData($addressData);
             $this->addressRepository->save($address);
         }
@@ -189,7 +193,7 @@ class ContactController extends AbstractDynamicFormController
             }
         }
 
-        $contact = $this->dynamicDto;
+        $contact = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
 
         $contact->setData($data);
         $contact->setId($contactId);
@@ -252,11 +256,13 @@ class ContactController extends AbstractDynamicFormController
         ?DynamicDto $dto,
         string $formKey = 'contact',
         ?DynamicType $form = null,
+        array $extraData = [],
     ): Response {
         return parent::itemResponse(
             $dto,
             'contact',
-            $dto->getBoolField('is_company') ? $this->companyForm : $this->contactForm
+            $dto->getBoolField('is_company') ? $this->companyForm : $this->contactForm,
+            $extraData,
         );
     }
 }

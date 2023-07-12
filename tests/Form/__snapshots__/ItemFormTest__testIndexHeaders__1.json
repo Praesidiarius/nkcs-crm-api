@@ -4,5 +4,17 @@
         "key": "name",
         "sortable": false,
         "type": "text"
+    },
+    {
+        "title": "item.unit",
+        "key": "unit_id",
+        "sortable": false,
+        "type": "select"
+    },
+    {
+        "title": "Preis",
+        "key": "price",
+        "sortable": false,
+        "type": "currency"
     }
 ]

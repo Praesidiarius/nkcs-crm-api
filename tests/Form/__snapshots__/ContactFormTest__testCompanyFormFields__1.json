@@ -1,42 +1,34 @@
 [
     {
-        "text": "Firma",
-        "key": "company_name",
-        "type": "text",
-        "section": "contactBasic",
-        "cols": 12,
-        "data": []
-    },
-    {
         "text": "E-Mail Adresse",
         "key": "email_private",
         "type": "email",
-        "section": "contactBasic",
+        "section": "contactCompanyBasic",
         "cols": 8,
-        "data": []
+        "data": null
     },
     {
         "text": "Tel",
         "key": "phone",
         "type": "phone",
-        "section": "contactBasic",
+        "section": "contactCompanyBasic",
         "cols": 4,
-        "data": []
+        "data": null
     },
     {
         "text": "addresses",
         "key": "address",
         "type": "table",
-        "section": "contactAddress",
+        "section": "contactCompanyAddress",
         "cols": 12,
-        "data": [],
+        "data": null,
         "fields": [
             {
                 "text": "Strasse",
                 "key": "street",
                 "value": "street",
                 "type": "text",
-                "section": "contactAddress",
+                "section": "none",
                 "cols": 6
             },
             {
@@ -44,7 +36,7 @@
                 "key": "zip",
                 "value": "zip",
                 "type": "zip",
-                "section": "contactAddress",
+                "section": "none",
                 "cols": 1
             },
             {
@@ -52,7 +44,7 @@
                 "key": "city",
                 "value": "city",
                 "type": "city",
-                "section": "contactAddress",
+                "section": "none",
                 "cols": 5
             }
         ]
@@ -61,8 +53,17 @@
         "text": "",
         "key": "is_company",
         "type": "hidden",
-        "section": "contactBasic",
+        "section": "contactCompanyBasic",
         "cols": 0,
-        "data": []
+        "data": 1,
+        "default": "1"
+    },
+    {
+        "text": "Firma",
+        "key": "company_name",
+        "type": "text",
+        "section": "contactCompanyBasic",
+        "cols": 12,
+        "data": null
     }
 ]

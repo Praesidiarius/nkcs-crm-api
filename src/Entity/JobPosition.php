@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Model\DynamicDto;
 use App\Repository\JobPositionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -16,19 +17,21 @@ class JobPosition
     #[ORM\Column(nullable: true)]
     private ?int $itemId = null;
 
+    // do not map item by orm
+    private ?DynamicDto $item = null;
+
     #[ORM\Column(nullable: true)]
     private ?float $price = null;
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $comment = null;
 
-    #[ORM\ManyToOne(inversedBy: 'jobPositions')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Job $job = null;
+    #[ORM\Column(nullable: false)]
+    private ?int $jobId = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?JobPositionUnit $unit = null;
+    private ?ItemUnit $unit = null;
 
     #[ORM\Column(nullable: true)]
     private ?float $amount = null;
@@ -38,16 +41,33 @@ class JobPosition
         return $this->id;
     }
 
-    public function getItem(): ?int
+    public function getItemId(): ?int
     {
         return $this->itemId;
     }
 
-    public function setItem(?int $itemId): self
+    public function setItemId(?int $itemId): self
     {
         $this->itemId = $itemId;
 
         return $this;
+    }
+
+    public function setItem(?DynamicDto $item): self
+    {
+        $this->item = $item;
+
+        return $this;
+    }
+
+    public function getItem(bool $serialized = true): null|array|DynamicDto
+    {
+        if (!$serialized) {
+            return $this->item;
+        }
+
+        $this->item?->serializeDataForApiByFormModel('item');
+        return $this->item?->getDataSerialized();
     }
 
     public function getPrice(): ?float
@@ -84,24 +104,24 @@ class JobPosition
         return $this;
     }
 
-    public function getJob(): ?Job
+    public function getJobId(): ?int
     {
-        return $this->job;
+        return $this->jobId;
     }
 
-    public function setJob(?Job $job): self
+    public function setJobId(?int $jobId): self
     {
-        $this->job = $job;
+        $this->jobId = $jobId;
 
         return $this;
     }
 
-    public function getUnit(): ?JobPositionUnit
+    public function getUnit(): ?ItemUnit
     {
         return $this->unit;
     }
 
-    public function setUnit(?JobPositionUnit $unit): self
+    public function setUnit(?ItemUnit $unit): self
     {
         $this->unit = $unit;
 

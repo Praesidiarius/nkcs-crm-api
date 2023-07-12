@@ -2,13 +2,11 @@
     {
         "text": "Kontaktdaten",
         "key": "contactBasic",
-        "isTab": false,
-        "test": false
+        "isTab": false
     },
     {
         "text": "Adressen",
         "key": "contactAddress",
-        "isTab": false,
-        "test": false
+        "isTab": false
     }
 ]

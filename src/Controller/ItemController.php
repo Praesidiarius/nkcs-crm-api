@@ -2,13 +2,14 @@
 
 namespace App\Controller;
 
-use App\Form\Contact\ContactType;
 use App\Form\DynamicType;
 use App\Form\Item\ItemType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
+use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
 use App\Repository\UserSettingRepository;
+use Doctrine\DBAL\Connection;
 use Stripe\StripeClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,14 +22,19 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class ItemController extends AbstractDynamicFormController
 {
     public function __construct(
-        private readonly ItemType              $itemForm,
-        private readonly ItemRepository        $itemRepository,
+        private readonly ItemType $itemForm,
+        private readonly ItemRepository $itemRepository,
         private readonly UserSettingRepository $userSettings,
-        private readonly HttpClientInterface   $httpClient,
-        private readonly DynamicDto            $dynamicDto,
-    )
-    {
-        parent::__construct($this->httpClient, $this->userSettings, $this->dynamicDto);
+        private readonly HttpClientInterface $httpClient,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly Connection $connection,
+    ) {
+        parent::__construct(
+            $this->httpClient,
+            $this->userSettings,
+            $this->dynamicFormFieldRepository,
+            $this->connection,
+        );
     }
 
     #[Route('/add', name: 'item_add', methods: ['GET'])]
@@ -57,7 +63,7 @@ class ItemController extends AbstractDynamicFormController
             }
         }
 
-        $item = $this->dynamicDto;
+        $item = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
         $item->setData($data);
 
         // manual validation
@@ -136,7 +142,7 @@ class ItemController extends AbstractDynamicFormController
         unset($data['createdDate']);
         unset($data['id']);
 
-        $form = $this->createForm(ContactType::class);
+        $form = $this->createForm(ItemType::class);
         $form->submit($data);
 
         if (!$form->isValid()) {
@@ -148,7 +154,7 @@ class ItemController extends AbstractDynamicFormController
             }
         }
 
-        $item = $this->dynamicDto;
+        $item = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
 
         $item->setData($data);
         $item->setId($itemId);
@@ -203,11 +209,13 @@ class ItemController extends AbstractDynamicFormController
         ?DynamicDto $dto,
         string $formKey = 'item',
         ?DynamicType $form = null,
+        array $extraData = [],
     ): Response {
         return parent::itemResponse(
             $dto,
             'item',
-            $this->itemForm
+            $this->itemForm,
+            $extraData,
         );
     }
 }

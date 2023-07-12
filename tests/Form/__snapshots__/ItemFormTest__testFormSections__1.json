@@ -2,13 +2,6 @@
     {
         "text": "Stammdaten",
         "key": "itemBasic",
-        "isTab": false,
-        "test": false
-    },
-    {
-        "text": "item.form.section.finance",
-        "key": "itemFinance",
-        "isTab": false,
-        "test": false
+        "isTab": false
     }
 ]

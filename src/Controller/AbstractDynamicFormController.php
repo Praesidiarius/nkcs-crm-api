@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Form\DynamicType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
+use App\Repository\DynamicFormFieldRepository;
 use App\Repository\UserSettingRepository;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -13,9 +15,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class AbstractDynamicFormController extends AbstractApiController
 {
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
-        private readonly UserSettingRepository $userSettingRepository,
-        private readonly DynamicDto $dynamicDto,
+        private readonly HttpClientInterface        $httpClient,
+        protected readonly UserSettingRepository    $userSettingRepository,
+        private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly Connection                 $connection,
     ) {
         parent::__construct($this->httpClient);
     }
@@ -32,6 +35,7 @@ class AbstractDynamicFormController extends AbstractApiController
         return $this->json([
             'form' => $form->getFormFields($formKey),
             'sections' => $form->getFormSections($formKey),
+            'default_values' => $form->getFormDefaultValues($formKey),
         ]);
     }
 
@@ -65,7 +69,7 @@ class AbstractDynamicFormController extends AbstractApiController
 
         $itemsApi = [];
         foreach ($items as $itemRaw) {
-            $itemApi = $this->dynamicDto;
+            $itemApi = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
             $itemApi->setData($itemRaw);
             $itemApi->serializeDataForApiByFormModel($formKey);
             $itemsApi[] = $itemApi->getDataSerialized();
@@ -103,6 +107,7 @@ class AbstractDynamicFormController extends AbstractApiController
         ?DynamicDto $dto,
         string $formKey,
         DynamicType $form,
+        array $extraData = []
     ): Response {
         if (!$dto) {
             return $this->json(['message' => 'contact not found'], 404);
@@ -113,9 +118,9 @@ class AbstractDynamicFormController extends AbstractApiController
         $data = [
             'item' => $dto->getDataSerialized(),
             'form' => $form->getFormFields($formKey),
-            'sections' => $form->getFormSections($formKey),
+            'sections' => $form->getFormSections($formKey, true),
         ];
 
-        return $this->json($data);
+        return $this->json(array_merge($data, $extraData));
     }
 }

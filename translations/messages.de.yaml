@@ -52,8 +52,10 @@ job:
   title: Titel
   vat:
     vat: MwSt.
-    none: ohne MwSt.
-    default: inkl MwSt.
+  vatMode:
+    VAT_NONE: ohne MwSt.
+    VAT_EXCLUDED: exkl. MwSt.
+    VAT_INCLUDED: inkl. MwSt.
   form:
     section:
       basic: Stammdaten

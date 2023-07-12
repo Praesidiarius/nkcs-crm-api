@@ -5,6 +5,7 @@ namespace App\Form\Contact;
 use App\Form\DynamicType;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
+use App\Repository\SystemSettingRepository;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ContactCompanyType extends DynamicType
@@ -13,12 +14,14 @@ class ContactCompanyType extends DynamicType
         private readonly TranslatorInterface $translator,
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly SystemSettingRepository $systemSettings,
     )
     {
         parent::__construct(
             $this->translator,
             $this->dynamicFormRepository,
-            $this->dynamicFormFieldRepository
+            $this->dynamicFormFieldRepository,
+            $this->systemSettings,
         );
     }
 

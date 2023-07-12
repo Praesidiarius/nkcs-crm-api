@@ -1,11 +1,5 @@
 [
     {
-        "title": "Anrede",
-        "key": "salution_id",
-        "sortable": false,
-        "type": "select"
-    },
-    {
         "title": "Vorname",
         "key": "first_name",
         "sortable": false,

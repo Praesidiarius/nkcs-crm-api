@@ -7,6 +7,7 @@ use App\Form\DynamicType;
 use App\Repository\ContactSalutionRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
+use App\Repository\SystemSettingRepository;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ContactType extends DynamicType
@@ -16,12 +17,15 @@ class ContactType extends DynamicType
         private readonly ContactSalutionRepository $contactSalutionRepository,
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly SystemSettingRepository $systemSettings,
+
     )
     {
         parent::__construct(
             $this->translator,
             $this->dynamicFormRepository,
-            $this->dynamicFormFieldRepository
+            $this->dynamicFormFieldRepository,
+            $this->systemSettings,
         );
     }
 
@@ -30,15 +34,12 @@ class ContactType extends DynamicType
         return parent::getFormSections('contact', $withTabs);
     }
 
-    protected function getFormFieldData(DynamicFormField $formField): mixed
+    protected function getDynamicListData(DynamicFormField $formField): array
     {
-        return str_replace([
-                '#salutions#',
-            ],[
-                json_encode($this->getSalutions()),
-            ],
-            $formField->getDefaultData() ?? '',
-        );
+        return match ($formField->getRelatedTable()) {
+            'contact_salution' => $this->getSalutions(),
+            default => parent::getDynamicListData($formField)
+        };
     }
 
     private function getSalutions() : array
