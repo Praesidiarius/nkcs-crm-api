@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  symfony-tests:
+  nkcs-crm-api-test-deployment:
     runs-on: ubuntu-latest
     steps:
     #  To automatically get bug fixes and new Php versions for shivammathur/setup-php,
@@ -39,7 +39,9 @@ jobs:
       #run: mysql -uroot -proot < data/sql/db_test.sql
       run: |
         chmod +x data/scripts/buildTestDatabase.sh
-        data/scripts/buildTestDatabase.sh
+        cd data/scripts
+        ./buildTestDatabase.sh
+        cd -
       
     - name: generate jwt test keys
       run: php bin/console lexik:jwt:generate-keypair
