@@ -58,11 +58,11 @@ VALUES (NULL, NULL, 'job.form.section.positions', 'jobType1Positions', @job_form
 -- fields
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`)
-VALUES (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.title', 'title', 'text', 6, NULL, NULL, NULL, 1),
+                                  `on_index_default`, `default_sort_id`)
+VALUES (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.title', 'title', 'text', 6, NULL, NULL, NULL, 1, 0),
        (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.contact', 'contact_id', 'autocomplete', 6, NULL,
-        'contact', 'first_name', 1),
+        'contact', 'first_name', 1, 1),
        (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.vat.vat', 'vat_mode', 'select', 3, 'vat_default',
-        'enum', 'JobVatMode', 0);
+        'enum', 'JobVatMode', 0, 2);
 
 COMMIT;

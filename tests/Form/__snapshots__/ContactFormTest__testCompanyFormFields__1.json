@@ -1,5 +1,22 @@
 [
     {
+        "text": "",
+        "key": "is_company",
+        "type": "hidden",
+        "section": "contactCompanyBasic",
+        "cols": 0,
+        "data": 1,
+        "default": "1"
+    },
+    {
+        "text": "Firma",
+        "key": "company_name",
+        "type": "text",
+        "section": "contactCompanyBasic",
+        "cols": 12,
+        "data": null
+    },
+    {
         "text": "E-Mail Adresse",
         "key": "email_private",
         "type": "email",
@@ -48,22 +65,5 @@
                 "cols": 5
             }
         ]
-    },
-    {
-        "text": "",
-        "key": "is_company",
-        "type": "hidden",
-        "section": "contactCompanyBasic",
-        "cols": 0,
-        "data": 1,
-        "default": "1"
-    },
-    {
-        "text": "Firma",
-        "key": "company_name",
-        "type": "text",
-        "section": "contactCompanyBasic",
-        "cols": 12,
-        "data": null
     }
 ]

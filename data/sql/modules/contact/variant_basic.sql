@@ -104,49 +104,49 @@ VALUES (NULL, NULL, 'contact.form.section.history', 'contactCompanyHistory', @co
 -- contact
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`)
-VALUES (NULL, NULL, @contact_basic_section_id, @contact_form_id, NULL, 'is_company', 'hidden', 0, '0', NULL, NULL, 0),
-       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'salution', 'salution_id', 'select', 2, NULL, 'contact_salution', 'name', 0),
-       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'firstname', 'first_name', 'text', 5, NULL, NULL, NULL, 1),
-       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'lastname', 'last_name', 'text', 5, NULL, NULL, NULL, 1),
-       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'email.address', 'email_private', 'email', 8, NULL, NULL, NULL, 0),
-       (NULL, NULL, @contact_basic_section_id, @contact_form_id,  'phone', 'phone', 'phone', 4, NULL, NULL, NULL, 0);
+                                  `on_index_default`, `default_sort_id`)
+VALUES (NULL, NULL, @contact_basic_section_id, @contact_form_id, NULL, 'is_company', 'hidden', 0, '0', NULL, NULL, 0, 0),
+       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'salution', 'salution_id', 'select', 2, NULL, 'contact_salution', 'name', 0, 1),
+       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'firstname', 'first_name', 'text', 5, NULL, NULL, NULL, 1, 2),
+       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'lastname', 'last_name', 'text', 5, NULL, NULL, NULL, 1, 3),
+       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'email.address', 'email_private', 'email', 8, NULL, NULL, NULL, 0, 4),
+       (NULL, NULL, @contact_basic_section_id, @contact_form_id,  'phone', 'phone', 'phone', 4, NULL, NULL, NULL, 0, 5);
 
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`)
-VALUES (NULL, NULL, @contact_address_section_id, @contact_form_id, 'addresses', 'address', 'table', 12, NULL, NULL, NULL, 0);
+                                  `on_index_default`, `default_sort_id`)
+VALUES (NULL, NULL, @contact_address_section_id, @contact_form_id, 'addresses', 'address', 'table', 12, NULL, NULL, NULL, 0, 6);
 
 SET
   @contact_address_field_id = LAST_INSERT_ID();
 
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`)
-VALUES (NULL, @contact_address_field_id, NULL, @contact_address_form_id, 'address.street', 'street', 'text', 6, NULL, NULL, NULL, 0),
-       (NULL, @contact_address_field_id, NULL, @contact_address_form_id, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL, 0),
-       (NULL, @contact_address_field_id, NULL, @contact_address_form_id, 'address.city', 'city', 'city', 5, NULL, NULL, NULL, 0);
+                                  `on_index_default`, `default_sort_id`)
+VALUES (NULL, @contact_address_field_id, NULL, @contact_address_form_id, 'address.street', 'street', 'text', 6, NULL, NULL, NULL, 0, 0),
+       (NULL, @contact_address_field_id, NULL, @contact_address_form_id, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL, 0, 1),
+       (NULL, @contact_address_field_id, NULL, @contact_address_form_id, 'address.city', 'city', 'city', 5, NULL, NULL, NULL, 0, 2);
 
 -- company
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`)
-VALUES (NULL, NULL, @company_basic_section_id, @company_form_id, NULL, 'is_company', 'hidden', 0, '1', NULL, NULL, 0),
-       (NULL, NULL, @company_basic_section_id, @company_form_id, 'company', 'company_name', 'text', 12, NULL, NULL, NULL, 1),
-       (NULL, NULL, @company_basic_section_id, @company_form_id, 'email.address', 'email_private', 'email', 8, NULL, NULL, NULL, 0),
-       (NULL, NULL, @company_basic_section_id, @company_form_id,  'phone', 'phone', 'phone', 4, NULL, NULL, NULL, 0);
+                                  `on_index_default`, `default_sort_id`)
+VALUES (NULL, NULL, @company_basic_section_id, @company_form_id, NULL, 'is_company', 'hidden', 0, '1', NULL, NULL, 0, 0),
+       (NULL, NULL, @company_basic_section_id, @company_form_id, 'company', 'company_name', 'text', 12, NULL, NULL, NULL, 1, 1),
+       (NULL, NULL, @company_basic_section_id, @company_form_id, 'email.address', 'email_private', 'email', 8, NULL, NULL, NULL, 0, 2),
+       (NULL, NULL, @company_basic_section_id, @company_form_id,  'phone', 'phone', 'phone', 4, NULL, NULL, NULL, 0, 3);
 
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`)
-VALUES (NULL, NULL, @company_address_section_id, @company_form_id, 'addresses', 'address', 'table', 12, NULL, NULL, NULL, 0);
+                                  `on_index_default`, `default_sort_id`)
+VALUES (NULL, NULL, @company_address_section_id, @company_form_id, 'addresses', 'address', 'table', 12, NULL, NULL, NULL, 0, 4);
 
 SET
   @company_address_field_id = LAST_INSERT_ID();
 
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`)
-VALUES (NULL, @company_address_field_id, NULL, @company_address_form_id, 'address.street', 'street', 'text', 6, NULL, NULL, NULL, 0),
-       (NULL, @company_address_field_id, NULL, @company_address_form_id, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL, 0),
-       (NULL, @company_address_field_id, NULL, @company_address_form_id, 'address.city', 'city', 'city', 5, NULL, NULL, NULL, 0);
+                                  `on_index_default`, `default_sort_id`)
+VALUES (NULL, @company_address_field_id, NULL, @company_address_form_id, 'address.street', 'street', 'text', 6, NULL, NULL, NULL, 0, 0),
+       (NULL, @company_address_field_id, NULL, @company_address_form_id, 'address.zip', 'zip', 'zip', 1, NULL, NULL, NULL, 0, 1),
+       (NULL, @company_address_field_id, NULL, @company_address_form_id, 'address.city', 'city', 'city', 5, NULL, NULL, NULL, 0, 2);
