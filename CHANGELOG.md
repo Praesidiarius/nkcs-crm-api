@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 0.4.1 - 2023-07-12
+
+### Added
+- test database build script to fix GitHub pipeline
+
 ## 0.4.0 - 2023-07-12
 
 ### Added
