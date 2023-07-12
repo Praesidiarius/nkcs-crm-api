@@ -1,5 +1,6 @@
 # NKCS CRM Api
 [![CI Status](https://github.com/Praesidiarius/nkcs-crm-api/workflows/CI/badge.svg)](https://github.com/Praesidiarius/nkcs-crm-api/actions)
+[![codecov](https://codecov.io/gh/Praesidiarius/nkcs-crm-api/branch/main/graph/badge.svg?token=Z01K94CXNN)](https://codecov.io/gh/Praesidiarius/nkcs-crm-api)
 > Simple, light and extensible api based on the symfony framework
 
 ## Install
