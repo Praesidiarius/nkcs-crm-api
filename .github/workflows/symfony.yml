@@ -36,7 +36,10 @@ jobs:
       run: sudo /etc/init.d/mysql start
 
     - name: Create test database
-      run: mysql -uroot -proot < data/sql/db_test.sql
+      #run: mysql -uroot -proot < data/sql/db_test.sql
+      run: |
+        chmod +x data/scripts/buildTestDatabase.sh
+        data/scripts/buildTestDatabase.sh
       
     - name: generate jwt test keys
       run: php bin/console lexik:jwt:generate-keypair
