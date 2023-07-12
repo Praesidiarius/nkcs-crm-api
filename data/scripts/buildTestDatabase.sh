@@ -5,7 +5,7 @@ DEV_PASSWORD="\$2y\$13\$cMyLSyniGkyrM2IhCm68vejEqypYm6vGCsngOgc4VARcSeky2yAw6"
 DB_NAME="nkcs_test"
 DB_USER="root"
 DB_PASS="root"
-SQL_TEMPLATE_DIR="$(pwd)/../sql"
+SQL_TEMPLATE_DIR="./../sql"
 
 # make sure sql template directory exists before running the script
 if [ ! -d "${SQL_TEMPLATE_DIR}" ]; then
