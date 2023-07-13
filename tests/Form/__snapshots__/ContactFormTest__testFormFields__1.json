@@ -3,6 +3,7 @@
         "text": "",
         "key": "is_company",
         "type": "hidden",
+        "required": true,
         "section": "contactBasic",
         "cols": 0,
         "data": 0
@@ -11,6 +12,7 @@
         "text": "Anrede",
         "key": "salution_id",
         "type": "select",
+        "required": false,
         "section": "contactBasic",
         "cols": 2,
         "data": [
@@ -22,12 +24,14 @@
                 "id": 2,
                 "text": "Frau"
             }
-        ]
+        ],
+        "default": 1
     },
     {
         "text": "Vorname",
         "key": "first_name",
         "type": "text",
+        "required": false,
         "section": "contactBasic",
         "cols": 5,
         "data": null
@@ -36,6 +40,7 @@
         "text": "Nachname",
         "key": "last_name",
         "type": "text",
+        "required": false,
         "section": "contactBasic",
         "cols": 5,
         "data": null
@@ -44,27 +49,40 @@
         "text": "E-Mail Adresse",
         "key": "email_private",
         "type": "email",
+        "required": false,
         "section": "contactBasic",
-        "cols": 8,
+        "cols": 5,
         "data": null
     },
     {
         "text": "Tel",
         "key": "phone",
         "type": "phone",
+        "required": false,
         "section": "contactBasic",
         "cols": 4,
+        "data": null
+    },
+    {
+        "text": "Geburtstag",
+        "key": "birthday",
+        "type": "date",
+        "required": false,
+        "section": "contactBasic",
+        "cols": 3,
         "data": null
     },
     {
         "text": "addresses",
         "key": "address",
         "type": "table",
+        "required": false,
         "section": "contactAddress",
         "cols": 12,
         "data": null,
         "fields": [
             {
+                "title": "Strasse",
                 "text": "Strasse",
                 "key": "street",
                 "value": "street",
@@ -73,6 +91,7 @@
                 "cols": 6
             },
             {
+                "title": "PLZ",
                 "text": "PLZ",
                 "key": "zip",
                 "value": "zip",
@@ -81,6 +100,7 @@
                 "cols": 1
             },
             {
+                "title": "Ort",
                 "text": "Ort",
                 "key": "city",
                 "value": "city",
@@ -89,5 +109,14 @@
                 "cols": 5
             }
         ]
+    },
+    {
+        "text": "contact.description",
+        "key": "description",
+        "type": "textarea",
+        "required": false,
+        "section": "contactBasic",
+        "cols": 12,
+        "data": null
     }
 ]

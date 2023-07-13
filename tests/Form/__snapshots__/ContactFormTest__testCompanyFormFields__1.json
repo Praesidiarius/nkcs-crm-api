@@ -3,6 +3,7 @@
         "text": "",
         "key": "is_company",
         "type": "hidden",
+        "required": true,
         "section": "contactCompanyBasic",
         "cols": 0,
         "data": 1,
@@ -12,6 +13,7 @@
         "text": "Firma",
         "key": "company_name",
         "type": "text",
+        "required": true,
         "section": "contactCompanyBasic",
         "cols": 12,
         "data": null
@@ -20,6 +22,7 @@
         "text": "E-Mail Adresse",
         "key": "email_private",
         "type": "email",
+        "required": false,
         "section": "contactCompanyBasic",
         "cols": 8,
         "data": null
@@ -28,6 +31,7 @@
         "text": "Tel",
         "key": "phone",
         "type": "phone",
+        "required": false,
         "section": "contactCompanyBasic",
         "cols": 4,
         "data": null
@@ -36,11 +40,13 @@
         "text": "addresses",
         "key": "address",
         "type": "table",
+        "required": false,
         "section": "contactCompanyAddress",
         "cols": 12,
         "data": null,
         "fields": [
             {
+                "title": "Strasse",
                 "text": "Strasse",
                 "key": "street",
                 "value": "street",
@@ -49,6 +55,7 @@
                 "cols": 6
             },
             {
+                "title": "PLZ",
                 "text": "PLZ",
                 "key": "zip",
                 "value": "zip",
@@ -57,6 +64,7 @@
                 "cols": 1
             },
             {
+                "title": "Ort",
                 "text": "Ort",
                 "key": "city",
                 "value": "city",
@@ -65,5 +73,14 @@
                 "cols": 5
             }
         ]
+    },
+    {
+        "text": "contact.description",
+        "key": "description",
+        "type": "textarea",
+        "required": false,
+        "section": "contactCompanyBasic",
+        "cols": 12,
+        "data": null
     }
 ]

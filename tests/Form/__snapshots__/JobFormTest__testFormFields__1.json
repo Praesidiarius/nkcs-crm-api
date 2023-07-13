@@ -3,24 +3,27 @@
         "text": "Titel",
         "key": "title",
         "type": "text",
+        "required": false,
         "section": "jobType1Basic",
-        "cols": 6,
+        "cols": 12,
         "data": null
     },
     {
         "text": "Kunde",
         "key": "contact_id",
         "type": "autocomplete",
+        "required": true,
         "section": "jobType1Basic",
-        "cols": 6,
+        "cols": 4,
         "data": []
     },
     {
         "text": "MwSt.",
         "key": "vat_mode",
         "type": "select",
+        "required": true,
         "section": "jobType1Basic",
-        "cols": 3,
+        "cols": 4,
         "data": [
             {
                 "id": 0,
@@ -28,5 +31,23 @@
             }
         ],
         "default": 0
+    },
+    {
+        "text": "Datum",
+        "key": "date",
+        "type": "date",
+        "required": false,
+        "section": "jobType1Basic",
+        "cols": 4,
+        "data": null
+    },
+    {
+        "text": "Kommentar",
+        "key": "description",
+        "type": "textarea",
+        "required": false,
+        "section": "jobType1Basic",
+        "cols": 12,
+        "data": null
     }
 ]

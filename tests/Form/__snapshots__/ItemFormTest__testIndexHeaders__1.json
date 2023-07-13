@@ -6,7 +6,7 @@
         "type": "text"
     },
     {
-        "title": "item.unit",
+        "title": "Einheit",
         "key": "unit_id",
         "sortable": false,
         "type": "select"

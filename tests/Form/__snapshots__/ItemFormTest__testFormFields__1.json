@@ -3,14 +3,16 @@
         "text": "Name",
         "key": "name",
         "type": "text",
+        "required": true,
         "section": "itemBasic",
         "cols": 6,
         "data": null
     },
     {
-        "text": "item.unit",
+        "text": "Einheit",
         "key": "unit_id",
         "type": "select",
+        "required": true,
         "section": "itemBasic",
         "cols": 2,
         "data": [
@@ -22,14 +24,25 @@
                 "id": 2,
                 "text": "h"
             }
-        ]
+        ],
+        "default": 1
     },
     {
         "text": "Preis",
         "key": "price",
         "type": "currency",
+        "required": true,
         "section": "itemBasic",
         "cols": 2,
+        "data": null
+    },
+    {
+        "text": "Beschreibung",
+        "key": "description",
+        "type": "textarea",
+        "required": false,
+        "section": "itemBasic",
+        "cols": 12,
         "data": null
     }
 ]
