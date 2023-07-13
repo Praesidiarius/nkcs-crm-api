@@ -17,6 +17,8 @@ class JobRepository extends AbstractRepository
         private readonly ItemRepository $itemRepository,
     ) {
         parent::__construct($this->connection, $this->dynamicFormFieldRepository);
+
+        $this->baseTable = 'job';
     }
 
     public function getDynamicDto(): DynamicDto
@@ -28,26 +30,6 @@ class JobRepository extends AbstractRepository
             $this->jobPositionRepository,
             $this->itemRepository,
         );
-    }
-
-    public function findAll(string $table = 'job'): array
-    {
-        return parent::findAll('job');
-    }
-
-    public function findMostRecent(string $table = 'job'): ?DynamicDto
-    {
-        return parent::findMostRecent('job');
-    }
-
-    public function findById(int $id, string $table = 'job'): ?DynamicDto
-    {
-        return parent::findById($id, 'job');
-    }
-
-    public function findByAttribute(string $attributeKey, mixed $attributeValue, string $table = 'job'): ?DynamicDto
-    {
-        return parent::findByAttribute($attributeKey, $attributeValue, 'job');
     }
 
     public function findByDateRange(\DateTimeInterface $from, \DateTimeInterface $to): array
@@ -67,11 +49,6 @@ class JobRepository extends AbstractRepository
         return $this->getDtoResults($qb);
     }
 
-    public function removeById(int $id, string $table = 'job'): void
-    {
-        parent::removeById($id, 'job');
-    }
-
     public function findBySearchAttributes(int $page, int $pageSize): array
     {
         $qb = $this->connection->createQueryBuilder()
@@ -83,10 +60,5 @@ class JobRepository extends AbstractRepository
         ;
 
         return $qb->fetchAllAssociative();
-    }
-
-    public function save(DynamicDto $entity): DynamicDto|string
-    {
-        return parent::saveToTable($entity, 'job');
     }
 }

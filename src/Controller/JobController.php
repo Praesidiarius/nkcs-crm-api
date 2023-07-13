@@ -7,7 +7,6 @@ use App\Enum\JobVatMode;
 use App\Form\DynamicType;
 use App\Form\Job\JobType;
 use App\Model\DynamicDto;
-use App\Model\JobDto;
 use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
@@ -81,7 +80,7 @@ class JobController extends AbstractDynamicFormController
             ], 400);
         } **/
 
-        $job = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $job = $this->jobRepository->getDynamicDto();
         $job->setData($data);
 
         $job->setSelectField('type_id', 1);
@@ -136,7 +135,7 @@ class JobController extends AbstractDynamicFormController
             }
         }
 
-        $job = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $job = $this->jobRepository->getDynamicDto();
         $job->setData($data);
         $job->setId($jobId);
 
@@ -186,39 +185,9 @@ class JobController extends AbstractDynamicFormController
         ?int $page,
         ?AbstractRepository $repository = null,
         ?DynamicType $form = null,
-        string $formKey = 'jobType1',
+        string $formKey = '',
     ): Response {
-        if (!$this->checkLicense()) {
-            throw new HttpException(402, 'no valid license found');
-        }
-
-        $pageSize = $this->userSettingRepository->getUserSetting(
-            $this->getUser(),
-            'pagination-page-size',
-        );
-        $page = $page ?? 1;
-        $items = $this->jobRepository->findBySearchAttributes($page, $pageSize);
-
-        $itemsApi = [];
-        foreach ($items as $itemRaw) {
-            $itemApi = $this->jobRepository->getDynamicDto();
-            $itemApi->setData($itemRaw);
-            $itemApi->serializeDataForApiByFormModel($formKey);
-            $itemsApi[] = $itemApi->getDataSerialized();
-        }
-
-        $data = [
-            'headers' => $this->jobForm->getIndexHeaders($formKey),
-            'items' => $itemsApi,
-            'total_items' => count($items),
-            'pagination' => [
-                'page_count' => ceil(count($items) / $pageSize),
-                'page_size' => $pageSize,
-                'page' => $page,
-            ],
-        ];
-
-        return $this->json($data);
+        return parent::list($page, $this->jobRepository, $this->jobForm, 'jobType1');
     }
 
     #[Route('/position', name: 'job_position_add', methods: ['POST'])]

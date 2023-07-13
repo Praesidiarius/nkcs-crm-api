@@ -260,7 +260,7 @@ class ContactController extends AbstractDynamicFormController
     ): Response {
         return parent::itemResponse(
             $dto,
-            'contact',
+            $dto->getBoolField('is_company') ? 'company' : 'contact',
             $dto->getBoolField('is_company') ? $this->companyForm : $this->contactForm,
             $extraData,
         );

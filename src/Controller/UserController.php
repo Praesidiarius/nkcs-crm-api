@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\User\ClientNavigation;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -10,8 +11,12 @@ use Symfony\Component\Routing\Annotation\Route;
 class UserController extends AbstractApiController
 {
     #[Route('/')]
-    public function getUserInfo(): Response {
+    public function getUserInfo(
+        ClientNavigation $clientNavigation,
+    ): Response {
         $me = $this->getUser();
+
+        $userNavigation = $clientNavigation->getUserClientNavigation($me);
 
         $userApiData = [
             'user' => [
@@ -20,6 +25,7 @@ class UserController extends AbstractApiController
                 'function' => $me->getFunction(),
                 'email' => $me->getEmail(),
             ],
+            'navigation' => $userNavigation
         ];
 
         if ($this->getParameter('license.server')) {

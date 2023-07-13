@@ -22,7 +22,6 @@ class DynamicType extends AbstractType
 {
     public function __construct(
         private readonly TranslatorInterface $translator,
-        //private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
@@ -105,6 +104,7 @@ class DynamicType extends AbstractType
 
         $formFields = $this->getFormFields($formKey);
 
+        /** @var DynamicFormField $field */
         foreach ($formFields as $field) {
             if (array_key_exists('default', $field)) {
                 $defaultValues[$field['key']] = $field['default'];
@@ -122,7 +122,10 @@ class DynamicType extends AbstractType
 
     protected function getFormFieldDefaultData(DynamicFormField $formField): string|int|float|null
     {
-        return $formField->getDefaultData();
+        return match ($formField->getFieldType()) {
+            'select' => (int) $formField->getDefaultData(),
+            default => $formField->getDefaultData()
+        };
     }
 
     public function getFormFields(string $formKey, bool $withTabs = true): array
@@ -142,6 +145,7 @@ class DynamicType extends AbstractType
                 'text' => $this->translator->trans($dynamicFormField->getLabel()),
                 'key' => $dynamicFormField->getFieldKey(),
                 'type' => $dynamicFormField->getFieldType(),
+                'required' => $dynamicFormField->isFieldRequired(),
                 'section' => $dynamicFormField->getSection()?->getSectionKey() ?? 'none',
                 'cols' => $dynamicFormField->getColumns(),
                 'data' => is_array($this->getFormFieldData($dynamicFormField))

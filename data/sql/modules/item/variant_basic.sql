@@ -45,11 +45,12 @@ SET
 
 -- fields
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
-                                  `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
+                                  `field_type`, `field_required`, `columns`, `default_data`, `related_table`, `related_table_col`,
                                   `on_index_default`, `default_sort_id`)
-VALUES (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.name', 'name', 'text', 6, NULL, NULL, NULL, 1, 0),
-       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.unit', 'unit_id', 'select', 2, NULL,
+VALUES (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.name', 'name', 'text', 1, 6, NULL, NULL, NULL, 1, 0),
+       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.unit.unit', 'unit_id', 'select', 1, 2, 1,
         'item_unit', 'name', 1, 1),
-       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.price', 'price', 'currency', 2, NULL, NULL, NULL, 1, 2);
+       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.price', 'price', 'currency', 1, 2, NULL, NULL, NULL, 1, 2),
+       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.description', 'description', 'textarea', 0, 12, NULL, NULL, NULL, 0, 3);
 
 COMMIT;

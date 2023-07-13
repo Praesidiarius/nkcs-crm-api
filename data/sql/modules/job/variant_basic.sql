@@ -5,15 +5,17 @@ CREATE TABLE `job`
 (
   `id`           int(11)        NOT NULL,
   `type_id`      int(11)        NOT NULL,
-  `contact_id`   int(11)                 DEFAULT NULL,
-  `title`        varchar(100)            DEFAULT NULL,
+  `contact_id`   int(11)                         DEFAULT NULL,
+  `title`        varchar(100)                    DEFAULT NULL,
+  `description`  text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `date`         date                            DEFAULT NULL,
   `created_by`   int(11)        NOT NULL,
   `created_date` datetime       NOT NULL COMMENT '(DC2Type:datetime_immutable)',
-  `sub_total`    decimal(10, 0) NOT NULL DEFAULT 0,
+  `sub_total`    decimal(10, 0) NOT NULL         DEFAULT 0,
   `vat_mode`     smallint(6)    NOT NULL,
-  `vat_rate`     double                  DEFAULT NULL,
-  `vat_total`    double                  DEFAULT NULL,
-  `total`        double         NOT NULL DEFAULT 0
+  `vat_rate`     double                          DEFAULT NULL,
+  `vat_total`    double                          DEFAULT NULL,
+  `total`        double         NOT NULL         DEFAULT 0
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -57,12 +59,16 @@ VALUES (NULL, NULL, 'job.form.section.positions', 'jobType1Positions', @job_form
 
 -- fields
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
-                                  `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
+                                  `field_type`, `field_required`, `columns`, `default_data`, `related_table`, `related_table_col`,
                                   `on_index_default`, `default_sort_id`)
-VALUES (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.title', 'title', 'text', 6, NULL, NULL, NULL, 1, 0),
-       (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.contact', 'contact_id', 'autocomplete', 6, NULL,
+VALUES (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.title', 'title', 'text', 0, 12, NULL, NULL, NULL, 1, 0),
+       (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.contact', 'contact_id', 'autocomplete', 1, 4, NULL,
         'contact', 'first_name', 1, 1),
-       (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.vat.vat', 'vat_mode', 'select', 3, 'vat_default',
-        'enum', 'JobVatMode', 0, 2);
+       (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.vat.vat', 'vat_mode', 'select', 1, 4, 'vat_default',
+        'enum', 'JobVatMode', 0, 2),
+       (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'time.date', 'date', 'date', 0, 4, NULL,
+        NULL, NULL, 0, 3),
+       (NULL, NULL, @typeOne_basic_section_id, @job_form_id, 'job.description', 'description', 'textarea', 0, 12, NULL,
+        NULL, NULL, 0, 12);
 
 COMMIT;

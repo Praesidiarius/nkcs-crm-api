@@ -13,6 +13,7 @@ email:
   private: E-Mail (privat)
   address: E-Mail Adresse
 contact:
+  birthday: Geburtstag
   salution:
     mr: Herr
     mrs: Frau
@@ -48,6 +49,7 @@ index:
   tasks: Aufgaben
 job:
   id: "#"
+  description: Kommentar
   contact: Kunde
   title: Titel
   vat:
@@ -58,7 +60,9 @@ job:
     VAT_INCLUDED: inkl. MwSt.
   form:
     section:
+      job: Auftrag
       basic: Stammdaten
+      positions: Positionen
       settings: Einstellungen
 item:
   unit:
@@ -75,3 +79,5 @@ item:
   form:
     section:
       basic: Stammdaten
+  voucher:
+    vouchers: Gutscheine

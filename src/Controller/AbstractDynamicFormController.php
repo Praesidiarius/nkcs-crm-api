@@ -70,7 +70,7 @@ class AbstractDynamicFormController extends AbstractApiController
 
         $itemsApi = [];
         foreach ($items as $itemRaw) {
-            $itemApi = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+            $itemApi = $repository->getDynamicDto();
             $itemApi->setData($itemRaw);
             $itemApi->serializeDataForApiByFormModel($formKey);
             $itemsApi[] = $itemApi->getDataSerialized();

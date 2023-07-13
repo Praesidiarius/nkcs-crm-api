@@ -8,7 +8,7 @@ SET @last_id_in_table1 = LAST_INSERT_ID();
 --
 -- add basic user settings
 --
-INSERT INTO `user_setting` (`id`,`user_id`,`setting_key`,`setting_value`) VALUES (NULL, @last_id_in_table1, 'pagination-page-size', 5);
+INSERT INTO `user_setting` (`id`,`user_id`,`setting_key`,`setting_value`) VALUES (NULL, @last_id_in_table1, 'pagination-page-size', 20);
 
 --
 -- add all dynamic fields for user

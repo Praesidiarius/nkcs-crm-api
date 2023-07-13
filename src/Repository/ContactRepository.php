@@ -13,6 +13,8 @@ class ContactRepository extends AbstractRepository
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
     ) {
         parent::__construct($this->connection, $this->dynamicFormFieldRepository);
+
+        $this->baseTable = 'contact';
     }
 
     public function getDynamicDto(): DynamicDto
@@ -20,44 +22,21 @@ class ContactRepository extends AbstractRepository
         return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
-    public function findAll(string $table = 'contact'): array
-    {
-        return parent::findAll('contact');
-    }
-
-    public function findMostRecent(string $table = 'contact'): ?DynamicDto
-    {
-        return parent::findMostRecent('contact');
-    }
-
-    public function findById(int $id, string $table = 'contact'): ?DynamicDto
-    {
-        return parent::findById($id, 'contact');
-    }
-
-    public function findByAttribute(string $attributeKey, mixed $attributeValue, string $table = 'contact'): ?DynamicDto
-    {
-        return parent::findByAttribute($attributeKey, $attributeValue, 'contact');
-    }
-
     public function findByEmail(string $email): ?DynamicDto
     {
-        return parent::findByAttribute('email_private', $email, 'contact');
+        return parent::findByAttribute('email_private', $email);
     }
 
     public function findBySignupToken(string $token): ?DynamicDto
     {
-        return parent::findByAttribute('signup_token', $token, 'contact');
+        return parent::findByAttribute('signup_token', $token);
     }
 
     public function removeById(int $id, string $table = 'contact'): void
     {
-        $address = $this->addressRepository->findByAttribute('contact_id', $id, 'contact_address');
-        if ($address) {
-            parent::removeById($address->getId(), 'contact_address');
-        }
+        $this->addressRepository->removeByContactId($id);
 
-        parent::removeById($id, 'contact');
+        parent::removeById($id);
     }
 
     public function isEmailAddressAlreadyInUse(string $email): bool
@@ -83,22 +62,5 @@ class ContactRepository extends AbstractRepository
         ;
 
         return $qb->fetchAllAssociative();
-    }
-
-    public function count(): int
-    {
-        $qb = $this->connection->createQueryBuilder();
-
-        $qb
-            ->select('COUNT(id)')
-            ->from('contact')
-        ;
-
-        return (int) $qb->fetchOne();
-    }
-
-    public function save(DynamicDto $entity): DynamicDto|string
-    {
-        return parent::saveToTable($entity, 'contact');
     }
 }

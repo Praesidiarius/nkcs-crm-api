@@ -29,6 +29,7 @@ services:
         bind:
             $documentBaseDir: '%document.base_dir%'
             $licenseAllowedClients: '%license.allowed_clients%'
+            $activatedModules: '%api.activated_modules%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

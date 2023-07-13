@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 0.4.2 - 2023-07-13
+
+### Added
+- Client Side Navigation 
+- New Fields for job, item, contact basic variants
+- Form Fields now have a required flag
+
+## Changed
+- Added baseTable property for AbstractRepo, removed most overwritten functions in repos
+
+## Fixes
+- Tons of small fixes for DynamicForms
+
 ## 0.4.1 - 2023-07-12
 
 ### Added

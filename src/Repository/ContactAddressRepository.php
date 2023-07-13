@@ -13,16 +13,13 @@ class ContactAddressRepository extends AbstractRepository
 
     ) {
         parent::__construct($this->connection, $this->dynamicFormFieldRepository);
+
+        $this->baseTable = 'contact_address';
     }
 
     public function getDynamicDto(): DynamicDto
     {
         return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
-    }
-
-    public function save(DynamicDto $entity): DynamicDto
-    {
-        return parent::saveToTable($entity, 'contact_address');
     }
 
     public function getPrimaryAddressForContact(int $contactId): ?DynamicDto

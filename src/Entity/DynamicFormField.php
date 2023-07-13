@@ -26,6 +26,9 @@ class DynamicFormField
     private ?string $fieldType = null;
 
     #[ORM\Column]
+    private bool $fieldRequired = false;
+
+    #[ORM\Column]
     private ?int $columns = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -96,6 +99,18 @@ class DynamicFormField
         $this->fieldType = $fieldType;
 
         return $this;
+    }
+
+    public function setFieldRequired(bool $required): self
+    {
+        $this->fieldRequired = $required;
+
+        return $this;
+    }
+
+    public function isFieldRequired(): bool
+    {
+        return $this->fieldRequired;
     }
 
     public function getColumns(): ?int

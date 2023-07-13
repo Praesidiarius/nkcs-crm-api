@@ -95,6 +95,7 @@ CREATE TABLE `dynamic_form_field`
   `label`             varchar(100) COLLATE utf8mb4_unicode_ci          DEFAULT NULL,
   `field_key`         varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `field_type`        varchar(25) COLLATE utf8mb4_unicode_ci  NOT NULL,
+  `field_required`    INT(1)                                  NOT NULL DEFAULT '0',
   `columns`           int(11)                                 NOT NULL,
   `default_data`      varchar(255) COLLATE utf8mb4_unicode_ci          DEFAULT NULL,
   `related_table`     varchar(100) COLLATE utf8mb4_unicode_ci          DEFAULT NULL,

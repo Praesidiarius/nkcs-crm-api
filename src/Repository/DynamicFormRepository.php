@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\DynamicForm;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -37,6 +38,11 @@ class DynamicFormRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function getPlainQueryBuilder(): QueryBuilder
+    {
+        return $this->getEntityManager()->getConnection()->createQueryBuilder();
     }
 
 //    /**

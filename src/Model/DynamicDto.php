@@ -141,7 +141,7 @@ class DynamicDto
                 'currency' => $this->getSerializedCurrencyFieldData($field, $this->data[$field->getFieldKey()] ?? 0),
                 default => array_key_exists($field->getFieldKey(), $this->data)
                     ? $this->data[$field->getFieldKey()]
-                    : '-2'
+                    : '-'
             };
         }
     }

@@ -8,6 +8,8 @@ use Doctrine\DBAL\Query\QueryBuilder;
 
 class AbstractRepository
 {
+    protected string $baseTable = '';
+
     public function __construct(
         private readonly Connection $connection,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
@@ -19,12 +21,12 @@ class AbstractRepository
         return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
-    public function findMostRecent(string $table): ?DynamicDto
+    public function findMostRecent(): ?DynamicDto
     {
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->select('*')
-            ->from($table)
+            ->from($this->baseTable)
             ->orderBy('id', 'DESC')
         ;
 
@@ -39,12 +41,12 @@ class AbstractRepository
         return $entity;
     }
 
-    public function findAll(string $table): array
+    public function findAll(?string $table = null): array
     {
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->select('*')
-            ->from($table)
+            ->from($table ?: $this->baseTable)
         ;
 
         $rawData = $qb->fetchAllAssociative();
@@ -77,12 +79,12 @@ class AbstractRepository
         return [];
     }
 
-    public function findById(int $id, string $table): ?DynamicDto
+    public function findById(int $id): ?DynamicDto
     {
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->select('*')
-            ->from($table)
+            ->from($this->baseTable)
             ->where('id = :id')
             ->setParameters([
                 'id' => $id,
@@ -99,12 +101,12 @@ class AbstractRepository
         return null;
     }
 
-    protected function findByAttribute(string $attributeKey, mixed $attributeValue, string $table): ?DynamicDto
+    public function findByAttribute(string $attributeKey, mixed $attributeValue): ?DynamicDto
     {
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->select('*')
-            ->from($table)
+            ->from($this->baseTable)
             ->where($attributeKey . ' = :' . $attributeKey)
             ->setParameters([
                 $attributeKey => $attributeValue,
@@ -121,12 +123,12 @@ class AbstractRepository
         return null;
     }
 
-    public function removeById(int $id, string $table): void
+    public function removeById(int $id): void
     {
         $qb = $this->connection->createQueryBuilder();
 
         $qb
-            ->delete($table)
+            ->delete($this->baseTable)
             ->where('id = :id')
             ->setParameters([
                 'id' => $id,
@@ -136,7 +138,24 @@ class AbstractRepository
         $qb->executeQuery();
     }
 
-    protected function saveToTable(DynamicDto $entity, string $table): DynamicDto|string
+
+    public function count(): int
+    {
+        if (!$this->baseTable) {
+            return 0;
+        }
+
+        $qb = $this->connection->createQueryBuilder();
+
+        $qb
+            ->select('COUNT(id)')
+            ->from($this->baseTable)
+        ;
+
+        return (int) $qb->fetchOne();
+    }
+
+    public function save(DynamicDto $entity): DynamicDto|string
     {
         $values = [];
         $parameters = [];
@@ -148,7 +167,7 @@ class AbstractRepository
 
         if ($entity->getId()) {
             $parameters['id'] = $entity->getId();
-            $qb->update($table);
+            $qb->update($this->baseTable);
             foreach ($entity->getData() as $col => $data) {
                 $values[$col] = ':'.$col;
                 $parameters[$col] = is_array($data) ? $data['id'] : $data;
@@ -162,7 +181,7 @@ class AbstractRepository
             return $entity;
         }
 
-        $qb->insert($table);
+        $qb->insert($this->baseTable);
         $qb->values($values);
         $qb->setParameters($parameters);
 
