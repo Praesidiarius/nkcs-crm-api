@@ -158,6 +158,9 @@ class DynamicType extends AbstractType
 
                 foreach ($rowFields as $rowField) {
                     $fieldApiData['fields'][] = [
+                        // title is for vuetify datatable headers
+                        'title' => $this->translator->trans($rowField->getLabel()),
+                        // text is for form field labels
                         'text' => $this->translator->trans($rowField->getLabel()),
                         'key' => $rowField->getFieldKey(),
                         'value' => $rowField->getFieldKey(),

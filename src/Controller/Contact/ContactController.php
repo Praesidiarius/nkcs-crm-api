@@ -26,13 +26,13 @@ use OpenApi\Attributes as OA;
 class ContactController extends AbstractDynamicFormController
 {
     public function __construct(
-        private readonly ContactType              $contactForm,
+        private readonly ContactType $contactForm,
         private readonly ContactCompanyType $companyForm,
-        private readonly ContactRepository        $contactRepository,
+        private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
-        private readonly UserSettingRepository    $userSettings,
-        private readonly HttpClientInterface      $httpClient,
-        private readonly TranslatorInterface      $translator,
+        private readonly UserSettingRepository $userSettings,
+        private readonly HttpClientInterface $httpClient,
+        private readonly TranslatorInterface $translator,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly Connection $connection,
     ) {

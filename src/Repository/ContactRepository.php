@@ -85,6 +85,18 @@ class ContactRepository extends AbstractRepository
         return $qb->fetchAllAssociative();
     }
 
+    public function count(): int
+    {
+        $qb = $this->connection->createQueryBuilder();
+
+        $qb
+            ->select('COUNT(id)')
+            ->from('contact')
+        ;
+
+        return (int) $qb->fetchOne();
+    }
+
     public function save(DynamicDto $entity): DynamicDto|string
     {
         return parent::saveToTable($entity, 'contact');

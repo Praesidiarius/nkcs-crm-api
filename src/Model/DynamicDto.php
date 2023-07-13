@@ -137,12 +137,28 @@ class DynamicDto
                             : $this->data[$field->getFieldKey()] ?? 0
                     ) ?? 0,
                 ),
+                'table' => $this->getSerializedTableFieldData($field),
                 'currency' => $this->getSerializedCurrencyFieldData($field, $this->data[$field->getFieldKey()] ?? 0),
                 default => array_key_exists($field->getFieldKey(), $this->data)
                     ? $this->data[$field->getFieldKey()]
-                    : '-'
+                    : '-2'
             };
         }
+    }
+
+    private function getSerializedTableFieldData(DynamicFormField $formField): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+
+        $qb
+            ->select('*')
+            ->from($formField->getRelatedTable())
+            ->where($formField->getRelatedTableCol() . ' = :id')
+            ->setParameters([
+                'id' => $this->getId()
+            ]);
+
+        return $qb->fetchAllAssociative();
     }
 
     private function getSerializedCurrencyFieldData(DynamicFormField $currencyField, float $value): float

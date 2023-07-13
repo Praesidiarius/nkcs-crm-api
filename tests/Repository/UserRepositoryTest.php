@@ -75,7 +75,7 @@ class UserRepositoryTest extends KernelTestCase
     public function testRemove(): void
     {
         $this->markTestSkipped('having trouble with github mysql server.');
-        
+
         $user = $this->repository->find(self::$userTestIds['simple']);
 
         $this->repository->remove($user, true);

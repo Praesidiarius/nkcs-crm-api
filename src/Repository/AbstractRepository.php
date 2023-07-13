@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Model\DynamicDto;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 class AbstractRepository
 {
@@ -46,6 +47,22 @@ class AbstractRepository
             ->from($table)
         ;
 
+        $rawData = $qb->fetchAllAssociative();
+        if (count($rawData) > 0) {
+            $entities = [];
+            foreach ($rawData as $row) {
+                $entity = $this->getDynamicDto();
+                $entity->setData($row);
+                $entities[] = $entity;
+            }
+            return $entities;
+        }
+
+        return [];
+    }
+
+    protected function getDtoResults(QueryBuilder $qb): array
+    {
         $rawData = $qb->fetchAllAssociative();
         if (count($rawData) > 0) {
             $entities = [];

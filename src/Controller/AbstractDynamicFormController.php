@@ -66,6 +66,7 @@ class AbstractDynamicFormController extends AbstractApiController
         );
         $page = $page ?? 1;
         $items = $repository->findBySearchAttributes($page, $pageSize);
+        $totalItems = $repository->count();
 
         $itemsApi = [];
         foreach ($items as $itemRaw) {
@@ -78,9 +79,9 @@ class AbstractDynamicFormController extends AbstractApiController
         $data = [
             'headers' => $form->getIndexHeaders($formKey),
             'items' => $itemsApi,
-            'total_items' => count($items),
+            'total_items' => $totalItems,
             'pagination' => [
-                'page_count' => ceil(count($items) / $pageSize),
+                'page_count' => ceil($totalItems / $pageSize),
                 'page_size' => $pageSize,
                 'page' => $page,
             ],

@@ -50,6 +50,23 @@ class JobRepository extends AbstractRepository
         return parent::findByAttribute($attributeKey, $attributeValue, 'job');
     }
 
+    public function findByDateRange(\DateTimeInterface $from, \DateTimeInterface $to): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+
+        $qb
+            ->select('*')
+            ->from('job', 'j')
+            ->where('j.created_date BETWEEN :dateFrom AND :dateTo')
+            ->setParameters([
+                'dateFrom' => $from->format('Y-m-d') . ' 00:00:00',
+                'dateTo' => $to->format('Y-m-d') . ' 23:59:59'
+            ])
+        ;
+
+        return $this->getDtoResults($qb);
+    }
+
     public function removeById(int $id, string $table = 'job'): void
     {
         parent::removeById($id, 'job');
