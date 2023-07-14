@@ -41,6 +41,7 @@ class ItemRepositoryTest extends KernelTestCase
     {
         $item = $this->repository->getDynamicDto();
         $item->setTextField('name', 'Unit Test 1');
+        $item->setIntField('type_id', 1);
         $item->setIntField('unit_id', 1);
         $item->setPriceField('price', 30.50);
         $item->setCreatedBy(0);

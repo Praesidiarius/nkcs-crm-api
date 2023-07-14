@@ -2,7 +2,6 @@
 
 namespace App\Tests\Controller;
 
-use App\Controller\ItemController;
 use App\Repository\ItemRepository;
 use Faker\Factory;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
@@ -11,7 +10,7 @@ use Spatie\Snapshots\MatchesSnapshots;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-#[CoversClass(ItemController::class)]
+#[CoversClass(\App\Controller\Item\ItemController::class)]
 class ItemControllerTest extends WebTestCase
 {
     use MatchesSnapshots;
@@ -63,6 +62,7 @@ class ItemControllerTest extends WebTestCase
 
         $formData = [
             'unit_id' => 1,
+            'type_id' => 1,
             'name' => $faker->name,
             'price' => $faker->randomFloat(2, 5, 30),
         ];

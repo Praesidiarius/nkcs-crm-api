@@ -36,6 +36,9 @@ class JobPosition
     #[ORM\Column(nullable: true)]
     private ?float $amount = null;
 
+    // not mapped by orm
+    private array $voucherCodes = [];
+
     public function getId(): ?int
     {
         return $this->id;
@@ -152,5 +155,15 @@ class JobPosition
             $posTotalView = number_format($this->getTotal(), 0, '.', '\'') . '.-';
         }
         return $posTotalView;
+    }
+
+    public function getVoucherCodes(): array
+    {
+        return $this->voucherCodes;
+    }
+
+    public function addVoucherCode(string $code): void
+    {
+        $this->voucherCodes[] = $code;
     }
 }

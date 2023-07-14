@@ -28,6 +28,25 @@
         "default": 1
     },
     {
+        "text": "Art des Artikels",
+        "key": "type_id",
+        "type": "select",
+        "required": true,
+        "section": "itemBasic",
+        "cols": 2,
+        "data": [
+            {
+                "id": 1,
+                "text": "Produkt"
+            },
+            {
+                "id": 2,
+                "text": "Geschenkkarte"
+            }
+        ],
+        "default": 1
+    },
+    {
         "text": "Preis",
         "key": "price",
         "type": "currency",

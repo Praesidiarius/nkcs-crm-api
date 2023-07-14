@@ -2,15 +2,21 @@
 
 namespace App\Controller;
 
+use App\Entity\ItemVoucherCode;
+use App\Entity\ItemVoucherCodeRedeem;
 use App\Entity\JobPosition;
 use App\Enum\JobVatMode;
 use App\Form\DynamicType;
 use App\Form\Job\JobType;
 use App\Model\DynamicDto;
+use App\Model\JobDto;
 use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
+use App\Repository\ItemTypeRepository;
 use App\Repository\ItemUnitRepository;
+use App\Repository\ItemVoucherCodeRedeemRepository;
+use App\Repository\ItemVoucherCodeRepository;
 use App\Repository\JobPositionRepository;
 use App\Repository\JobRepository;
 use App\Repository\UserSettingRepository;
@@ -33,6 +39,9 @@ class JobController extends AbstractDynamicFormController
         private readonly UserSettingRepository $userSettings,
         private readonly ItemRepository $itemRepository,
         private readonly ItemUnitRepository $itemUnitRepository,
+        private readonly ItemVoucherCodeRepository $voucherCodeRepository,
+        private readonly ItemVoucherCodeRedeemRepository $voucherCodeRedeemRepository,
+        private readonly ItemTypeRepository $itemTypeRepository,
         private readonly HttpClientInterface $httpClient,
         private readonly TranslatorInterface $translator,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
@@ -158,10 +167,85 @@ class JobController extends AbstractDynamicFormController
 
         $extraData = [
             'positions' => $job->getJobPositions(),
-            'position_units' => $this->listUnits()
+            'position_units' => $this->listUnits(),
+            'finance' => [
+                'sub_total' => $job->getPriceField('sub_total'),
+                'sub_total_text' => $job->getPriceFieldText('sub_total'),
+                'vat_total' => $job->getPriceField('vat_total'),
+                'vat_total_text' => $job->getPriceFieldText('vat_total'),
+                'total' => $job->getPriceField('total'),
+                'total_text' => $job->getPriceFieldText('total'),
+            ],
+            'vouchers_used' => $job->getVouchersUsed(),
         ];
 
         return $this->itemResponse($job, 'job', $this->jobForm, $extraData);
+    }
+
+    #[Route('/voucher/redeem', name: 'job_voucher_code_redeem', requirements: ['id' => Requirement::DIGITS], methods: ['POST'])]
+    public function redeemVoucherCode(
+        Request $request,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        $body = $request->getContent();
+        $data = json_decode($body, true);
+
+        $jobId = (int) $data['job_id'];
+        if ($jobId <= 0) {
+            throw new HttpException(404, 'job not found');
+        }
+        $job = $this->jobRepository->findById($jobId);
+
+        if (count($job->getJobPositions()) === 0) {
+            throw new HttpException(400, 'you cannot redeem a voucher in an empty job. add positions first.');
+        }
+
+        $voucherCodeUuid = $data['voucher_code'];
+        if (strlen($voucherCodeUuid) < 36) {
+            throw new HttpException(400, 'invalid voucher code');
+        }
+        $voucherCode = $this->voucherCodeRepository->findOneBy(['code' => $voucherCodeUuid]);
+        if (!$voucherCode) {
+            throw new HttpException(404, 'voucher code not found');
+        }
+
+        $voucherCodeUsages = $this->voucherCodeRedeemRepository->findBy(['voucherCodeId' => $voucherCode->getId()]);
+        // voucher codes linked to an item, are gift cards and can only be used once
+        if ($voucherCode->getItemId() && $voucherCodeUsages) {
+            throw new HttpException(400, 'voucher already used');
+        }
+
+        $voucherRedeem = new ItemVoucherCodeRedeem();
+        $voucherRedeem->setVoucherCodeId($voucherCode->getId());
+        $voucherRedeem->setJobId($job->getId());
+        $voucherRedeem->setContactId($job->getIntField('contact_id'));
+        $voucherRedeem->setDate();
+
+        $this->voucherCodeRedeemRepository->save($voucherRedeem, true);
+
+        // check if voucher is a gift card
+        if ($voucherCode->getItemId()) {
+            // apply voucher to job total
+            $voucherItem = $this->itemRepository->findById($voucherCode->getItemId());
+            $voucherDiscount = $voucherItem->getPriceField('price');
+            $currentJobTotal = $job->getPriceField('total');
+            $newJobTotal = $currentJobTotal - $voucherDiscount;
+            $job->setPriceField('total', $newJobTotal);
+
+            $this->jobRepository->updateAttribute('total', $newJobTotal, $job->getId());
+        }
+
+        return $this->json([
+            'state' => 'success',
+            'vouchers_used' => $job->getVouchersUsed(),
+            'job' => [
+                'total' => $job->getPriceField('total'),
+                'total_text' => $job->getPriceFieldText('total'),
+            ]
+        ]);
     }
 
     #[Route('/remove/{jobId}', name: 'job_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
@@ -177,6 +261,61 @@ class JobController extends AbstractDynamicFormController
         }
 
         return $this->json(['state' => 'success']);
+    }
+
+    #[Route('/position/remove/{positionId}', name: 'job_position_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    public function deletePosition(
+        int $positionId,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        if ($positionId > 0) {
+            $position = $this->jobPositionRepository->find($positionId);
+            if (!$position) {
+                throw new HttpException(404, 'position not found');
+            }
+            $job = $this->jobRepository->findById($position->getJobId());
+
+            $posItem = $position->getItemId() ? $this->itemRepository->findById($position->getItemId()) : false;
+            if ($posItem) {
+                $posItemTypeId = $posItem->getIntField('type_id');
+                if ($posItemTypeId !== 1) {
+                    $posItemType = $this->itemTypeRepository->find($posItemTypeId);
+
+                    switch ($posItemType->getType()) {
+                        case 'giftcard':
+                            $codes = $this->voucherCodeRepository->findBy(['position' => $position]);
+                            foreach ($codes as $code) {
+                                $this->voucherCodeRepository->remove($code, true);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            $this->jobPositionRepository->remove($position, true);
+
+            $job = $this->recalcJobFinances($job);
+
+            return $this->json([
+                'positions' => $job->getJobPositions(),
+                'finance' => [
+                    'sub_total' => $job->getPriceField('sub_total'),
+                    'sub_total_text' => $job->getPriceFieldText('sub_total'),
+                    'vat_total' => $job->getPriceField('vat_total'),
+                    'vat_total_text' => $job->getPriceFieldText('vat_total'),
+                    'total' => $job->getPriceField('total'),
+                    'total_text' => $job->getPriceFieldText('total'),
+                ],
+                'state' => 'success'
+            ]);
+        }
+
+        throw new HttpException(404, 'position not found');
     }
 
     #[Route('/list', name: 'job_index', methods: ['GET'])]
@@ -219,6 +358,7 @@ class JobController extends AbstractDynamicFormController
         $position->setAmount($data['amount']);
 
         $itemId = (int) $data['item'];
+        $posItem = null;
         if ($itemId > 0) {
             $item = $this->itemRepository->findById($itemId);
             if (!$item) {
@@ -226,6 +366,7 @@ class JobController extends AbstractDynamicFormController
                     ['message' => 'item not found']
                 ], 404);
             }
+            $posItem = $item;
             $unit = $this->itemUnitRepository->find($item->getIntField('unit_id'));
             $position->setItemId($itemId);
             $position->setUnit($unit);
@@ -241,11 +382,49 @@ class JobController extends AbstractDynamicFormController
         }
 
         // save position
-        $this->jobPositionRepository->save($position, true);
+        $position = $this->jobPositionRepository->save($position, true);
+
+        if ($posItem) {
+            $posItem->serializeDataForApiByFormModel('item');
+
+            // item type handling
+            $itemType = $posItem->getSelectField('type_id');
+            if (array_key_exists('type', $itemType)) {
+                // if item is a giftcard, lets create voucher codes
+                if ($itemType['type'] === 'giftcard') {
+                    for ($i = 0; $i < $position->getAmount(); $i++) {
+                        $voucherCode = new ItemVoucherCode();
+                        $voucherCode->setItemId($posItem->getId());
+                        $voucherCode->generateCode();
+                        $voucherCode->setJobPosition($position);
+
+                        $this->voucherCodeRepository->save($voucherCode, true);
+                    }
+                }
+            }
+        }
 
         $jobPositionsNew = $job->getJobPositions();
+        $job = $this->recalcJobFinances($job);
+
+        return $this->json([
+            'positions' => $jobPositionsNew,
+            'finance' => [
+                'sub_total' => $job->getPriceField('sub_total'),
+                'sub_total_text' => $job->getPriceFieldText('sub_total'),
+                'vat_total' => $job->getPriceField('vat_total'),
+                'vat_total_text' => $job->getPriceFieldText('vat_total'),
+                'total' => $job->getPriceField('total'),
+                'total_text' => $job->getPriceFieldText('total'),
+            ],
+        ]);
+    }
+
+    private function recalcJobFinances(DynamicDto $job): DynamicDto
+    {
+        $positions = $job->getJobPositions();
         $jobSubTotal = 0;
-        foreach ($jobPositionsNew as $jobPosition) {
+        foreach ($positions as $jobPosition) {
             $jobSubTotal += $jobPosition->getTotal();
         }
         $job->setPriceField('sub_total',$jobSubTotal);
@@ -253,22 +432,21 @@ class JobController extends AbstractDynamicFormController
             $job->setPriceField('vat_rate', $this->getParameter('job.vat_rate_default'));
             $jobVat = $jobSubTotal * ($this->getParameter('job.vat_rate_default') / 100);
             $job->setPriceField('vat_total', $jobVat);
+            $jobVouchers = $job->getVouchersUsed();
+            foreach ($jobVouchers as $voucher) {
+                $jobSubTotal -= $voucher['amount'];
+            }
             $job->setPriceField('total', $jobSubTotal + $jobVat);
         } else {
+            $jobVouchers = $job->getVouchersUsed();
+            foreach ($jobVouchers as $voucher) {
+                $jobSubTotal -= $voucher['amount'];
+            }
             $job->setPriceField('total', $jobSubTotal);
         }
-        $this->jobRepository->save($job);
-
-        return $this->json([
-            'positions' => $jobPositionsNew,
-            'job' => [
-                'subTotal' => $job->getPriceField('sub_total'),
-                'vatTotal' => $job->getPriceField('vat_total'),
-                'vatRate' => $job->getPriceField('vat_rate'),
-                'total' => $job->getPriceField('total'),
-            ],
-        ]);
+        return $this->jobRepository->save($job);
     }
+
 
     private function listUnits(): array
     {

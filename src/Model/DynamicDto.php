@@ -28,6 +28,11 @@ class DynamicDto
         return $this->data;
     }
 
+    public function addCustomData(string $key, array|int|string $data): void
+    {
+        $this->data[$key] = $data;
+    }
+
     public function setId(int $id): void
     {
         $this->data['id'] = $id;
@@ -80,6 +85,15 @@ class DynamicDto
         }
 
         return null;
+    }
+
+    public function getPriceFieldText(string $fieldKey): string
+    {
+        $priceText = number_format($this->getPriceField($fieldKey), 2, '.', '\'');
+        if (fmod($this->getPriceField($fieldKey), 1) === 0.0) {
+            $priceText = number_format($this->getPriceField($fieldKey), 0, '.', '\'') . '.-';
+        }
+        return $priceText;
     }
 
     public function setPriceField(string $fieldKey, float $price): self
@@ -172,7 +186,7 @@ class DynamicDto
         $qb = $this->connection->createQueryBuilder();
 
         $qb
-            ->select('id', $selectField->getRelatedTableCol())
+            ->select('*')
             ->from($selectField->getRelatedTable())
             ->where('id = :id')
             ->setParameters([
@@ -182,7 +196,11 @@ class DynamicDto
         $result = $qb->fetchAssociative();
 
         if ($result) {
-            return ['id' => $selectedValue, 'name' => $result[$selectField->getRelatedTableCol()]];
+            $info = ['id' => $selectedValue, 'name' => $result[$selectField->getRelatedTableCol()]];
+            if (array_key_exists('type', $result)) {
+                $info['type'] = $result['type'];
+            }
+            return $info;
         }
 
         return ['id' => 0, 'name' => '-'];

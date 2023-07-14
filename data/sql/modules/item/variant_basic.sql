@@ -5,6 +5,7 @@ CREATE TABLE `item`
 (
   `id`           int(11) NOT NULL,
   `unit_id`      int(11) NOT NULL,
+  `type_id`      int(11) NOT NULL,
   `name`         varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `price`        double                                  NOT NULL,
   `created_by`   int(11) NOT NULL,
@@ -50,7 +51,9 @@ INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynami
 VALUES (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.name', 'name', 'text', 1, 6, NULL, NULL, NULL, 1, 0),
        (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.unit.unit', 'unit_id', 'select', 1, 2, 1,
         'item_unit', 'name', 1, 1),
-       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.price', 'price', 'currency', 1, 2, NULL, NULL, NULL, 1, 2),
-       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.description', 'description', 'textarea', 0, 12, NULL, NULL, NULL, 0, 3);
+       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.type.type', 'type_id', 'select', 1, 2, 1,
+        'item_type', 'name', 0, 2),
+       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.price', 'price', 'currency', 1, 2, NULL, NULL, NULL, 1, 3),
+       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.description', 'description', 'textarea', 0, 12, NULL, NULL, NULL, 0, 4);
 
 COMMIT;

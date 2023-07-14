@@ -6,6 +6,7 @@ use App\Entity\DynamicFormField;
 use App\Form\DynamicType;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
+use App\Repository\ItemTypeRepository;
 use App\Repository\ItemUnitRepository;
 use App\Repository\SystemSettingRepository;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -15,6 +16,7 @@ class ItemType extends DynamicType
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly ItemUnitRepository $itemUnitRepository,
+        private readonly ItemTypeRepository $itemTypeRepository,
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
@@ -37,8 +39,23 @@ class ItemType extends DynamicType
     {
         return match ($formField->getRelatedTable()) {
             'item_unit' => $this->getUnits(),
+            'item_type' => $this->getTypes(),
             default => parent::getDynamicListData($formField)
         };
+    }
+
+    private function getTypes() : array
+    {
+        $itemUnits = $this->itemTypeRepository->findAll();
+        $unitField = [];
+        foreach ($itemUnits as $unit) {
+            $unitField[] = [
+                'id' => $unit->getId(),
+                'text' => $this->translator->trans($unit->getName()),
+            ];
+        }
+
+        return $unitField;
     }
 
     private function getUnits() : array

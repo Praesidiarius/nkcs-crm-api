@@ -21,13 +21,15 @@ class JobPositionRepository extends ServiceEntityRepository
         parent::__construct($registry, JobPosition::class);
     }
 
-    public function save(JobPosition $entity, bool $flush = false): void
+    public function save(JobPosition $entity, bool $flush = false): JobPosition
     {
         $this->getEntityManager()->persist($entity);
 
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+
+        return $entity;
     }
 
     public function remove(JobPosition $entity, bool $flush = false): void

@@ -3,9 +3,12 @@
 namespace App\Model;
 
 use App\Entity\DynamicFormField;
+use App\Entity\ItemVoucherCode;
 use App\Enum\JobVatMode;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
+use App\Repository\ItemTypeRepository;
+use App\Repository\ItemVoucherCodeRepository;
 use App\Repository\JobPositionRepository;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -17,7 +20,9 @@ class JobDto extends DynamicDto
         private readonly Connection $connection,
         private readonly TranslatorInterface $translator,
         private readonly JobPositionRepository $jobPositionRepository,
+        private readonly ItemTypeRepository $itemTypeRepository,
         private readonly ItemRepository $itemRepository,
+        private readonly ItemVoucherCodeRepository $voucherCodeRepository,
     ) {
         parent::__construct($this->dynamicFormFieldRepository, $this->connection);
     }
@@ -45,6 +50,24 @@ class JobDto extends DynamicDto
         foreach ($positionEntities as $position) {
             $posItem = $position->getItemId() ? $this->itemRepository->findById($position->getItemId()) : false;
             if ($posItem) {
+                $posItemTypeId = $posItem->getIntField('type_id');
+                if ($posItemTypeId !== 1) {
+                    $posItemType = $this->itemTypeRepository->find($posItemTypeId);
+
+                    switch ($posItemType->getType()) {
+                        case 'giftcard':
+                            $voucherCodes = $this->voucherCodeRepository->findBy(['position' => $position]);
+                            if ($voucherCodes) {
+                                foreach ($voucherCodes as $voucherCode) {
+                                    // only show partial code
+                                    $position->addVoucherCode(explode('-', $voucherCode->getCode())[0] . '-*******');
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
                 $position->setItem($posItem);
                 $position->setPrice($posItem->getPriceField('price'));
             }
@@ -52,5 +75,35 @@ class JobDto extends DynamicDto
             $positionsSerialized[] = $position;
         }
         return $positionsSerialized;
+    }
+
+    public function getVouchersUsed(): array
+    {
+        $vouchersDataSerialized = [];
+
+        $vouchersUsed = $this->voucherCodeRepository->findAllUsagesByJobId($this->getId());
+        /** @var ItemVoucherCode $voucherCode */
+        foreach ($vouchersUsed as $voucherCode) {
+            $voucherName = '-';
+            $voucherDiscount = 0;
+            $voucherDiscountText = '0.-';
+
+            // check if voucher is a gift card
+            if ($voucherCode->getItemId()) {
+                $voucherItem = $this->itemRepository->findById($voucherCode->getItemId());
+                $voucherName = $voucherItem->getTextField('name');
+                $voucherDiscount = $voucherItem->getPriceField('price');
+                $voucherDiscountText = $voucherItem->getPriceFieldText('price');
+            }
+
+            $vouchersDataSerialized[] = [
+                'name' => $voucherName,
+                'code' => $voucherCode->getCode(),
+                'amount' => $voucherDiscount,
+                'amount_text' => $voucherDiscountText,
+            ];
+        }
+
+        return $vouchersDataSerialized;
     }
 }

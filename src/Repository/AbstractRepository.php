@@ -191,4 +191,20 @@ class AbstractRepository
 
         return $entity;
     }
+
+    public function updateAttribute(string $attributeKey, int|float|string $attributeValue, int $entityId): void
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->update($this->baseTable)
+            ->set($attributeKey, ':' . $attributeKey)
+            ->where('id = :id')
+            ->setParameters([
+                'id' => $entityId,
+                $attributeKey => $attributeValue
+            ])
+        ;
+
+        $qb->executeQuery();
+    }
 }

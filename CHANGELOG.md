@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 0.4.3 - 2023-07-14
+
+### Added
+- Voucher Codes and Gift-cards (only Gift-cards tested so far - vouchers still a work in progress)
+- Job Positions can now be removed
+- Items can now have different types
+- added new item type "gift card"
+
+## Fixes
+- Fixes for No VAT Mode
+- Job Financials are now calculated correctly
+
 ## 0.4.2 - 2023-07-13
 
 ### Added

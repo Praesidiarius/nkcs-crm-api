@@ -42,5 +42,8 @@ mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/contact
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/job/variant_basic.sql
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/job/core_extensions.sql
 
+# item voucher extension
+mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/item/extensions/voucher.sql
+
 # add user
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" -e "${CREATE_USER_SQL}"

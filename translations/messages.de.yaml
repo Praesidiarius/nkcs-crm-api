@@ -65,6 +65,10 @@ job:
       positions: Positionen
       settings: Einstellungen
 item:
+  type:
+    type: Art des Artikels
+    default: Produkt
+    giftcard: Geschenkkarte
   unit:
     unit: Einheit
     piece: Stk.

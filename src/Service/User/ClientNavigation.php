@@ -37,7 +37,7 @@ class ClientNavigation
                     [
                         'title' => $this->translator->trans('item.voucher.vouchers'),
                         'icon' => 'mdi-gift',
-                        //'to' => ['name' => 'VoucherIndex']
+                        'to' => ['name' => 'VoucherIndex']
                     ]
                 ]
             ];
