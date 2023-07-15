@@ -470,13 +470,19 @@ class JobController extends AbstractDynamicFormController
             $job->setPriceField('vat_total', $jobVat);
             $jobVouchers = $job->getVouchersUsed();
             foreach ($jobVouchers as $voucher) {
-                $jobSubTotal -= $voucher['amount'];
+                $jobSubTotal = match($voucher['type']) {
+                    ItemVoucherType::ABSOLUTE => $jobSubTotal - $voucher['amount'],
+                    ItemVoucherType::PERCENT => $jobSubTotal * ((100 - $voucher['amount']) / 100)
+                };
             }
             $job->setPriceField('total', $jobSubTotal + $jobVat);
         } else {
             $jobVouchers = $job->getVouchersUsed();
             foreach ($jobVouchers as $voucher) {
-                $jobSubTotal -= $voucher['amount'];
+                $jobSubTotal = match($voucher['type']) {
+                    ItemVoucherType::ABSOLUTE => $jobSubTotal - $voucher['amount'],
+                    ItemVoucherType::PERCENT => $jobSubTotal * ((100 - $voucher['amount']) / 100)
+                };
             }
             $job->setPriceField('total', $jobSubTotal);
         }

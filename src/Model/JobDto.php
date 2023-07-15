@@ -94,6 +94,7 @@ class JobDto extends DynamicDto
             $voucherName = '-';
             $voucherDiscount = 0;
             $voucherDiscountText = '0.-';
+            $voucherType = ItemVoucherType::ABSOLUTE;
 
             // check if voucher is a gift card
             if ($voucherCode->getItemId()) {
@@ -106,6 +107,7 @@ class JobDto extends DynamicDto
             if ($voucherCode->getVoucherId()) {
                 $voucher = $this->voucherRepository->findById($voucherCode->getVoucherId());
                 $isAbsoluteVoucher = ItemVoucherType::from($voucher->getTextField('voucher_type')) === ItemVoucherType::ABSOLUTE;
+                $voucherType = ItemVoucherType::from($voucher->getTextField('voucher_type'));
                 $voucherName = $voucher->getTextField('name');
                 $voucherDiscount = $voucher->getPriceField('amount');
                 $voucherDiscountText = $isAbsoluteVoucher
@@ -117,6 +119,7 @@ class JobDto extends DynamicDto
             $vouchersDataSerialized[] = [
                 'name' => $voucherName,
                 'code' => $voucherCode->getCode(),
+                'type' => $voucherType,
                 'amount' => $voucherDiscount,
                 'amount_text' => $voucherDiscountText,
             ];
