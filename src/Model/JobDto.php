@@ -45,7 +45,7 @@ class JobDto extends DynamicDto
         return parent::getSerializedSelectFieldData($selectField, $selectedValue);
     }
 
-    public function getJobPositions(): array
+    public function getJobPositions($hideVoucherCodes = true): array
     {
         $positionsSerialized = [];
         $positionEntities = $this->jobPositionRepository->findBy(['jobId' => $this->getId()]);
@@ -63,7 +63,11 @@ class JobDto extends DynamicDto
                             if ($voucherCodes) {
                                 foreach ($voucherCodes as $voucherCode) {
                                     // only show partial code
-                                    $position->addVoucherCode(explode('-', $voucherCode->getCode())[0] . '-*******');
+                                    if ($hideVoucherCodes) {
+                                        $position->addVoucherCode(explode('-', $voucherCode->getCode())[0] . '-*******');
+                                    } else {
+                                        $position->addVoucherCode($voucherCode->getCode());
+                                    }
                                 }
                             }
                             break;

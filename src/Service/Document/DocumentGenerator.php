@@ -19,11 +19,11 @@ class DocumentGenerator
     public function __construct(
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
-        private readonly JobRepository           $jobRepository,
-        private readonly Security                $security,
-        private readonly TranslatorInterface     $translator,
+        private readonly JobRepository $jobRepository,
+        private readonly Security $security,
+        private readonly TranslatorInterface$translator,
         private readonly DynamicFormFieldRepository $formFieldRepository,
-        private readonly string                  $documentBaseDir,
+        private readonly string $documentBaseDir,
     ) {
     }
 
@@ -94,28 +94,48 @@ class DocumentGenerator
         int $jobId,
     ): string
     {
-        $job = $this->jobRepository->find($jobId);
+        $job = $this->jobRepository->findById($jobId);
 
         $fileName = $template->getName() . '-' . $job->getId() . '-' . $document->getId() . '.docx';
         $templateProcessor = new TemplateProcessor($this->documentBaseDir . '/templates/' . $template->getId() . '.docx');
 
-        $contact = $job->getContact();
+        $contact = $job->getIntField('contact_id')
+            ? $this->contactRepository->findById($job->getIntField('contact_id'))
+            : null
+        ;
 
         /**
          * Add Contact Address
          */
-        $name = $contact->getFirstName()
-            ? $contact->getFirstName() . ' ' . $contact->getLastName()
-            : $contact->getLastName();
+        $name = '';
+        if ($contact) {
+            if ($contact->getBoolField('is_company')) {
+                $name = $contact->getTextField('company_name');
+            } else {
+                if ($contact->getTextField('first_name')) {
+                    $name = $contact->getTextField('first_name');
+                }
+                if ($contact->getTextField('last_name')) {
+                    if ($name !== '') {
+                        $name .= ' ';
+                    }
+                    $name .= $contact->getTextField('last_name');
+                }
+            }
+        }
 
-        $primaryAddress = $contact->getAddress()->first();
+        $primaryAddress = $this->addressRepository->getPrimaryAddressForContact($contact->getId());
         if ($primaryAddress) {
             $title = new TextRun();
             $title->addText($name);
             $title->addTextBreak();
-            $title->addText($primaryAddress->getStreet());
+            $title->addText($primaryAddress->getTextField('street'));
             $title->addTextBreak();
-            $title->addText($primaryAddress->getZip() . ' ' . $primaryAddress->getCity());
+            $title->addText(
+                $primaryAddress->getTextField('zip')
+                . ' '
+                . $primaryAddress->getTextField('city')
+            );
             $templateProcessor->setComplexBlock('address', $title);
         } else {
             $templateProcessor->setValue('address', '');
@@ -125,15 +145,43 @@ class DocumentGenerator
         /**
          * Add Job Positions
          */
-        $templateProcessor->cloneRow('posItem', count($job->getJobPositions()));
+        $jobPositions = $job->getJobPositions(false);
+        $templateProcessor->cloneRow('posItem', count($jobPositions));
+
+        $jobVouchersUsed = $job->getVouchersUsed();
+        $templateProcessor->cloneRow('sPosItem', count($jobVouchersUsed));
+
+        $row = 1;
+        foreach ($jobVouchersUsed as $voucherUsed) {
+            $templateProcessor->setValue('sPosItem#' . $row, $voucherUsed['name']);
+            $templateProcessor->setValue('sPosAmount#' . $row, '-' . $voucherUsed['amount_text']);
+
+            $row++;
+        }
 
         $row = 1;
         $jobSubTotal = 0;
-        foreach ($job->getJobPositions() as $jobPosition) {
+        foreach ($jobPositions as $jobPosition) {
             $posDescription = $jobPosition->getItem()
-                ? $jobPosition->getItem()->getName()
+                ? $jobPosition->getItem()['name']
                     . ($jobPosition->getComment() ? ' ' . $jobPosition->getComment() : '')
                 : $jobPosition->getComment();
+
+            $title = new TextRun();
+            $title->addText($posDescription);
+
+            if ($jobPosition->getVoucherCodes()) {
+                $title->addTextBreak();
+
+                $codesText = 'Code: ';
+                if (count($jobPosition->getVoucherCodes()) >1) {
+                    $codesText = 'Codes: ';
+                }
+                foreach ($jobPosition->getVoucherCodes() as $code) {
+                    $codesText .= $code . ', ';
+                }
+                $title->addText($codesText);
+            }
 
             $posTotal = round($jobPosition->getAmount() * $jobPosition->getPrice(), 2);
             $posTotalView = number_format($posTotal, 2, '.', '\'');
@@ -146,7 +194,8 @@ class DocumentGenerator
             if (fmod($posPriceView, 1) === 0.0) {
                 $posPriceView = number_format($jobPosition->getPrice(), 0, '.', '\'') . '.-';
             }
-            $templateProcessor->setValue('posItem#' . $row, $posDescription);
+           // $templateProcessor->setValue('posItem#' . $row, $posDescription);
+            $templateProcessor->setComplexBlock('posItem#' . $row, $title);
             $templateProcessor->setValue('posAm#' . $row, $jobPosition->getAmount());
             $templateProcessor->setValue('posPrice#' . $row, $posPriceView);
             $templateProcessor->setValue('posTotal#' . $row, $posTotalView);
@@ -158,8 +207,14 @@ class DocumentGenerator
          * Add Job Basic Data
          */
         $templateProcessor->setValue('id', $job->getId());
-        $templateProcessor->setValue('subTotal', number_format($jobSubTotal, 2, '.', '\''));
-        $templateProcessor->setValue('total', number_format($jobSubTotal, 2, '.', '\''));
+        $templateProcessor->setValue(
+            'j_date',
+            $job->getTextField('date')
+                    ? date('d.m.Y', strtotime($job->getTextField('date')))
+                    : ''
+        );
+        $templateProcessor->setValue('subTotal', number_format($job->getPriceField('sub_total'), 2, '.', '\''));
+        $templateProcessor->setValue('total', number_format($job->getPriceField('total'), 2, '.', '\''));
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
         $templateProcessor->saveAs($this->documentBaseDir . '/' . $template->getType()->getIdentifier() . '/' . $fileName);

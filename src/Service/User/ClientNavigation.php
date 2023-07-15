@@ -23,6 +23,7 @@ class ClientNavigation
             $menu[] = [
                 'title' => $this->translator->trans('item.items'),
                 'icon' => 'mdi-tag-text',
+                'to' => ['name' => 'ItemIndex'],
                 'children' => [
                     [
                         'title' => $this->translator->trans('item.itemMultiple'),
