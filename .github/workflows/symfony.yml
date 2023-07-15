@@ -37,9 +37,9 @@ jobs:
 
     - name: Create test database
       run: |
-        chmod +x data/scripts/buildTestDatabase.sh
+        chmod +x data/scripts/buildDatabase.sh
         cd data/scripts
-        ./buildTestDatabase.sh
+        ./buildDatabase.sh
         cd -
       
     - name: generate jwt test keys
