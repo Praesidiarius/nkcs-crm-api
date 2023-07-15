@@ -84,4 +84,13 @@ item:
     section:
       basic: Stammdaten
   voucher:
+    code: Gutschein-Code
+    dateStart: Gültig von
+    dateEnd: Gültig bis
+    isUnique: Einmalig einlösbar
+    amount: Betrag
+    type:
+      type: Art
+      ABSOLUTE: Betrag
+      PERCENT: Prozent
     vouchers: Gutscheine

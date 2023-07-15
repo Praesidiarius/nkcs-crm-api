@@ -7,6 +7,7 @@ use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
 use App\Repository\SystemSettingRepository;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\CurrencyType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
@@ -56,6 +57,9 @@ class DynamicType extends AbstractType
                     break;
                 case 'textarea':
                     $builder->add($field['key'], TextareaType::class);
+                    break;
+                case 'checkbox':
+                    $builder->add($field['key'], CheckboxType::class);
                     break;
                 default:
                     break;

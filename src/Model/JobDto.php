@@ -4,12 +4,14 @@ namespace App\Model;
 
 use App\Entity\DynamicFormField;
 use App\Entity\ItemVoucherCode;
+use App\Enum\ItemVoucherType;
 use App\Enum\JobVatMode;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
 use App\Repository\ItemTypeRepository;
 use App\Repository\ItemVoucherCodeRepository;
 use App\Repository\JobPositionRepository;
+use App\Repository\VoucherRepository;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -23,6 +25,7 @@ class JobDto extends DynamicDto
         private readonly ItemTypeRepository $itemTypeRepository,
         private readonly ItemRepository $itemRepository,
         private readonly ItemVoucherCodeRepository $voucherCodeRepository,
+        private readonly VoucherRepository $voucherRepository,
     ) {
         parent::__construct($this->dynamicFormFieldRepository, $this->connection);
     }
@@ -33,7 +36,7 @@ class JobDto extends DynamicDto
             return match ($selectField->getRelatedTableCol()) {
                 'JobVatMode' => [
                     'id' => JobVatMode::from($selectedValue)->value,
-                    'name' => $this->translator->trans('job.vatMode.' . JobVatMode::VAT_EXCLUDED->name)
+                    'name' => $this->translator->trans('job.vatMode.' . JobVatMode::from($selectedValue)->name)
                 ],
                 default => ['id' => 0, 'name' => '-']
             };
@@ -94,6 +97,17 @@ class JobDto extends DynamicDto
                 $voucherName = $voucherItem->getTextField('name');
                 $voucherDiscount = $voucherItem->getPriceField('price');
                 $voucherDiscountText = $voucherItem->getPriceFieldText('price');
+            }
+
+            if ($voucherCode->getVoucherId()) {
+                $voucher = $this->voucherRepository->findById($voucherCode->getVoucherId());
+                $isAbsoluteVoucher = ItemVoucherType::from($voucher->getTextField('voucher_type')) === ItemVoucherType::ABSOLUTE;
+                $voucherName = $voucher->getTextField('name');
+                $voucherDiscount = $voucher->getPriceField('amount');
+                $voucherDiscountText = $isAbsoluteVoucher
+                    ? $voucher->getPriceFieldText('amount')
+                    : $voucher->getPriceField('amount'). '%'
+                ;
             }
 
             $vouchersDataSerialized[] = [

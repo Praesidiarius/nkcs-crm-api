@@ -7,12 +7,17 @@
 --
 CREATE TABLE `item_voucher`
 (
-  `id`           int(11)                                 NOT NULL,
-  `name`         varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `price`        double                                  NOT NULL,
-  `created_by`   int(11)                                 NOT NULL,
-  `created_date` datetime                                NOT NULL COMMENT '(DC2Type:datetime_immutable)',
-  `description`  text COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `id`            int(11)                                 NOT NULL,
+  `name`          varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount`        double                                  NOT NULL,
+  `voucher_type`  varchar(10)                             NOT NULL,
+  `use_only_once` int(1)                                  NOT NULL DEFAULT '0',
+  `contact_id`    int(11)                                          DEFAULT NULL,
+  `date_start`    datetime                                         DEFAULT NULL,
+  `date_end`      datetime                                         DEFAULT NULL,
+  `created_by`    int(11)                                 NOT NULL,
+  `created_date`  datetime                                NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `description`   text COLLATE utf8mb4_unicode_ci                  DEFAULT NULL
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -114,11 +119,23 @@ INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynami
                                   `field_type`, `field_required`, `columns`, `default_data`, `related_table`,
                                   `related_table_col`,
                                   `on_index_default`, `default_sort_id`)
-VALUES (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.name', 'name', 'text', 1, 6, NULL, NULL, NULL, 1,
+VALUES (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.name', 'name', 'text', 1, 5, NULL, NULL, NULL, 1,
         0),
-       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.price', 'price', 'currency', 1, 2, NULL, NULL,
-        NULL, 1, 2),
+       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.voucher.code', 'code', 'text', 1, 3, NULL, NULL,
+        NULL, 0, 1),
+       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.voucher.amount', 'amount', 'currency', 1, 2,
+        NULL, NULL, NULL, 1, 2),
+       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.voucher.type.type', 'voucher_type', 'select', 1,
+        2, NULL, 'enum', 'ItemVoucherType', 0, 3),
+       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.voucher.dateStart', 'date_start', 'date', 0, 3,
+        NULL, NULL, NULL, 0, 4),
+       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.voucher.dateEnd', 'date_end', 'date', 0, 3,
+        NULL, NULL, NULL, 0, 5),
+       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.voucher.isUnique', 'use_only_once', 'checkbox', 0, 2,
+        NULL, NULL, NULL, 0, 6),
+       (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'job.contact', 'contact_id', 'autocomplete', 0, 4,
+        NULL, 'contact', 'first_name', 0, 7),
        (NULL, NULL, @voucher_basic_section_id, @voucher_form_id, 'item.description', 'description', 'textarea', 0, 12,
-        NULL, NULL, NULL, 0, 3);
+        NULL, NULL, NULL, 0, 10);
 
 COMMIT;

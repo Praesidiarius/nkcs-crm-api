@@ -3,15 +3,16 @@
 namespace App\Controller\Item;
 
 use App\Controller\AbstractDynamicFormController;
+use App\Entity\ItemVoucherCode;
 use App\Form\DynamicType;
 use App\Form\Item\VoucherType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
+use App\Repository\ItemVoucherCodeRepository;
 use App\Repository\UserSettingRepository;
 use App\Repository\VoucherRepository;
 use Doctrine\DBAL\Connection;
-use Stripe\StripeClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -25,6 +26,7 @@ class VoucherController extends AbstractDynamicFormController
     public function __construct(
         private readonly VoucherType $voucherForm,
         private readonly VoucherRepository $voucherRepository,
+        private readonly ItemVoucherCodeRepository $voucherCodeRepository,
         private readonly UserSettingRepository $userSettings,
         private readonly HttpClientInterface $httpClient,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
@@ -64,7 +66,16 @@ class VoucherController extends AbstractDynamicFormController
             }
         }
 
-        $voucher = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $voucherCodeCustom = $data['code'];
+        unset($data['code']);
+
+        // check if code is already taken
+        $codeExists = $this->voucherCodeRepository->findBy(['code' => $voucherCodeCustom]);
+        if ($codeExists) {
+            throw new HttpException(400, 'code already taken. please choose another one');
+        }
+
+        $voucher = $this->voucherRepository->getDynamicDto();
         $voucher->setData($data);
 
         // manual validation
@@ -78,39 +89,14 @@ class VoucherController extends AbstractDynamicFormController
         $voucher->setCreatedBy($this->getUser()->getId());
         $voucher->setCreatedDate();
 
-        // save contact
         $voucher = $this->voucherRepository->save($voucher);
 
-        /**
-         * Stripe Integration
-         */
-        if ($this->getParameter('payment.stripe_key') && $voucher->getBoolField('stripe_enabled')) {
-            $stripeClient = new StripeClient($this->getParameter('payment.stripe_secret'));
+        // create voucher code
+        $voucherCode = new ItemVoucherCode();
+        $voucherCode->setVoucherId($voucher->getId());
+        $voucherCode->setCode($voucherCodeCustom);
 
-            $stripeProduct = $stripeClient->products->create([
-                'name' => $voucher->getTextField('name'),
-                'description' => $voucher->getTextField('description'),
-            ]);
-
-            $stripePriceData = [
-                // stripe wants amount in cents
-                'unit_amount' => ($voucher->getPriceField('price') ?? 0) * 100,
-                'currency' => $this->getParameter('payment.currency'),
-                'product' => $stripeProduct['id']
-            ];
-
-            if ($voucher->getSelectField('unit_id')['type'] === 'sub-month') {
-                $stripePriceData['recurring'] = ['interval' => 'month'];
-            }
-            if ($voucher->getSelectField('unit_id')['type'] === 'sub-year') {
-                $stripePriceData['recurring'] = ['interval' => 'year'];
-            }
-            $stripePrice = $stripeClient->prices->create($stripePriceData);
-
-            $voucher->setTextField('stripe_price_id', $stripePrice['id']);
-
-            $voucher = $this->voucherRepository->save($voucher);
-        }
+        $this->voucherCodeRepository->save($voucherCode, true);
 
         return $this->itemResponse($voucher);
     }
@@ -173,6 +159,12 @@ class VoucherController extends AbstractDynamicFormController
         ?DynamicType $form = null,
     ): Response {
         $voucher = $this->voucherRepository->findById($entityId);
+
+        $voucherCode = $this->voucherCodeRepository->findOneBy(['voucherId' => $voucher->getId()]);
+        if ($voucherCode) {
+            $voucher->setTextField('code', $voucherCode->getCode());
+        }
+
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }

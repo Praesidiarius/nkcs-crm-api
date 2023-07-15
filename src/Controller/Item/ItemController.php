@@ -64,7 +64,7 @@ class ItemController extends AbstractDynamicFormController
             }
         }
 
-        $item = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $item = $this->itemRepository->getDynamicDto();
         $item->setData($data);
 
         // manual validation

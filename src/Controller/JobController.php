@@ -5,11 +5,11 @@ namespace App\Controller;
 use App\Entity\ItemVoucherCode;
 use App\Entity\ItemVoucherCodeRedeem;
 use App\Entity\JobPosition;
+use App\Enum\ItemVoucherType;
 use App\Enum\JobVatMode;
 use App\Form\DynamicType;
 use App\Form\Job\JobType;
 use App\Model\DynamicDto;
-use App\Model\JobDto;
 use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
@@ -20,6 +20,7 @@ use App\Repository\ItemVoucherCodeRepository;
 use App\Repository\JobPositionRepository;
 use App\Repository\JobRepository;
 use App\Repository\UserSettingRepository;
+use App\Repository\VoucherRepository;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,6 +40,7 @@ class JobController extends AbstractDynamicFormController
         private readonly UserSettingRepository $userSettings,
         private readonly ItemRepository $itemRepository,
         private readonly ItemUnitRepository $itemUnitRepository,
+        private readonly VoucherRepository $voucherRepository,
         private readonly ItemVoucherCodeRepository $voucherCodeRepository,
         private readonly ItemVoucherCodeRedeemRepository $voucherCodeRedeemRepository,
         private readonly ItemTypeRepository $itemTypeRepository,
@@ -204,7 +206,7 @@ class JobController extends AbstractDynamicFormController
         }
 
         $voucherCodeUuid = $data['voucher_code'];
-        if (strlen($voucherCodeUuid) < 36) {
+        if (strlen($voucherCodeUuid) < 6) {
             throw new HttpException(400, 'invalid voucher code');
         }
         $voucherCode = $this->voucherCodeRepository->findOneBy(['code' => $voucherCodeUuid]);
@@ -216,6 +218,26 @@ class JobController extends AbstractDynamicFormController
         // voucher codes linked to an item, are gift cards and can only be used once
         if ($voucherCode->getItemId() && $voucherCodeUsages) {
             throw new HttpException(400, 'voucher already used');
+        }
+
+        $voucher = null;
+        if ($voucherCode->getVoucherId()) {
+            $voucher = $this->voucherRepository->findById($voucherCode->getVoucherId());
+            if ($voucher->getIntField('contact_id')) {
+                if ($voucher->getIntField('contact_id') !== $job->getIntField('contact_id')) {
+                    throw new HttpException(400, 'voucher cannot be used for this customer');
+                }
+            }
+            if ($voucher->getIntField('use_only_once')) {
+                foreach ($voucherCodeUsages as $usage) {
+                    if (
+                        $usage->getContactId() === $voucher->getIntField('contact_id')
+                        || $usage->getContactId() === $job->getIntField('contact_id')
+                    ) {
+                        throw new HttpException(400, 'voucher already used');
+                    }
+                }
+            }
         }
 
         $voucherRedeem = new ItemVoucherCodeRedeem();
@@ -235,6 +257,20 @@ class JobController extends AbstractDynamicFormController
             $newJobTotal = $currentJobTotal - $voucherDiscount;
             $job->setPriceField('total', $newJobTotal);
 
+            $this->jobRepository->updateAttribute('total', $newJobTotal, $job->getId());
+        }
+
+        if ($voucher) {
+            $voucherDiscount = $voucher->getPriceField('amount');
+            $voucherType = ItemVoucherType::from($voucher->getTextField('voucher_type'));
+            $currentJobTotal = $job->getPriceField('total');
+
+            $newJobTotal = match($voucherType) {
+                ItemVoucherType::ABSOLUTE => $currentJobTotal - $voucherDiscount,
+                ItemVoucherType::PERCENT => $currentJobTotal * ((100 - $voucherDiscount) / 100)
+            };
+
+            $job->setPriceField('total', $newJobTotal);
             $this->jobRepository->updateAttribute('total', $newJobTotal, $job->getId());
         }
 
