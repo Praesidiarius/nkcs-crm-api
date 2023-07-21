@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\License;
 use App\Entity\LicenseProduct;
 use App\Entity\LicensePurchase;
+use App\Model\DynamicDto;
 use App\Repository\ContactRepository;
 use App\Repository\ItemRepository;
 use App\Repository\ItemUnitRepository;
@@ -12,6 +13,7 @@ use App\Repository\LicenseClientNotificationRepository;
 use App\Repository\LicenseProductRepository;
 use App\Repository\LicensePurchaseRepository;
 use App\Repository\LicenseRepository;
+use App\Repository\SystemSettingRepository;
 use App\Service\SecurityTools;
 use DateTime;
 use DateTimeImmutable;
@@ -22,6 +24,7 @@ use Stripe\Stripe;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Uid\Uuid;
@@ -387,8 +390,7 @@ class LicenseController extends AbstractController
         Request $request,
         LicenseClientNotificationRepository $clientNotificationRepository,
         ?string $licenseHolder,
-    ): Response
-    {
+    ): Response {
         $self = ($request->server->getBoolean('HTTPS') ? 'https://' : 'http://')
             . $request->server->get('HTTP_HOST');
 
@@ -414,6 +416,55 @@ class LicenseController extends AbstractController
 
         return $this->json([
             'notifications' => $myNotifications
+        ]);
+    }
+
+    #[Route('/license/referral/{licenseHolder}')]
+    public function referralInfo(
+        Request $request,
+        ?string $licenseHolder,
+        SystemSettingRepository $systemSettings,
+    ): Response {
+        // make sure we are on the license server instance
+        $self = ($request->server->getBoolean('HTTPS') ? 'https://' : 'http://')
+            . $request->server->get('HTTP_HOST');
+
+        if ($this->getParameter('license.server') != $self) {
+            throw new NotFoundHttpException();
+        }
+
+        $referralBaseUrl = $systemSettings->findOneBy(['settingKey' => 'referral-base-url']);
+
+        if (!$referralBaseUrl) {
+            throw new HttpException(404, 'referral link not found');
+        }
+
+        $refContact = $this->contactRepository->findByAttribute('contact_identifier', $licenseHolder);
+        $refCount = 0;
+        $refInfo = [];
+        if ($refContact) {
+            $refList = $this->contactRepository->findAllByAttribute('referral_id', $refContact->getId());
+            /** @var DynamicDto $ref */
+            foreach ($refList as $ref) {
+                $refCount++;
+                $refInfo[] = [
+                    'signup_step1' => $ref->getDateFormattedField('signup_date_step1'),
+                    'signup_step2' => $ref->getDateFormattedField('signup_date_step2'),
+                    'bonus' => 0,
+                    'name' => $ref->getTextField('contact_identifier') ?: '-'
+                ];
+            }
+        }
+
+        $refBalance = 0;
+
+        $referralLink = str_replace(['#CODE#'], [$licenseHolder], $referralBaseUrl->getSettingValue());
+
+        return $this->json([
+            'link' => $referralLink,
+            'count' => $refCount,
+            'balance' => $refBalance,
+            'list' => $refInfo,
         ]);
     }
 }

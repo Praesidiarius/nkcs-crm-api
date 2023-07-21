@@ -52,6 +52,17 @@ class DynamicDto
         return null;
     }
 
+    public function getDateFormattedField(string $fieldKey): ?string
+    {
+        if (array_key_exists($fieldKey, $this->data)) {
+            if ($this->data[$fieldKey]) {
+                return date('d.m.Y', strtotime($this->data[$fieldKey]));
+            }
+        }
+
+        return '-';
+    }
+
     public function setTextField(string $fieldKey, string $text): self
     {
         $this->data[$fieldKey] = $text;

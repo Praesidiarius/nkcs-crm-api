@@ -123,6 +123,47 @@ class AbstractRepository
         return null;
     }
 
+    public function findAllByAttribute(string $attributeKey, mixed $attributeValue): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from($this->baseTable)
+            ->where($attributeKey . ' = :' . $attributeKey)
+            ->setParameters([
+                $attributeKey => $attributeValue,
+            ])
+        ;
+
+        $rawData = $qb->fetchAllAssociative();
+        if (count($rawData) > 0) {
+            $entities = [];
+            foreach ($rawData as $row) {
+                $entity = $this->getDynamicDto();
+                $entity->setData($row);
+                $entities[] = $entity;
+            }
+            return $entities;
+        }
+
+        return [];
+    }
+
+    public function countByAttribute(string $attributeKey, mixed $attributeValue): int
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('COUNT(id)')
+            ->from($this->baseTable)
+            ->where($attributeKey . ' = :' . $attributeKey)
+            ->setParameters([
+                $attributeKey => $attributeValue,
+            ])
+        ;
+
+        return (int) $qb->fetchOne();
+    }
+
     public function removeById(int $id): void
     {
         $qb = $this->connection->createQueryBuilder();

@@ -83,6 +83,13 @@ class ContactSignupController extends AbstractApiController
         $contact->setDateField('signup_date_step1',new DateTimeImmutable());
         $contact->setTextField('signup_token', $hash);
 
+        if ($data['referral']) {
+            $refContact = $this->contactRepository->findByAttribute('contact_identifier', $data['referral']);
+            if ($refContact) {
+                $contact->setIntField('referral_id', $refContact->getId());
+            }
+        }
+
         $this->contactRepository->save($contact);
 
         $emailSubject = $systemSettings->findOneBy(['settingKey' => 'contact-signup-email-subject']);
