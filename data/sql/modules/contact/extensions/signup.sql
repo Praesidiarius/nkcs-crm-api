@@ -1,7 +1,7 @@
 ALTER TABLE `contact`
   ADD `contact_identifier` varchar(50)  DEFAULT NULL AFTER `description`,
   ADD `referral_id`        int(11)      DEFAULT NULL AFTER `contact_identifier`,
-  ADD `signup_token`       varchar(255) DEFAULT NULL AFTER `referral`,
+  ADD `signup_token`       varchar(255) DEFAULT NULL AFTER `referral_id`,
   ADD `signup_date_step1`  datetime     DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)' AFTER `signup_token`,
   ADD `signup_date_step2`  datetime     DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)' AFTER `signup_date_step1`
 ;
