@@ -171,7 +171,7 @@ class AddNewFieldCommand extends Command
             'currency' => 'float',
             'textarea' => 'text',
             'datetime' => 'datetime',
-            default => 'string'
+            default => 'varchar(255)'
         };
     }
 }

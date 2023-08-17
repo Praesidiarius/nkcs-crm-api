@@ -143,64 +143,72 @@ class DocumentGenerator
 
 
         /**
-         * Add Job Positions
+         * Add Vouchers
          */
-        $jobPositions = $job->getJobPositions(false);
-        $templateProcessor->cloneRow('posItem', count($jobPositions));
+        if (in_array('sPosItem', $templateProcessor->getVariables())) {
+            $jobVouchersUsed = $job->getVouchersUsed();
 
-        $jobVouchersUsed = $job->getVouchersUsed();
-        $templateProcessor->cloneRow('sPosItem', count($jobVouchersUsed));
+            $templateProcessor->cloneRow('sPosItem', count($jobVouchersUsed));
+            $row = 1;
+            foreach ($jobVouchersUsed as $voucherUsed) {
+                $templateProcessor->setValue('sPosItem#' . $row, $voucherUsed['name']);
+                $templateProcessor->setValue('sPosAmount#' . $row, '-' . $voucherUsed['amount_text']);
 
-        $row = 1;
-        foreach ($jobVouchersUsed as $voucherUsed) {
-            $templateProcessor->setValue('sPosItem#' . $row, $voucherUsed['name']);
-            $templateProcessor->setValue('sPosAmount#' . $row, '-' . $voucherUsed['amount_text']);
-
-            $row++;
+                $row++;
+            }
         }
 
-        $row = 1;
-        $jobSubTotal = 0;
-        foreach ($jobPositions as $jobPosition) {
-            $posDescription = $jobPosition->getItem()
-                ? $jobPosition->getItem()['name']
+        /**
+         * Add Job Positions
+         */
+        if (in_array('posItem', $templateProcessor->getVariables())) {
+            $jobPositions = $job->getJobPositions(false);
+
+            $templateProcessor->cloneRow('posItem', count($jobPositions));
+
+            $row = 1;
+            $jobSubTotal = 0;
+            foreach ($jobPositions as $jobPosition) {
+                $posDescription = $jobPosition->getItem()
+                    ? $jobPosition->getItem()['name']
                     . ($jobPosition->getComment() ? ' ' . $jobPosition->getComment() : '')
-                : $jobPosition->getComment();
+                    : $jobPosition->getComment();
 
-            $title = new TextRun();
-            $title->addText($posDescription);
+                $title = new TextRun();
+                $title->addText($posDescription);
 
-            if ($jobPosition->getVoucherCodes()) {
-                $title->addTextBreak();
+                if ($jobPosition->getVoucherCodes()) {
+                    $title->addTextBreak();
 
-                $codesText = 'Code: ';
-                if (count($jobPosition->getVoucherCodes()) >1) {
-                    $codesText = 'Codes: ';
+                    $codesText = 'Code: ';
+                    if (count($jobPosition->getVoucherCodes()) >1) {
+                        $codesText = 'Codes: ';
+                    }
+                    foreach ($jobPosition->getVoucherCodes() as $code) {
+                        $codesText .= $code . ', ';
+                    }
+                    $title->addText($codesText);
                 }
-                foreach ($jobPosition->getVoucherCodes() as $code) {
-                    $codesText .= $code . ', ';
+
+                $posTotal = round($jobPosition->getAmount() * $jobPosition->getPrice(), 2);
+                $posTotalView = number_format($posTotal, 2, '.', '\'');
+                if (fmod($posTotal, 1) === 0.0) {
+                    $posTotalView = number_format($posTotal, 0, '.', '\'') . '.-';
                 }
-                $title->addText($codesText);
-            }
+                $jobSubTotal += $posTotal;
 
-            $posTotal = round($jobPosition->getAmount() * $jobPosition->getPrice(), 2);
-            $posTotalView = number_format($posTotal, 2, '.', '\'');
-            if (fmod($posTotal, 1) === 0.0) {
-                $posTotalView = number_format($posTotal, 0, '.', '\'') . '.-';
-            }
-            $jobSubTotal += $posTotal;
+                $posPriceView = $jobPosition->getPrice();
+                if (fmod($posPriceView, 1) === 0.0) {
+                    $posPriceView = number_format($jobPosition->getPrice(), 0, '.', '\'') . '.-';
+                }
+                // $templateProcessor->setValue('posItem#' . $row, $posDescription);
+                $templateProcessor->setComplexBlock('posItem#' . $row, $title);
+                $templateProcessor->setValue('posAm#' . $row, $jobPosition->getAmount());
+                $templateProcessor->setValue('posPrice#' . $row, $posPriceView);
+                $templateProcessor->setValue('posTotal#' . $row, $posTotalView);
 
-            $posPriceView = $jobPosition->getPrice();
-            if (fmod($posPriceView, 1) === 0.0) {
-                $posPriceView = number_format($jobPosition->getPrice(), 0, '.', '\'') . '.-';
+                $row++;
             }
-           // $templateProcessor->setValue('posItem#' . $row, $posDescription);
-            $templateProcessor->setComplexBlock('posItem#' . $row, $title);
-            $templateProcessor->setValue('posAm#' . $row, $jobPosition->getAmount());
-            $templateProcessor->setValue('posPrice#' . $row, $posPriceView);
-            $templateProcessor->setValue('posTotal#' . $row, $posTotalView);
-
-            $row++;
         }
 
         /**
