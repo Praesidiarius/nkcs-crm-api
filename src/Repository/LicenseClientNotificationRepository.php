@@ -34,9 +34,9 @@ class LicenseClientNotificationRepository extends ServiceEntityRepository
 
         $notificationsWithStatus = $qb->getQuery()->getResult();
         $notificationsCleaned = [];
-        foreach ($notificationsWithStatus as $notificationsWithStatus) {
-            if ($notificationsWithStatus['status'] === null) {
-                $notificationsCleaned[] = $notificationsWithStatus['notification'];
+        foreach ($notificationsWithStatus as $notificationWithStatus) {
+            if ($notificationWithStatus['status'] === null) {
+                $notificationsCleaned[] = $notificationWithStatus['notification'];
             }
         }
 
