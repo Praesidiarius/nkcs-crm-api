@@ -6,17 +6,11 @@ use App\Entity\DynamicForm;
 use App\Entity\DynamicFormField;
 use App\Entity\DynamicFormFieldRelation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\Query\Parameter;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<DynamicFormField>
- *
- * @method DynamicFormField|null find($id, $lockMode = null, $lockVersion = null)
- * @method DynamicFormField|null findOneBy(array $criteria, array $orderBy = null)
- * @method DynamicFormField[]    findAll()
- * @method DynamicFormField[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
 class DynamicFormFieldRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -50,9 +44,9 @@ class DynamicFormFieldRepository extends ServiceEntityRepository
             ->join(DynamicFormFieldRelation::class, 'dr', Join::WITH,'dr.field = d.id')
             ->join(DynamicForm::class, 'df', Join::WITH, 'd.dynamicForm = df.id')
             ->where('df.formKey = :form')
-            ->setParameters([
-                'form' => $dynamicFormKey
-            ])
+            ->setParameters(new ArrayCollection([
+                new Parameter('form', $dynamicFormKey),
+            ]))
             ->orderBy('dr.sortId')
             ->getQuery()
             ->getResult()
@@ -66,37 +60,12 @@ class DynamicFormFieldRepository extends ServiceEntityRepository
             ->join(DynamicForm::class, 'df', Join::WITH, 'd.dynamicForm = df.id')
             ->where('df.formKey = :form')
             ->andWhere('dr.showOnIndex = 1')
-            ->setParameters([
-                'form' => $dynamicFormKey
-            ])
+            ->setParameters(new ArrayCollection([
+                new Parameter('form', $dynamicFormKey),
+            ]))
             ->orderBy('dr.sortId')
             ->getQuery()
             ->getResult()
-            ;
+        ;
     }
-
-//    /**
-//     * @return DynamicFormField[] Returns an array of DynamicFormField objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('d')
-//            ->andWhere('d.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('d.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?DynamicFormField
-//    {
-//        return $this->createQueryBuilder('d')
-//            ->andWhere('d.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
 }

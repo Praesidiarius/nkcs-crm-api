@@ -3,17 +3,12 @@
 namespace App\Repository;
 
 use App\Entity\License;
+use Cake\Chronos\Chronos;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Query\Parameter;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<License>
- *
- * @method License|null find($id, $lockMode = null, $lockVersion = null)
- * @method License|null findOneBy(array $criteria, array $orderBy = null)
- * @method License[]    findAll()
- * @method License[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
 class LicenseRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -39,10 +34,10 @@ class LicenseRepository extends ServiceEntityRepository
             ->andWhere('l.dateValid >= :currentDate')
             ->orderBy('l.id', 'ASC')
             ->setMaxResults(1)
-            ->setParameters([
-                'holder' => $licenseHolder,
-                'currentDate' => new \DateTime(),
-            ])
+            ->setParameters(new ArrayCollection([
+                new Parameter('holder', $licenseHolder),
+                new Parameter('currentDate', Chronos::now()),
+            ]))
         ;
 
         return $qb->getQuery()->getOneOrNullResult();
@@ -57,11 +52,11 @@ class LicenseRepository extends ServiceEntityRepository
             ->andWhere('l.dateValid >= :currentDate')
             ->andWhere('l.id != :activeLicense')
             ->orderBy('l.id', 'ASC')
-            ->setParameters([
-                'holder' => $licenseHolder,
-                'currentDate' => new \DateTime(),
-                'activeLicense' => $activeLicenseId,
-            ])
+            ->setParameters(new ArrayCollection([
+                new Parameter('holder', $licenseHolder),
+                new Parameter('currentDate', Chronos::now()),
+                new Parameter('activeLicense', $activeLicenseId),
+            ]))
         ;
 
         return $qb->getQuery()->getResult() ?? [];
@@ -75,10 +70,10 @@ class LicenseRepository extends ServiceEntityRepository
             ->where('l.holder = :holder')
             ->andWhere('l.dateValid < :currentDate')
             ->orderBy('l.id', 'ASC')
-            ->setParameters([
-                'holder' => $licenseHolder,
-                'currentDate' => new \DateTime(),
-            ])
+            ->setParameters(new ArrayCollection([
+                new Parameter('holder', $licenseHolder),
+                new Parameter('currentDate', Chronos::now()),
+            ]))
         ;
 
         return $qb->getQuery()->getResult() ?? [];
@@ -92,29 +87,4 @@ class LicenseRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
-
-//    /**
-//     * @return License[] Returns an array of License objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('l')
-//            ->andWhere('l.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('l.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?License
-//    {
-//        return $this->createQueryBuilder('l')
-//            ->andWhere('l.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
 }

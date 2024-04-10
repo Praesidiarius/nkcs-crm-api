@@ -9,7 +9,6 @@ use Doctrine\DBAL\Connection;
 
 class DynamicDto
 {
-
     private array $serializedData = [];
     private array $data = [];
     public function __construct(
