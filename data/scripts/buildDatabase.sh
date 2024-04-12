@@ -1,7 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
-DB_USER="root"
-DB_PASS="root"
+if test -f .env.local; then
+  . .env.local
+else
+  echo "Config file missing. please create a .env.local file in ./data/scripts directory"
+  exit
+fi
+
 SQL_TEMPLATE_DIR="./../sql"
 DB_NAME=${1:-nkcs_test}
 USER_USERNAME=${2:-dev}

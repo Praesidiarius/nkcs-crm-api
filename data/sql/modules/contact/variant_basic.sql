@@ -109,6 +109,8 @@ INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynami
                                   `on_index_default`, `default_sort_id`)
 VALUES (NULL, NULL, @contact_basic_section_id, @contact_form_id, NULL, 'is_company', 'hidden', 1, 0, '0', NULL, NULL, 0,
         0),
+       (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'company', 'company_name', 'hidden', 0, 12, NULL,
+        NULL, NULL, 1, 0),
        (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'salution', 'salution_id', 'select', 0, 2, 1,
         'contact_salution', 'name', 0, 1),
        (NULL, NULL, @contact_basic_section_id, @contact_form_id, 'firstname', 'first_name', 'text', 0, 5, NULL, NULL,
