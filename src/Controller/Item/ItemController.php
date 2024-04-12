@@ -10,6 +10,7 @@ use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\ItemRepository;
 use App\Repository\UserSettingRepository;
+use App\Service\DataExporter;
 use Doctrine\DBAL\Connection;
 use Stripe\StripeClient;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +30,7 @@ class ItemController extends AbstractDynamicFormController
         private readonly HttpClientInterface $httpClient,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly Connection $connection,
+        private readonly DataExporter $dataExporter,
     ) {
         parent::__construct(
             $this->httpClient,
@@ -204,6 +206,17 @@ class ItemController extends AbstractDynamicFormController
         string $formKey = '',
     ): Response {
         return parent::list($page, $this->itemRepository, $this->itemForm, 'item');
+    }
+
+    #[Route('/export', name: 'item_export', methods: ['GET'])]
+    public function export(): Response {
+        $items = $this->itemRepository->findAll();
+
+        $excelFileName = $this->dataExporter->getExcelExport($this->itemForm, $items);
+
+        return $this->json([
+            $excelFileName,
+        ]);
     }
 
     protected function itemResponse(

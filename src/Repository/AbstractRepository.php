@@ -41,6 +41,9 @@ class AbstractRepository
         return $entity;
     }
 
+    /**
+     * @return DynamicDto[]
+     */
     public function findAll(?string $table = null): array
     {
         $qb = $this->connection->createQueryBuilder();

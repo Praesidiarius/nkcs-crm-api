@@ -132,7 +132,7 @@ class DynamicType extends AbstractType
         };
     }
 
-    public function getFormFields(string $formKey, bool $withTabs = true): array
+    public function getFormFields(string $formKey = 'none', bool $withTabs = true): array
     {
 
         $dynamicFormFields = $this->dynamicFormFieldRepository->getUserFieldsByFormKey($formKey);
