@@ -5,9 +5,17 @@
 
 ## Install
 - ``composer install``
-- - copy `.env` to ``.env.local``
-- Add values for ``APP_SECRET``, ``JWT_PASSPHRASE`` AND ``DATABASE_URL``
+- - copy `.env.example` to ``.env.local``
+- copy `docker/database/.env.example` to ``docker/database/.env``
+- Add values for ``APP_SECRET`` AND ``DATABASE_URL``
 - ``php bin/console lexik:jwt:generate-keypair``
+- ``mkcert -cert-file docker/nginx/crm-api.local.crt -key-file docker/nginx/crm-api.local.key crm-api.local``
+- ``mkcert -install``
+- ``docker compose build``
+- ``docker compose up``
+- ``add 127.0.0.1 crm-api.local to your hosts file``
+
+The CRM API is now running locally in docker at crm-api.local
 
 ### Add a first user to test api
 - ``php bin/console security:hash-password`` - make a hash for YOURPASSWORD

@@ -1,0 +1,1 @@
+docker exec -ti crm.php /bin/bash

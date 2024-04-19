@@ -1,0 +1,24 @@
+# MariaDB-specific config file.
+# Read by /etc/mysql/my.cnf
+
+[client]
+default-character-set = utf8mb4
+
+[mysqld]
+
+# Enable the slow query log to see queries with especially long duration
+slow_query_log = 1
+
+#log_slow_rate_limit	= 1000
+long_query_time = 2
+log_slow_verbosity	= query_plan
+
+expire_logs_days	= 3
+
+#
+# * Character sets
+# Default is Latin1, if you need UTF-8 set all this (also in client section)
+#
+character-set-server = utf8mb4
+init-connect='SET NAMES utf8mb4'
+collation-server = utf8mb4_unicode_520_ci

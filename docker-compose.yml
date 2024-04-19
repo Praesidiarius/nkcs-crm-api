@@ -1,21 +1,54 @@
-version: '3'
-
 services:
-###> doctrine/doctrine-bundle ###
-  database:
-    image: postgres:${POSTGRES_VERSION:-15}-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
+  web:
+    build:
+      context: ./docker/nginx
+    container_name: crm.web
     volumes:
-      - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
+      - .:/var/www
+      - ./docker/logs/nginx/:/var/log/nginx/
+    depends_on:
+      - php-fpm
+      - db
+    ports:
+      - "80:80"
+      - "443:443"
+  php-fpm:
+    build:
+      context: ./docker/php-fpm
+    container_name: crm.php
+    volumes:
+      - .:/var/www
+      - ./docker/logs/symfony/:/var/log/
+  db:
+    build:
+      context: ./docker/database
+    container_name: crm.db
+    env_file:
+      - ./docker/database/.env
+    ports:
+      - "3308:3306"
+  adminer:
+    build:
+      context: ./docker/adminer
+    container_name: crm.adminer
+    restart: always
+    ports:
+      - 8080:8080
 
-volumes:
-###> doctrine/doctrine-bundle ###
-  database_data:
-###< doctrine/doctrine-bundle ###
+  mailcatcher:
+    container_name: crm.mailcatcher
+    # build: . # if building from source
+    image: stpaquet/alpinemailcatcher:latest # or any other image you want to use
+    environment:
+      - MAIL_LIMIT=70 # docker image default is 50
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+  db_test:
+    build:
+      context: ./docker/database
+    container_name: crm.db_test
+    env_file:
+      - ./docker/database/.env
+    ports:
+      - "3309:3306"

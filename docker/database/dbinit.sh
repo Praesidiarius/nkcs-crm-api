@@ -1,14 +1,13 @@
 #!/bin/bash
 
-if test -f .env.local; then
-  . .env.local
+if test -f /docker-entrypoint-initdb.d/.env; then
+  . /docker-entrypoint-initdb.d/.env
 else
-  echo "Config file missing. please create a .env.local file in ./data/scripts directory"
+  echo "Config file missing. please create a .env.local file directory"
   exit
 fi
 
-SQL_TEMPLATE_DIR="./../sql"
-DB_NAME=${1:-nkcs_test}
+SQL_TEMPLATE_DIR="/home/sql"
 USER_USERNAME=${2:-dev}
 # password hash equals "test"
 USER_PASSWORD=${3:-"\$2y\$13\$cMyLSyniGkyrM2IhCm68vejEqypYm6vGCsngOgc4VARcSeky2yAw6"}
