@@ -44,13 +44,26 @@ readonly class DataExporter
 
         $spreadsheet->getActiveSheet()->setTitle('Export');
 
-        $filename =  '/item/export' . $this->security->getUser()->getId() . '.xlsx';
+        $filename =  'export' . $this->security->getUser()->getId() . '.xlsx';
+        $filePath = $this->documentBaseDir . '/item/' . $filename;
 
         $writer = new Xlsx($spreadsheet);
-        $writer->save($this->documentBaseDir . $filename);
+        $writer->save($filePath);
 
         return $filename;
     }
+
+    public function getDocumentAsBase64Download(
+        string $fileName
+    ) : string {
+        $fileContent = file_get_contents(
+            $this->documentBaseDir
+            . '/item/' . $fileName
+        );
+
+        return base64_encode($fileContent);
+    }
+
 
     /**
      * @param array $formFields

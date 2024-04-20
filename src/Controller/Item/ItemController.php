@@ -215,7 +215,8 @@ class ItemController extends AbstractDynamicFormController
         $excelFileName = $this->dataExporter->getExcelExport($this->itemForm, $items);
 
         return $this->json([
-            $excelFileName,
+            'document' => $this->dataExporter->getDocumentAsBase64Download($excelFileName),
+            'name' => 'item_export.xlsx',
         ]);
     }
 
