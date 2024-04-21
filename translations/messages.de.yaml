@@ -23,6 +23,8 @@ contact:
     section:
       basic: Kontaktdaten
       addresses: Adressen
+      contact: Kontakt
+      history: Verlauf
 time:
   date: Datum
 work-time:
