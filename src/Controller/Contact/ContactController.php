@@ -203,6 +203,47 @@ class ContactController extends AbstractDynamicFormController
         return $this->itemResponse($contact);
     }
 
+    #[Route('/address/{contactId}', name: 'contact_address_save', methods: ['POST'])]
+    public function saveAddress(
+        Request $request,
+        int $contactId,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        $addressForm = $this->dynamicFormFieldRepository->getUserFieldsByFormKey('contactAddress');
+        $addressFields = [];
+        foreach ($addressForm as $addressField) {
+            $addressFields[] = $addressField->getFieldKey();
+        }
+
+        $body = $request->getContent();
+        $data = json_decode($body, true);
+
+        foreach ($addressFields as $addressField) {
+            if (!isset($data[$addressField])) {
+                continue;
+            }
+            $addressData[$addressField] = $data[$addressField];
+            unset($data[$addressField]);
+        }
+
+        $addressData['contact_id'] = $contactId;
+
+        $address = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $address->setData($addressData);
+        $this->addressRepository->save($address);
+
+        $contact = $this->contactRepository->findById($contactId);
+
+        if ($contact->getBoolField('is_company')) {
+            return $this->itemResponse($contact, 'company', $this->companyForm);
+        }
+
+        return $this->itemResponse($contact, 'contact', $this->companyForm);
+    }
+
     #[Route('/view/{entityId}', name: 'contact_view', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function view(
         int $entityId,
@@ -232,6 +273,19 @@ class ContactController extends AbstractDynamicFormController
 
         $this->addressRepository->removeByContactId($contactId);
         $this->contactRepository->removeById($contactId);
+
+        return $this->json(['state' => 'success']);
+    }
+
+    #[Route('/address/remove/{addressId}', name: 'contact_address_delete', requirements: ['id' => Requirement::DIGITS], methods: ['DELETE'])]
+    public function deleteAddress(
+        int $addressId,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        $this->addressRepository->removeById($addressId);
 
         return $this->json(['state' => 'success']);
     }
