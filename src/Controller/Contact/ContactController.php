@@ -3,15 +3,19 @@
 namespace App\Controller\Contact;
 
 use App\Controller\AbstractDynamicFormController;
+use App\Entity\ContactHistory;
 use App\Form\Contact\ContactCompanyType;
 use App\Form\Contact\ContactType;
 use App\Form\DynamicType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\ContactAddressRepository;
+use App\Repository\ContactHistoryEventRepository;
+use App\Repository\ContactHistoryRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\UserSettingRepository;
+use Cake\Chronos\Chronos;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,6 +34,8 @@ class ContactController extends AbstractDynamicFormController
         private readonly ContactCompanyType $companyForm,
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
+        private readonly ContactHistoryEventRepository $historyEventRepository,
+        private readonly ContactHistoryRepository $historyRepository,
         private readonly UserSettingRepository $userSettings,
         private readonly HttpClientInterface $httpClient,
         private readonly TranslatorInterface $translator,
@@ -139,6 +145,18 @@ class ContactController extends AbstractDynamicFormController
 
         // save contact
         $contact = $this->contactRepository->save($contact);
+
+        // add history entry
+        $event = $this->historyEventRepository->findOneBy(['name' => 'contact.history.event.create']);
+
+        $historyEntry = (new ContactHistory())
+            ->setEvent($event)
+            ->setContactId($contact->getId())
+            ->setCreatedBy($this->getUser())
+            ->setCreatedAt(Chronos::now()->toNative())
+            ->setDate(Chronos::now()->toNative())
+        ;
+        $this->historyRepository->save($historyEntry, true);
 
         // save address
         if ($contactHasAddress) {
