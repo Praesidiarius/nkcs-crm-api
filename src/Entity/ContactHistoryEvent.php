@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ContactHistoryEventRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ContactHistoryEventRepository::class)]
 class ContactHistoryEvent
@@ -11,9 +12,11 @@ class ContactHistoryEvent
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['history:list'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['history:list'])]
     private ?string $name = null;
 
     #[ORM\Column]

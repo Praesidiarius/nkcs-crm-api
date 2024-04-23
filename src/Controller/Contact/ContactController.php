@@ -3,25 +3,25 @@
 namespace App\Controller\Contact;
 
 use App\Controller\AbstractDynamicFormController;
-use App\Entity\ContactHistory;
 use App\Form\Contact\ContactCompanyType;
 use App\Form\Contact\ContactType;
 use App\Form\DynamicType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\ContactAddressRepository;
-use App\Repository\ContactHistoryEventRepository;
 use App\Repository\ContactHistoryRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\UserSettingRepository;
-use Cake\Chronos\Chronos;
+use App\Service\Contact\ContactHistoryWriter;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use OpenApi\Attributes as OA;
@@ -34,13 +34,14 @@ class ContactController extends AbstractDynamicFormController
         private readonly ContactCompanyType $companyForm,
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
-        private readonly ContactHistoryEventRepository $historyEventRepository,
         private readonly ContactHistoryRepository $historyRepository,
+        private readonly ContactHistoryWriter $historyWriter,
         private readonly UserSettingRepository $userSettings,
         private readonly HttpClientInterface $httpClient,
         private readonly TranslatorInterface $translator,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly Connection $connection,
+        private readonly SerializerInterface $serializer,
     ) {
         parent::__construct(
             $this->httpClient,
@@ -146,17 +147,7 @@ class ContactController extends AbstractDynamicFormController
         // save contact
         $contact = $this->contactRepository->save($contact);
 
-        // add history entry
-        $event = $this->historyEventRepository->findOneBy(['name' => 'contact.history.event.create']);
-
-        $historyEntry = (new ContactHistory())
-            ->setEvent($event)
-            ->setContactId($contact->getId())
-            ->setCreatedBy($this->getUser())
-            ->setCreatedAt(Chronos::now()->toNative())
-            ->setDate(Chronos::now()->toNative())
-        ;
-        $this->historyRepository->save($historyEntry, true);
+        $this->historyWriter->write('contact.history.event.create', $contact->getId());
 
         // save address
         if ($contactHasAddress) {
@@ -218,6 +209,8 @@ class ContactController extends AbstractDynamicFormController
 
         $this->contactRepository->save($contact);
 
+        $this->historyWriter->write('contact.history.event.edit', $contact->getId());
+
         return $this->itemResponse($contact);
     }
 
@@ -259,6 +252,12 @@ class ContactController extends AbstractDynamicFormController
         $this->addressRepository->save($address);
 
         $contact = $this->contactRepository->findById($contactId);
+
+        if (array_key_exists('id', $addressData)) {
+            $this->historyWriter->write('contact.history.event.edit_address', $contact->getId());
+        } else {
+            $this->historyWriter->write('contact.history.event.add_address', $contact->getId());
+        }
 
         if ($contact->getBoolField('is_company')) {
             return $this->itemResponse($contact, 'company', $this->companyForm);
@@ -308,7 +307,13 @@ class ContactController extends AbstractDynamicFormController
             throw new HttpException(402, 'no valid license found');
         }
 
+        $address = $this->addressRepository->findById($addressId);
         $this->addressRepository->removeById($addressId);
+
+        $this->historyWriter->write(
+            'contact.history.event.remove_address',
+            $address->getIntField('contact_id'),
+        );
 
         return $this->json(['state' => 'success']);
     }
@@ -322,6 +327,26 @@ class ContactController extends AbstractDynamicFormController
         string $formKey = '',
     ): Response {
         return parent::list($page, $this->contactRepository, $this->contactForm, 'contact');
+    }
+
+    #[Route(
+        path: '/history/{contactId}',
+        name: 'contact_list_history',
+        requirements: ['id' => Requirement::DIGITS],
+        methods: ['GET']
+    )]
+    public function listHistory(
+        int $contactId,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        $history = $this->historyRepository->getContactHistory($contactId);
+
+        return JsonResponse::fromJsonString(
+            $this->serializer->serialize($history, 'json', ['groups' => ['history:list']])
+        );
     }
 
     #[Route('/settings', name: 'contact_settings', methods: ['GET'])]

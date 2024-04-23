@@ -6,6 +6,7 @@ use App\Repository\ContactHistoryRepository;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ContactHistoryRepository::class)]
 class ContactHistory
@@ -13,26 +14,31 @@ class ContactHistory
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['history:list'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['history:list'])]
     private ?ContactHistoryEvent $event = null;
 
     #[ORM\Column]
     private ?int $contactId = null;
 
     #[ORM\Column]
+    #[Groups(['history:list'])]
     private ?DateTimeImmutable $date = null;
 
     #[ORM\Column(nullable: true)]
     private ?DateTimeImmutable $dateReminder = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['history:list'])]
     private ?string $comment = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'created_by', nullable: false)]
+    #[Groups(['history:list'])]
     private ?User $createdBy = null;
 
     #[ORM\Column]

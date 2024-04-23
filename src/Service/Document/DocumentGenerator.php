@@ -9,6 +9,7 @@ use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\JobRepository;
+use App\Service\Contact\ContactHistoryWriter;
 use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -23,6 +24,7 @@ class DocumentGenerator
         private readonly Security $security,
         private readonly TranslatorInterface$translator,
         private readonly DynamicFormFieldRepository $formFieldRepository,
+        private readonly ContactHistoryWriter $contactHistoryWriter,
         private readonly string $documentBaseDir,
     ) {
     }
@@ -84,6 +86,12 @@ class DocumentGenerator
             $this->documentBaseDir
             . '/' . $template->getType()->getIdentifier()
             . '/' . $fileName
+        );
+
+        $this->contactHistoryWriter->write(
+            'contact.history.event.generate_document',
+            $contactId,
+            $template->getName()
         );
 
         return $fileName;

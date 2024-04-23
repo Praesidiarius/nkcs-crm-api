@@ -38,4 +38,18 @@ class ContactHistoryRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
+
+    /**
+     * @return ContactHistory[]
+     */
+    public function getContactHistory(int $contactId): array
+    {
+        return $this->createQueryBuilder('c')
+            ->where('c.contactId = :contactId')
+            ->orderBy('c.createdAt', 'DESC')
+            ->setParameter('contactId', $contactId)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 }
