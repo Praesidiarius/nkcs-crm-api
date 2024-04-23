@@ -124,6 +124,25 @@ class GenerateDemoDataCommand extends Command
             $address->setTextField('city', $faker->city);
 
             $this->addressRepository->save($address);
+
+            # make every 2nd contact have 3 addresses
+            if ($i % 2 === 0) {
+                $address = $this->addressRepository->getDynamicDto();
+                $address->setIntField('contact_id', $contact->getId());
+                $address->setTextField('street', $faker->streetName . ' ' . $faker->buildingNumber);
+                $address->setTextField('zip', substr($faker->postcode,1));
+                $address->setTextField('city', $faker->city);
+
+                $this->addressRepository->save($address);
+
+                $address = $this->addressRepository->getDynamicDto();
+                $address->setIntField('contact_id', $contact->getId());
+                $address->setTextField('street', $faker->streetName . ' ' . $faker->buildingNumber);
+                $address->setTextField('zip', substr($faker->postcode,1));
+                $address->setTextField('city', $faker->city);
+
+                $this->addressRepository->save($address);
+            }
         }
 
         $output->writeln([
@@ -148,6 +167,7 @@ class GenerateDemoDataCommand extends Command
 
             $item->setTextField('name', $faker->word);
             $item->setIntField('unit_id', 1);
+            $item->setIntField('type_id', 1);
             $item->setPriceField('price', $faker->randomFloat(2, 5, 500));
             $item->setCreatedBy(0);
             $item->setCreatedDate();
