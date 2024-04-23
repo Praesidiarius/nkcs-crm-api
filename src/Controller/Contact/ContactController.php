@@ -9,6 +9,7 @@ use App\Form\DynamicType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\ContactAddressRepository;
+use App\Repository\ContactHistoryEventRepository;
 use App\Repository\ContactHistoryRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
@@ -35,6 +36,7 @@ class ContactController extends AbstractDynamicFormController
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
         private readonly ContactHistoryRepository $historyRepository,
+        private readonly ContactHistoryEventRepository $historyEventRepository,
         private readonly ContactHistoryWriter $historyWriter,
         private readonly UserSettingRepository $userSettings,
         private readonly HttpClientInterface $httpClient,
@@ -342,10 +344,17 @@ class ContactController extends AbstractDynamicFormController
             throw new HttpException(402, 'no valid license found');
         }
 
+        // get history for contact
         $history = $this->historyRepository->getContactHistory($contactId);
 
-        return JsonResponse::fromJsonString(
-            $this->serializer->serialize($history, 'json', ['groups' => ['history:list']])
+        // get selectable events for new history entries
+        $events = $this->historyEventRepository->findBy(['selectable' => 1]);
+
+        return JsonResponse::fromJsonString('{
+            "history": ' . $this->serializer->serialize($history, 'json', ['groups' => ['history:list']])
+            . ','
+            . '"events": ' . $this->serializer->serialize($events, 'json', ['groups' => ['history:events:list']])
+            . '}'
         );
     }
 

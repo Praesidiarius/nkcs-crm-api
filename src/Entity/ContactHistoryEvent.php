@@ -12,7 +12,7 @@ class ContactHistoryEvent
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['history:list'])]
+    #[Groups(['history:list', 'history:events:list'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
@@ -49,5 +49,11 @@ class ContactHistoryEvent
         $this->selectable = $selectable;
 
         return $this;
+    }
+
+    #[Groups(['history:events:list'])]
+    public function getText(): ?string
+    {
+        return $this->name;
     }
 }
