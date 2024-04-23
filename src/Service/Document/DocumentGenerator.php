@@ -31,6 +31,7 @@ class DocumentGenerator
         DocumentTemplate $template,
         Document $document,
         int $contactId,
+        int $addressId,
     ): string {
         $contact = $this->contactRepository->findById($contactId);
 
@@ -54,7 +55,7 @@ class DocumentGenerator
             . '.docx'
         );
 
-        $primaryAddress = $this->addressRepository->getPrimaryAddressForContact($contactId);
+        $primaryAddress = $this->addressRepository->getAddressForContact($contactId, $addressId);
 
         if ($primaryAddress) {
             $title = new TextRun();

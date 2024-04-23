@@ -22,6 +22,30 @@ class ContactAddressRepository extends AbstractRepository
         return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
+    public function getAddressForContact(int $contactId, int $addressId): ?DynamicDto
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from('contact_address')
+            ->where('contact_id = :contactId')
+            ->andWhere('id = :addressId')
+            ->setParameters([
+                'contactId' => $contactId,
+                'addressId' => $addressId,
+            ])
+        ;
+
+        $rawData = $qb->fetchAssociative();
+        if ($rawData) {
+            $entity = $this->getDynamicDto();
+            $entity->setData($rawData);
+            return $entity;
+        }
+
+        return null;
+    }
+
     public function getPrimaryAddressForContact(int $contactId): ?DynamicDto
     {
         $qb = $this->connection->createQueryBuilder();

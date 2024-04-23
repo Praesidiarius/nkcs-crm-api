@@ -229,6 +229,11 @@ class ContactController extends AbstractDynamicFormController
             unset($data[$addressField]);
         }
 
+        // if id is present in data, it's an existing address we are editing
+        if (array_key_exists('id', $data)) {
+            $addressData['id'] = $data['id'];
+        }
+
         $addressData['contact_id'] = $contactId;
 
         $address = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
