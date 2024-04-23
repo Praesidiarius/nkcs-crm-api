@@ -223,6 +223,8 @@ class DocumentGenerator
                     : ''
         );
         $templateProcessor->setValue('subTotal', number_format($job->getPriceField('sub_total'), 2, '.', '\''));
+        $templateProcessor->setValue('vat', number_format($job->getPriceField('vat_total'), 2, '.', '\''));
+        $templateProcessor->setValue('vatRate', number_format($job->getPriceField('vat_rate'), 1, '.', '\''));
         $templateProcessor->setValue('total', number_format($job->getPriceField('total'), 2, '.', '\''));
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 
