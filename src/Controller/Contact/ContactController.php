@@ -3,6 +3,7 @@
 namespace App\Controller\Contact;
 
 use App\Controller\AbstractDynamicFormController;
+use App\Dto\AddHistoryRequest;
 use App\Form\Contact\ContactCompanyType;
 use App\Form\Contact\ContactType;
 use App\Form\DynamicType;
@@ -19,6 +20,7 @@ use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -329,6 +331,29 @@ class ContactController extends AbstractDynamicFormController
         string $formKey = '',
     ): Response {
         return parent::list($page, $this->contactRepository, $this->contactForm, 'contact');
+    }
+
+    #[Route(
+        path: '/history/{contactId}/add',
+        name: 'contact_add_history',
+        requirements: ['id' => Requirement::DIGITS],
+        methods: ['POST']
+    )]
+    public function addHistory(
+        int $contactId,
+        #[MapRequestPayload] AddHistoryRequest $historyRequest,
+    ): Response
+    {
+        $event = $this->historyEventRepository->find($historyRequest->getEventId());
+
+        $this->historyWriter->write($event->getName(), $contactId, $historyRequest->getComment());
+
+        // get history for contact
+        $history = $this->historyRepository->getContactHistory($contactId);
+
+        return JsonResponse::fromJsonString(
+            $this->serializer->serialize($history, 'json', ['groups' => ['history:list']])
+        );
     }
 
     #[Route(
