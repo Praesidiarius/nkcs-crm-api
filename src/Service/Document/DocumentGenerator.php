@@ -9,6 +9,7 @@ use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\JobRepository;
+use App\Service\Contact\ContactHistoryWriter;
 use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -23,6 +24,7 @@ class DocumentGenerator
         private readonly Security $security,
         private readonly TranslatorInterface$translator,
         private readonly DynamicFormFieldRepository $formFieldRepository,
+        private readonly ContactHistoryWriter $contactHistoryWriter,
         private readonly string $documentBaseDir,
     ) {
     }
@@ -31,6 +33,7 @@ class DocumentGenerator
         DocumentTemplate $template,
         Document $document,
         int $contactId,
+        int $addressId,
     ): string {
         $contact = $this->contactRepository->findById($contactId);
 
@@ -54,7 +57,7 @@ class DocumentGenerator
             . '.docx'
         );
 
-        $primaryAddress = $this->addressRepository->getPrimaryAddressForContact($contactId);
+        $primaryAddress = $this->addressRepository->getAddressForContact($contactId, $addressId);
 
         if ($primaryAddress) {
             $title = new TextRun();
@@ -83,6 +86,12 @@ class DocumentGenerator
             $this->documentBaseDir
             . '/' . $template->getType()->getIdentifier()
             . '/' . $fileName
+        );
+
+        $this->contactHistoryWriter->write(
+            'contact.history.event.generate_document',
+            $contactId,
+            $template->getName()
         );
 
         return $fileName;
@@ -222,6 +231,8 @@ class DocumentGenerator
                     : ''
         );
         $templateProcessor->setValue('subTotal', number_format($job->getPriceField('sub_total'), 2, '.', '\''));
+        $templateProcessor->setValue('vat', number_format($job->getPriceField('vat_total'), 2, '.', '\''));
+        $templateProcessor->setValue('vatRate', number_format($job->getPriceField('vat_rate'), 1, '.', '\''));
         $templateProcessor->setValue('total', number_format($job->getPriceField('total'), 2, '.', '\''));
         $templateProcessor->setValue('date', date('d.m.Y', time()));
 

@@ -2,9 +2,9 @@
 
 namespace App\Controller;
 
+use App\Dto\GenerateDocumentRequest;
 use App\Entity\Document;
 use App\Entity\DocumentTemplate;
-use App\Entity\DynamicForm;
 use App\Form\Document\DocumentTemplateType;
 use App\Repository\DocumentRepository;
 use App\Repository\DocumentTemplateRepository;
@@ -17,6 +17,7 @@ use DateTimeImmutable;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
@@ -144,23 +145,31 @@ class DocumentController extends AbstractApiController
         return $this->itemResponse($template);
     }
 
-    #[Route('/generate/{id}/{entityId}/{entityType}', name: 'document_generate', requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
+    #[Route('/generate', name: 'document_generate', methods: ['POST'])]
     public function generate(
-        DocumentTemplate $template,
-        int $entityId,
-        string $entityType,
+        #[MapRequestPayload] GenerateDocumentRequest $generateDocumentRequest,
     ): Response {
         if (!$this->checkLicense()) {
             throw new HttpException(402, 'no valid license found');
         }
 
-        $documentType = $this->documentTypeRepository->findOneBy(['identifier' => $entityType]);
+        $template = $this->templateRepository->findOneBy([
+            'id' => $generateDocumentRequest->getDocumentId(),
+        ]);
+
+        if (!$template) {
+            throw new HttpException(404, 'Template not found');
+        }
+
+        $documentType = $this->documentTypeRepository->findOneBy([
+            'identifier' => $generateDocumentRequest->getEntityType(),
+        ]);
         if (!$documentType) {
             throw new NotFoundHttpException('invalid document type');
         }
 
         $document = new Document();
-        $document->setEntityId($entityId);
+        $document->setEntityId($generateDocumentRequest->getEntityId());
         $document->setType($documentType);
         $document->setFileName('#temp#');
         $document->setTemplate($template);
@@ -170,8 +179,17 @@ class DocumentController extends AbstractApiController
         $document = $this->documentRepository->save($document, true);
 
         $fileName = match($documentType->getIdentifier()) {
-            'contact' => $this->documentGenerator->generateContactDocument($template, $document, $entityId),
-            'job' => $this->documentGenerator->generateJobDocument($template, $document, $entityId),
+            'contact' => $this->documentGenerator->generateContactDocument(
+                $template,
+                $document,
+                $generateDocumentRequest->getEntityId(),
+                $generateDocumentRequest->getAddressId(),
+            ),
+            'job' => $this->documentGenerator->generateJobDocument(
+                $template,
+                $document,
+                $generateDocumentRequest->getEntityId(),
+            ),
         };
 
         $document->setFileName($fileName);

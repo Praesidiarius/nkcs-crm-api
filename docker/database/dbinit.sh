@@ -42,6 +42,7 @@ mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/item/co
 # contact module basic
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/contact/variant_basic.sql
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/contact/core_extensions.sql
+mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/contact/extensions/history.sql
 
 # contact signup extension
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/contact/extensions/signup.sql
