@@ -13,6 +13,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[Route('/api/user')]
 class UserController extends AbstractApiController
 {
+    public function __construct(
+        private string $documentBaseDir,
+    ) {
+    }
+
     #[Route('/')]
     public function getUserInfo(
         ClientNavigation $clientNavigation,
@@ -22,8 +27,26 @@ class UserController extends AbstractApiController
 
         $userNavigation = $clientNavigation->getUserClientNavigation($me);
 
+        // todo: make this optional by system_setting
+        $userAvatar = '';
+        if (file_exists($this->documentBaseDir . '/user/default_avatar_male.png')) {
+            $userAvatar = base64_encode(file_get_contents(
+                $this->documentBaseDir . '/user/default_avatar_male.png'
+            ));
+        }
+
+        // todo: make this optional by system_setting
+        $userAvatarBg = '';
+        if (file_exists($this->documentBaseDir . '/user/default_bg.jpg')) {
+            $userAvatarBg = base64_encode(file_get_contents(
+                $this->documentBaseDir . '/user/default_bg.jpg'
+            ));
+        }
+
         $userApiData = [
             'user' => [
+                'avatar' => $userAvatar,
+                'background' => $userAvatarBg,
                 'name' => $me->getName(),
                 'firstName' => $me->getFirstName(),
                 'function' => $me->getFunction(),
@@ -63,6 +86,7 @@ class UserController extends AbstractApiController
                 ];
             }
         }
+
         return $this->json($userApiData);
     }
 
