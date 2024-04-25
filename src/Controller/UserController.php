@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\Dto\Base64FileRequest;
 use App\Repository\SystemSettingRepository;
 use App\Service\User\ClientNavigation;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -13,6 +15,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[Route('/api/user')]
 class UserController extends AbstractApiController
 {
+    public function __construct(
+        private string $documentBaseDir,
+    ) {
+    }
+
     #[Route('/')]
     public function getUserInfo(
         ClientNavigation $clientNavigation,
@@ -22,8 +29,38 @@ class UserController extends AbstractApiController
 
         $userNavigation = $clientNavigation->getUserClientNavigation($me);
 
+        // todo: make this optional by system_setting
+        $userAvatar = '';
+        if (file_exists($this->documentBaseDir . '/user/' . $this->getUser()->getId() . '_avatar.png')) {
+            $userAvatar =  base64_encode(file_get_contents(
+                $this->documentBaseDir . '/user/' . $this->getUser()->getId() . '_avatar.png'
+            ));
+        } else {
+            if (file_exists($this->documentBaseDir . '/user/default_avatar_male.png')) {
+                $userAvatar = base64_encode(file_get_contents(
+                    $this->documentBaseDir . '/user/default_avatar_male.png'
+                ));
+            }
+        }
+
+        // todo: make this optional by system_setting
+        $userAvatarBg = '';
+        if (file_exists($this->documentBaseDir . '/user/' . $this->getUser()->getId() . '_background.jpg')) {
+            $userAvatarBg =  base64_encode(file_get_contents(
+                $this->documentBaseDir . '/user/' . $this->getUser()->getId() . '_background.jpg'
+            ));
+        } else {
+            if (file_exists($this->documentBaseDir . '/user/default_bg.jpg')) {
+                $userAvatarBg = base64_encode(file_get_contents(
+                    $this->documentBaseDir . '/user/default_bg.jpg'
+                ));
+            }
+        }
+
         $userApiData = [
             'user' => [
+                'avatar' => $userAvatar,
+                'background' => $userAvatarBg,
                 'name' => $me->getName(),
                 'firstName' => $me->getFirstName(),
                 'function' => $me->getFunction(),
@@ -63,6 +100,7 @@ class UserController extends AbstractApiController
                 ];
             }
         }
+
         return $this->json($userApiData);
     }
 
@@ -77,5 +115,63 @@ class UserController extends AbstractApiController
             . '/license/referral/'
             . $this->getParameter('license.holder')
         )->getContent()));
+    }
+
+    #[Route(
+        path: '/avatar',
+        methods: ['POST']
+    )]
+    public function uploadAvatar(
+        #[MapRequestPayload] Base64FileRequest $base64FileRequest,
+    ): Response {
+        $templateContent = base64_decode($base64FileRequest->getFile());
+        $templateSavePath = $this->documentBaseDir . '/user/' . $this->getUser()->getId() . '_avatar.png';
+        file_put_contents($templateSavePath, $templateContent);
+
+        $userAvatar = '';
+        if (file_exists($templateSavePath)) {
+            $userAvatar = base64_encode(file_get_contents(
+                $templateSavePath
+            ));
+        } else {
+            if (file_exists($this->documentBaseDir . '/user/default_avatar_male.png')) {
+                $userAvatar = base64_encode(file_get_contents(
+                    $this->documentBaseDir . '/user/default_avatar_male.png'
+                ));
+            }
+        }
+
+        return $this->json([
+            'avatar' => $userAvatar
+        ]);
+    }
+
+    #[Route(
+        path: '/background',
+        methods: ['POST']
+    )]
+    public function uploadBackground(
+        #[MapRequestPayload] Base64FileRequest $base64FileRequest,
+    ): Response {
+        $templateContent = base64_decode($base64FileRequest->getFile());
+        $templateSavePath = $this->documentBaseDir . '/user/' . $this->getUser()->getId() . '_background.jpg';
+        file_put_contents($templateSavePath, $templateContent);
+
+        $userBackground = '';
+        if (file_exists($templateSavePath)) {
+            $userBackground = base64_encode(file_get_contents(
+                $templateSavePath
+            ));
+        } else {
+            if (file_exists($this->documentBaseDir . '/user/default_bg.jpg')) {
+                $userBackground = base64_encode(file_get_contents(
+                    $this->documentBaseDir . '/user/default_bg.jpg'
+                ));
+            }
+        }
+
+        return $this->json([
+            'background' => $userBackground
+        ]);
     }
 }
