@@ -190,6 +190,11 @@ class DocumentController extends AbstractApiController
                 $document,
                 $generateDocumentRequest->getEntityId(),
             ),
+            'item' => $this->documentGenerator->generateItemDocument(
+                $template,
+                $document,
+                $generateDocumentRequest->getEntityId(),
+            )
         };
 
         $document->setFileName($fileName);
