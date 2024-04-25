@@ -8,6 +8,7 @@ use App\Model\DynamicDto;
 use App\Repository\ContactAddressRepository;
 use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
+use App\Repository\ItemRepository;
 use App\Repository\JobRepository;
 use App\Service\Contact\ContactHistoryWriter;
 use PhpOffice\PhpWord\Element\TextRun;
@@ -21,6 +22,7 @@ class DocumentGenerator
         private readonly ContactRepository $contactRepository,
         private readonly ContactAddressRepository $addressRepository,
         private readonly JobRepository $jobRepository,
+        private readonly ItemRepository $itemRepository,
         private readonly Security $security,
         private readonly TranslatorInterface$translator,
         private readonly DynamicFormFieldRepository $formFieldRepository,
@@ -101,8 +103,7 @@ class DocumentGenerator
         DocumentTemplate $template,
         Document $document,
         int $jobId,
-    ): string
-    {
+    ): string {
         $job = $this->jobRepository->findById($jobId);
 
         $fileName = $template->getName() . '-' . $job->getId() . '-' . $document->getId() . '.docx';
@@ -241,6 +242,31 @@ class DocumentGenerator
         return $fileName;
     }
 
+    public function generateItemDocument(
+        DocumentTemplate $template,
+        Document $document,
+        int $itemId,
+    ): string {
+        $item = $this->itemRepository->findById($itemId);
+
+        $fileName = $template->getName() . '-' . $item->getId() . '-' . $document->getId() . '.docx';
+        $templateProcessor = new TemplateProcessor($this->documentBaseDir
+            . '/templates/' . $template->getId() . '.docx'
+        );
+
+        // item specific placeholders
+        $this->replaceDynamicPlaceHolders('item', $templateProcessor, $item);
+
+        // general placeholders
+        $templateProcessor->setValue('date', date('d.m.Y', time()));
+
+        $templateProcessor->saveAs($this->documentBaseDir
+            . '/' . $template->getType()->getIdentifier() . '/' . $fileName
+        );
+
+        return $fileName;
+    }
+
     public function getDocumentAsBase64Download(
         Document $document
     ) : string {
@@ -264,6 +290,7 @@ class DocumentGenerator
             }
             $fieldValue = match ($field->getFieldType()) {
                 'date' => date('d.m.Y', strtotime($data->getTextField($field->getFieldKey()))),
+                'select' => $this->translator->trans($data->getSelectField($field->getFieldKey())['name']),
                 default => $data->getTextField($field->getFieldKey())
             };
             $templateProcessor->setValue(substr($formKey,0,1). '_' . $field->getFieldKey(), $fieldValue);
