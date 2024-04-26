@@ -53,7 +53,7 @@ VALUES (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.name', 'name', 
         'item_unit', 'name', 1, 1),
        (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.type.type', 'type_id', 'select', 1, 2, 1,
         'item_type', 'name', 0, 2),
-       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.price', 'price', 'currency', 1, 2, NULL, NULL, NULL, 1, 3),
+       (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.price.price', 'price', 'currency', 1, 2, NULL, NULL, NULL, 1, 3),
        (NULL, NULL, @item_basic_section_id, @item_form_id, 'item.description', 'description', 'textarea', 0, 12, NULL, NULL, NULL, 0, 4);
 
 COMMIT;

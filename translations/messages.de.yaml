@@ -79,7 +79,12 @@ item:
     subscription:
       monthly: Monatsabo
       yearly: Jahresabo
-  price: Preis
+  price:
+    purchase: Einkaufspreis
+    sell: Verkaufspreis
+    comment: Kommentar
+    date: Datum
+    price: Preis
   addToStripe: Stripe Kartenzahlung aktivieren
   name: Name
   description: Beschreibung

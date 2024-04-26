@@ -124,7 +124,7 @@ INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynami
                                                                                                                                                                                                    (18, NULL, 6, 3, NULL, 'is_company', 'hidden', 0, '1', NULL, NULL),
                                                                                                                                                                                                    (19, NULL, 10, 4, 'item.name', 'name', 'text', 6, NULL, NULL, NULL),
                                                                                                                                                                                                    (20, NULL, 10, 4, 'item.unit', 'unit_id', 'select', 2, '#units#', 'item_unit', 'name'),
-                                                                                                                                                                                                   (21, NULL, 10, 4, 'item.price', 'price', 'currency', 2, '', '', '');
+                                                                                                                                                                                                   (21, NULL, 10, 4, 'item.price.price', 'price', 'currency', 2, '', '', '');
 
 CREATE TABLE `dynamic_form_field_relation` (
                                              `id` int(11) NOT NULL,

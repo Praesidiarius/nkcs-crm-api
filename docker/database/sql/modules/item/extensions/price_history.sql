@@ -32,12 +32,12 @@ CREATE TABLE `item_price`
 --
 
 INSERT INTO `dynamic_form_section` (`id`, `parent_section_id`, `section_label`, `section_key`, `form_id`)
-VALUES (NULL, NULL, 'item.price', 'itemPriceTab', @item_form_id);
+VALUES (NULL, NULL, 'item.price.price', 'itemPriceTab', @item_form_id);
 
 SET @item_price_tab_section_id = LAST_INSERT_ID();
 
 INSERT INTO `dynamic_form_section` (`id`, `parent_section_id`, `section_label`, `section_key`, `form_id`)
-VALUES (NULL, @item_price_tab_section_id, 'item.price', 'itemPriceTable', @item_form_id);
+VALUES (NULL, @item_price_tab_section_id, 'item.price.price', 'itemPriceTable', @item_form_id);
 
 SET @item_price_table_section_id = LAST_INSERT_ID();
 
@@ -54,7 +54,7 @@ SET @item_price_table_field_id = LAST_INSERT_ID();
 -- add item pricing form
 --
 INSERT INTO `dynamic_form` (`id`, `label`, `form_key`)
-VALUES (NULL, 'item.price', 'itemPrice');
+VALUES (NULL, 'item.price.price', 'itemPrice');
 
 SET @item_price_form_id = LAST_INSERT_ID();
 
