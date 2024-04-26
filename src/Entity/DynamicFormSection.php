@@ -6,7 +6,8 @@ use App\Repository\DynamicFormSectionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\MaxDepth;
 
 #[ORM\Entity(repositoryClass: DynamicFormSectionRepository::class)]
 class DynamicFormSection
@@ -17,16 +18,20 @@ class DynamicFormSection
     private ?int $id = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['form:basic'])]
     private ?string $sectionLabel = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'nestedSections')]
+    #[Groups(['form:basic'])]
     private ?self $parentSection = null;
 
-    #[ORM\OneToMany(mappedBy: 'parentSection', targetEntity: self::class)]
-    #[Ignore]
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentSection')]
+    #[MaxDepth(2)]
+    #[Groups(['form:basic'])]
     private Collection $nestedSections;
 
     #[ORM\Column(length: 150)]
+    #[Groups(['form:basic'])]
     private ?string $sectionKey = null;
 
     #[ORM\ManyToOne(inversedBy: 'dynamicFormSections')]

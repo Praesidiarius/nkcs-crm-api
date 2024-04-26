@@ -230,6 +230,4 @@ class DynamicDto
     {
         $this->data['created_date'] = date('Y-m-d H:i:s', time());
     }
-
-
 }

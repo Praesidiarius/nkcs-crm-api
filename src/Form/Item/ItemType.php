@@ -9,6 +9,7 @@ use App\Repository\DynamicFormRepository;
 use App\Repository\ItemTypeRepository;
 use App\Repository\ItemUnitRepository;
 use App\Repository\SystemSettingRepository;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ItemType extends DynamicType
@@ -20,6 +21,7 @@ class ItemType extends DynamicType
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
+        private readonly SerializerInterface $serializer,
     )
     {
         parent::__construct(
@@ -27,6 +29,7 @@ class ItemType extends DynamicType
             $this->dynamicFormRepository,
             $this->dynamicFormFieldRepository,
             $this->systemSettings,
+            $this->serializer,
         );
     }
 

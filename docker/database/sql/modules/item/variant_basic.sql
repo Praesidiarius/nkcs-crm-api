@@ -39,7 +39,7 @@ SET
 @item_main_section_id = LAST_INSERT_ID();
 
 INSERT INTO `dynamic_form_section` (`id`, `parent_section_id`, `section_label`, `section_key`, `form_id`)
-VALUES (NULL, @item_main_section_id, 'item.form.section.basic', 'itemBasic', @item_form_id);
+VALUES (NULL, @item_main_section_id, NULL, 'itemBasic', @item_form_id);
 
 SET
 @item_basic_section_id = LAST_INSERT_ID();

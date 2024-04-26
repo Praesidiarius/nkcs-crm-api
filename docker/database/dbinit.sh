@@ -39,6 +39,9 @@ mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/db_live.sql
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/item/variant_basic.sql
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/item/core_extensions.sql
 
+# item module price history extension
+mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/item/extensions/price_history.sql
+
 # contact module basic
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/contact/variant_basic.sql
 mysql -u${DB_USER} -p${DB_PASS} "${DB_NAME}" < $SQL_TEMPLATE_DIR/modules/contact/core_extensions.sql

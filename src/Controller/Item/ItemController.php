@@ -8,11 +8,14 @@ use App\Form\Item\ItemType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
+use App\Repository\ItemPriceHistoryRepository;
 use App\Repository\ItemRepository;
+use App\Repository\SystemSettingRepository;
 use App\Repository\UserSettingRepository;
 use App\Service\DataExporter;
 use Doctrine\DBAL\Connection;
 use Stripe\StripeClient;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -31,6 +34,9 @@ class ItemController extends AbstractDynamicFormController
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly Connection $connection,
         private readonly DataExporter $dataExporter,
+        private readonly SystemSettingRepository $systemSettings,
+        #[Autowire(lazy: true)]
+        private readonly ItemPriceHistoryRepository $priceHistoryRepository,
     ) {
         parent::__construct(
             $this->httpClient,
@@ -53,6 +59,32 @@ class ItemController extends AbstractDynamicFormController
 
         $body = $request->getContent();
         $data = json_decode($body, true);
+
+        // Item Price History Extension
+        $isPriceHistoryEnabled = (bool) $this->systemSettings
+            ->findSettingByKey('item-price-history-extension-enabled'
+            )?->getSettingValue() ?? false
+        ;
+        $itemHasPrice = false;
+        $priceData = [];
+
+        if ($isPriceHistoryEnabled) {
+            // move price history related data out of data for validation
+            $priceForm = $this->dynamicFormFieldRepository->getUserFieldsByFormKey('itemPrice');
+            $priceFields = [];
+            foreach ($priceForm as $priceField) {
+                $priceFields[] = $priceField->getFieldKey();
+            }
+
+            foreach ($priceFields as $priceField) {
+                if (!isset($data[$priceField])) {
+                    continue;
+                }
+                $itemHasPrice = true;
+                $priceData[$priceField] = $data[$priceField];
+                unset($data[$priceField]);
+            }
+        }
 
         $form = $this->createForm(ItemType::class);
         $form->submit($data);
@@ -82,6 +114,17 @@ class ItemController extends AbstractDynamicFormController
 
         // save contact
         $item = $this->itemRepository->save($item);
+
+        /** Price History Extension */
+        if ($itemHasPrice) {
+            $priceData['item_id'] = $item->getId();
+            $price = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+            $price->setData($priceData);
+            // set readonly fields
+            $price->setCreatedBy($this->getUser()->getId());
+            $price->setCreatedDate();
+            $this->priceHistoryRepository->save($price);
+        }
 
         /**
          * Stripe Integration

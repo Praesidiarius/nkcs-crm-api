@@ -9,6 +9,7 @@ use App\Repository\ContactRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
 use App\Repository\SystemSettingRepository;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class JobType extends DynamicType
@@ -19,6 +20,7 @@ class JobType extends DynamicType
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly ContactRepository $contactRepository,
         private readonly SystemSettingRepository $systemSettings,
+        private readonly SerializerInterface $serializer,
     )
     {
         parent::__construct(
@@ -26,6 +28,7 @@ class JobType extends DynamicType
             $this->dynamicFormRepository,
             $this->dynamicFormFieldRepository,
             $this->systemSettings,
+            $this->serializer,
         );
     }
 
