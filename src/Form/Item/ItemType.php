@@ -14,6 +14,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ItemType extends DynamicType
 {
+    private string $formKey = 'item';
+
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly ItemUnitRepository $itemUnitRepository,
@@ -75,9 +77,23 @@ class ItemType extends DynamicType
         return $unitField;
     }
 
+    /**
+     * @return DynamicFormField[]
+     */
     public function getFormFields(string $formKey = 'item', bool $withTabs = true): array
     {
         return parent::getFormFields('item', $withTabs);
+    }
+
+    public function hasTableFieldForUser(string $fieldKey): bool
+    {
+        foreach ($this->dynamicFormFieldRepository->getUserFieldsByFormKey($this->formKey) as $formField) {
+            if ($formField->getFieldKey() === $fieldKey && $formField->getFieldType() === 'table') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getIndexHeaders(string $formKey = 'item'): array
