@@ -16,11 +16,13 @@ use App\Service\DataExporter;
 use Doctrine\DBAL\Connection;
 use Stripe\StripeClient;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/item/{_locale}')]
@@ -37,6 +39,7 @@ class ItemController extends AbstractDynamicFormController
         private readonly SystemSettingRepository $systemSettings,
         #[Autowire(lazy: true)]
         private readonly ItemPriceHistoryRepository $priceHistoryRepository,
+        private readonly SerializerInterface $serializer,
     ) {
         parent::__construct(
             $this->httpClient,
@@ -238,6 +241,60 @@ class ItemController extends AbstractDynamicFormController
         }
 
         return $this->json(['state' => 'success']);
+    }
+
+    #[Route(
+        path: '/price/{itemId}',
+        name: 'item_add_price',
+        requirements: ['id' => Requirement::DIGITS],
+        methods: ['POST']
+    )]
+    public function addPrice(
+        int $itemId,
+        Request $request,
+    ): Response
+    {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        // Item Price History Extension
+        $isPriceHistoryEnabled = (bool) $this->systemSettings
+            ->findSettingByKey('item-price-history-extension-enabled'
+            )?->getSettingValue() ?? false
+        ;
+
+        if (!$isPriceHistoryEnabled) {
+            throw new HttpException(402, 'price history extension not enabled');
+        }
+
+        $priceFormFields = $this->dynamicFormFieldRepository->getUserFieldsByFormKey('itemPrice');
+
+        /**
+         * $this->serializer->normalize($priceFormFields, 'json', ['groups' => ['field:basic']])
+         */
+
+        $body = $request->getContent();
+        $data = json_decode($body, true);
+
+        $priceData = [];
+        foreach ($priceFormFields as $priceFormField) {
+            if (array_key_exists($priceFormField->getFieldKey(), $data)) {
+                $priceData[$priceFormField->getFieldKey()] = $data[$priceFormField->getFieldKey()];
+            }
+        }
+
+        $priceData['item_id'] = $itemId;
+        $price = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $price->setData($priceData);
+        // set readonly fields
+        $price->setCreatedBy($this->getUser()->getId());
+        $price->setCreatedDate();
+        $this->priceHistoryRepository->save($price);
+
+        $item = $this->itemRepository->findById($itemId);
+
+        return $this->itemResponse($item, 'item', $this->itemForm);
     }
 
     #[Route('/list', name: 'item_index', methods: ['GET'])]

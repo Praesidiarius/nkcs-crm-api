@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: DynamicFormFieldRepository::class)]
 class DynamicFormField
@@ -17,21 +18,27 @@ class DynamicFormField
     private ?int $id = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['field:basic'])]
     private ?string $label = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['field:basic'])]
     private ?string $fieldKey = null;
 
     #[ORM\Column(length: 25)]
+    #[Groups(['field:basic'])]
     private ?string $fieldType = null;
 
     #[ORM\Column]
+    #[Groups(['field:basic'])]
     private bool $fieldRequired = false;
 
     #[ORM\Column]
+    #[Groups(['field:basic'])]
     private ?int $columns = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['field:basic'])]
     private ?string $defaultData = null;
 
     #[ORM\Column(length: 100, nullable: true)]
