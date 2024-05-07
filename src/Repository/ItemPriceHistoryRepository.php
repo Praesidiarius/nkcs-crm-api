@@ -23,6 +23,22 @@ class ItemPriceHistoryRepository extends AbstractRepository
         return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
     }
 
+    public function getPricesForItem(int $itemId): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from($this->baseTable)
+            ->where('item_id = :itemId')
+            ->orderBy('date', 'ASC')
+            ->setParameters([
+                'itemId' => $itemId,
+            ])
+        ;
+
+        return $qb->fetchAllAssociative();
+    }
+
     public function getCurrentPriceForItem(int $itemId): float
     {
         $qb = $this->connection->createQueryBuilder();

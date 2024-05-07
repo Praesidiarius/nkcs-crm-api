@@ -43,9 +43,11 @@ SET @item_price_table_section_id = LAST_INSERT_ID();
 
 INSERT INTO `dynamic_form_field` (`id`, `parent_field_id`, `section_id`, `dynamic_form_id`, `label`, `field_key`,
                                   `field_type`, `columns`, `default_data`, `related_table`, `related_table_col`,
-                                  `on_index_default`, `default_sort_id`)
+                                  `related_table_order`, `on_index_default`, `default_sort_id`)
 VALUES (NULL, NULL, @item_price_table_section_id, @item_form_id, 'prices', 'price', 'table', 12, NULL,
-        'item_price', 'item_id', 0, 7);
+        'item_price', 'item_id', 'date ASC', 0, 7),
+       (NULL, NULL, @item_price_table_section_id, @item_form_id, 'item.price_history.title', 'price_history', 'chart', 12, NULL,
+        'item_price', 'item_id', 'date ASC', 0, 8);
 
 SET @item_price_table_field_id = LAST_INSERT_ID();
 

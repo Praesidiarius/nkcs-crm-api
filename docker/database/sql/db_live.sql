@@ -100,6 +100,7 @@ CREATE TABLE `dynamic_form_field`
   `default_data`      varchar(255) COLLATE utf8mb4_unicode_ci          DEFAULT NULL,
   `related_table`     varchar(100) COLLATE utf8mb4_unicode_ci          DEFAULT NULL,
   `related_table_col` varchar(50) COLLATE utf8mb4_unicode_ci           DEFAULT NULL,
+  `related_table_order` varchar(50) COLLATE utf8mb4_unicode_ci           DEFAULT NULL,
   `on_index_default`  INT(1)                                  NOT NULL DEFAULT '0',
   `default_sort_id`   INT(1)                                  NOT NULL DEFAULT '0'
 ) ENGINE = InnoDB

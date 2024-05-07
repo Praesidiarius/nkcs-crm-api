@@ -47,6 +47,9 @@ class DynamicFormField
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $relatedTableCol = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $relatedTableOrder = null;
+
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'nestedFields')]
     private ?self $parentField = null;
 
@@ -206,6 +209,18 @@ class DynamicFormField
     public function setRelatedTable(?string $relatedTable): static
     {
         $this->relatedTable = $relatedTable;
+
+        return $this;
+    }
+
+    public function getRelatedTableOrder(): ?string
+    {
+        return $this->relatedTableOrder;
+    }
+
+    public function setRelatedTableOrder(?string $relatedTableOrder): static
+    {
+        $this->relatedTableOrder = $relatedTableOrder;
 
         return $this;
     }
