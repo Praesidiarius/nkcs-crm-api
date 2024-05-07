@@ -17,13 +17,11 @@ use App\Service\DataExporter;
 use Doctrine\DBAL\Connection;
 use Stripe\StripeClient;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[Route('/api/item/{_locale}')]
@@ -40,7 +38,6 @@ class ItemController extends AbstractDynamicFormController
         private readonly SystemSettingRepository $systemSettings,
         #[Autowire(lazy: true)]
         private readonly ItemPriceHistoryRepository $priceHistoryRepository,
-        private readonly SerializerInterface $serializer,
     ) {
         parent::__construct(
             $this->httpClient,
