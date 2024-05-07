@@ -11,7 +11,9 @@ use App\Repository\ItemRepository;
 use App\Repository\ItemTypeRepository;
 use App\Repository\ItemVoucherCodeRepository;
 use App\Repository\JobPositionRepository;
+use App\Repository\SystemSettingRepository;
 use App\Repository\VoucherRepository;
+use App\Service\ChartDataGenerator;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -26,8 +28,10 @@ class JobDto extends DynamicDto
         private readonly ItemRepository $itemRepository,
         private readonly ItemVoucherCodeRepository $voucherCodeRepository,
         private readonly VoucherRepository $voucherRepository,
+        private readonly SystemSettingRepository $systemSettings,
+        private readonly ChartDataGenerator $chartDataGenerator,
     ) {
-        parent::__construct($this->dynamicFormFieldRepository, $this->connection);
+        parent::__construct($this->dynamicFormFieldRepository, $this->connection, $this->chartDataGenerator);
     }
 
     protected function getSerializedSelectFieldData(DynamicFormField $selectField, int $selectedValue): array
@@ -76,7 +80,16 @@ class JobDto extends DynamicDto
                     }
                 }
                 $position->setItem($posItem);
-                $position->setPrice($posItem->getPriceField('price'));
+
+                // Item Price History Extension
+                $isPriceHistoryEnabled = (bool) $this->systemSettings
+                    ->findSettingByKey('item-price-history-extension-enabled'
+                    )?->getSettingValue() ?? false
+                ;
+                // if price history extension is active, don't get price from item, it's saved on the position already
+                if (!$isPriceHistoryEnabled) {
+                    $position->setPrice($posItem->getPriceField('price'));
+                }
             }
 
             $positionsSerialized[] = $position;

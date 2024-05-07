@@ -9,10 +9,13 @@ use App\Repository\DynamicFormRepository;
 use App\Repository\ItemTypeRepository;
 use App\Repository\ItemUnitRepository;
 use App\Repository\SystemSettingRepository;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ItemType extends DynamicType
 {
+    private string $formKey = 'item';
+
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly ItemUnitRepository $itemUnitRepository,
@@ -20,6 +23,7 @@ class ItemType extends DynamicType
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
+        private readonly SerializerInterface $serializer,
     )
     {
         parent::__construct(
@@ -27,6 +31,7 @@ class ItemType extends DynamicType
             $this->dynamicFormRepository,
             $this->dynamicFormFieldRepository,
             $this->systemSettings,
+            $this->serializer,
         );
     }
 
@@ -72,9 +77,23 @@ class ItemType extends DynamicType
         return $unitField;
     }
 
+    /**
+     * @return DynamicFormField[]
+     */
     public function getFormFields(string $formKey = 'item', bool $withTabs = true): array
     {
         return parent::getFormFields('item', $withTabs);
+    }
+
+    public function hasTableFieldForUser(string $fieldKey): bool
+    {
+        foreach ($this->dynamicFormFieldRepository->getUserFieldsByFormKey($this->formKey) as $formField) {
+            if ($formField->getFieldKey() === $fieldKey && $formField->getFieldType() === 'table') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getIndexHeaders(string $formKey = 'item'): array

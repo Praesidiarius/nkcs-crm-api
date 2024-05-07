@@ -8,6 +8,7 @@ use App\Repository\ContactSalutionRepository;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
 use App\Repository\SystemSettingRepository;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ContactType extends DynamicType
@@ -18,7 +19,7 @@ class ContactType extends DynamicType
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
-
+        private readonly SerializerInterface $serializer,
     )
     {
         parent::__construct(
@@ -26,6 +27,7 @@ class ContactType extends DynamicType
             $this->dynamicFormRepository,
             $this->dynamicFormFieldRepository,
             $this->systemSettings,
+            $this->serializer,
         );
     }
 

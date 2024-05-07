@@ -343,7 +343,7 @@ class DocumentController extends AbstractApiController
         $data = [
             'item' => $template,
             'form' => $this->templateForm->getFormFields(),
-            'sections' => $this->templateForm->getFormSections(),
+            'sections' => $this->templateForm->getTabbedFormSections(),
         ];
 
         return $this->json($data);

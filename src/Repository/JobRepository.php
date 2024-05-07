@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Model\DynamicDto;
 use App\Model\JobDto;
+use App\Service\ChartDataGenerator;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -18,6 +19,8 @@ class JobRepository extends AbstractRepository
         private readonly ItemTypeRepository $itemTypeRepository,
         private readonly ItemVoucherCodeRepository $voucherCodeRepository,
         private readonly VoucherRepository $voucherRepository,
+        private readonly SystemSettingRepository $systemSettings,
+        private readonly ChartDataGenerator $chartDataGenerator,
     ) {
         parent::__construct($this->connection, $this->dynamicFormFieldRepository);
 
@@ -35,6 +38,8 @@ class JobRepository extends AbstractRepository
             $this->itemRepository,
             $this->voucherCodeRepository,
             $this->voucherRepository,
+            $this->systemSettings,
+            $this->chartDataGenerator,
         );
     }
 

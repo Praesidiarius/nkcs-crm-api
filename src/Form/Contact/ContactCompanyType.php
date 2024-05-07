@@ -6,6 +6,7 @@ use App\Form\DynamicType;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
 use App\Repository\SystemSettingRepository;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ContactCompanyType extends DynamicType
@@ -15,6 +16,7 @@ class ContactCompanyType extends DynamicType
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
+        private readonly SerializerInterface $serializer,
     )
     {
         parent::__construct(
@@ -22,6 +24,7 @@ class ContactCompanyType extends DynamicType
             $this->dynamicFormRepository,
             $this->dynamicFormFieldRepository,
             $this->systemSettings,
+            $this->serializer,
         );
     }
 

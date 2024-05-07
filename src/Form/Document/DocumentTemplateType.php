@@ -72,6 +72,23 @@ class DocumentTemplateType extends AbstractType
         ];
     }
 
+    public function getTabbedFormSections(): array
+    {
+        return [
+            [
+                'sectionLabel' => $this->translator->trans('document.form.section.basic'),
+                'sectionKey' => 'tab',
+                'nestedSections' => [
+                    [
+                        'sectionLabel' => $this->translator->trans('document.form.section.basic'),
+                        'sectionKey' => 'basic',
+                    ]
+                ]
+            ]
+        ];
+    }
+
+
     public function getFormFields(): array
     {
         $docTypes = $this->documentTypeRepository->findAll();

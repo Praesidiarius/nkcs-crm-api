@@ -2,6 +2,7 @@
 
 namespace App\Form;
 
+use App\Entity\DynamicForm;
 use App\Entity\DynamicFormField;
 use App\Repository\DynamicFormFieldRepository;
 use App\Repository\DynamicFormRepository;
@@ -17,6 +18,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DynamicType extends AbstractType
@@ -26,8 +29,8 @@ class DynamicType extends AbstractType
         private readonly DynamicFormRepository $dynamicFormRepository,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
-    )
-    {
+        private readonly SerializerInterface $serializer,
+    ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -71,6 +74,30 @@ class DynamicType extends AbstractType
     {
         $resolver->setDefaults([
             'csrf_protection' => false,
+        ]);
+    }
+
+    public function getTabbedFormSections(string $formKey): array
+    {
+        /** @var DynamicForm|null $dynamicForm */
+        $dynamicForm = $this->dynamicFormRepository->findOneBy(['formKey' => $formKey]);
+
+        if (!$dynamicForm) {
+            return json_encode([]);
+        }
+
+        $dynamicSections = $dynamicForm->getDynamicFormSections();
+        $dynamicTabs = $dynamicSections->filter(static function ($section) {
+            return $section->getParentSection() === null;
+        });
+
+        // we need to normalize the form sections to handle the circular reference
+        // https://symfony.com/doc/current/components/serializer.html#handling-circular-references
+        return $this->serializer->normalize($dynamicTabs, 'json', [
+            'groups' => ['form:basic'],
+            AbstractNormalizer::CIRCULAR_REFERENCE_HANDLER => function (object $object): string {
+                return $object->getId();
+            },
         ]);
     }
 

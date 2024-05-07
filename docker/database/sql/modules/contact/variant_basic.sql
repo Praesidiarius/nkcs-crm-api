@@ -65,7 +65,7 @@ SET
   @contact_main_section_id = LAST_INSERT_ID();
 
 INSERT INTO `dynamic_form_section` (`id`, `parent_section_id`, `section_label`, `section_key`, `form_id`)
-VALUES (NULL, @contact_main_section_id, 'contact.form.section.basic', 'contactBasic', @contact_form_id);
+VALUES (NULL, @contact_main_section_id, NULL, 'contactBasic', @contact_form_id);
 
 SET
   @contact_basic_section_id = LAST_INSERT_ID();
@@ -87,7 +87,7 @@ SET
   @company_main_section_id = LAST_INSERT_ID();
 
 INSERT INTO `dynamic_form_section` (`id`, `parent_section_id`, `section_label`, `section_key`, `form_id`)
-VALUES (NULL, @company_main_section_id, 'contact.form.section.basic', 'contactCompanyBasic', @company_form_id);
+VALUES (NULL, @company_main_section_id, NULL, 'contactCompanyBasic', @company_form_id);
 
 SET
   @company_basic_section_id = LAST_INSERT_ID();

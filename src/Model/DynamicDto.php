@@ -4,6 +4,7 @@ namespace App\Model;
 
 use App\Entity\DynamicFormField;
 use App\Repository\DynamicFormFieldRepository;
+use App\Service\ChartDataGenerator;
 use DateTimeInterface;
 use Doctrine\DBAL\Connection;
 
@@ -14,6 +15,7 @@ class DynamicDto
     public function __construct(
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly Connection $connection,
+        private readonly ?ChartDataGenerator $chartDataGenerator = null,
     ) {
     }
 
@@ -161,6 +163,10 @@ class DynamicDto
                             : $this->data[$field->getFieldKey()] ?? 0
                     ) ?? 0,
                 ),
+                'chart' => $this->chartDataGenerator
+                    ? $this->chartDataGenerator->getSerializedChartData($field->getFieldKey(), $this->getId())
+                    : []
+                ,
                 'table' => $this->getSerializedTableFieldData($field),
                 'currency' => $this->getSerializedCurrencyFieldData($field, $this->data[$field->getFieldKey()] ?? 0),
                 default => array_key_exists($field->getFieldKey(), $this->data)
@@ -181,6 +187,11 @@ class DynamicDto
             ->setParameters([
                 'id' => $this->getId()
             ]);
+
+        if ($formField->getRelatedTableOrder()) {
+            $orderBy = explode(' ', $formField->getRelatedTableOrder());
+            $qb->orderBy($orderBy[0], $orderBy[1]);
+        }
 
         return $qb->fetchAllAssociative();
     }
@@ -230,6 +241,4 @@ class DynamicDto
     {
         $this->data['created_date'] = date('Y-m-d H:i:s', time());
     }
-
-
 }

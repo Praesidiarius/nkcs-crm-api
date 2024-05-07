@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Model\DynamicDto;
+use App\Service\ChartDataGenerator;
 use Doctrine\DBAL\Connection;
 
 class ItemRepository extends AbstractRepository
@@ -10,6 +11,7 @@ class ItemRepository extends AbstractRepository
     public function __construct(
         private readonly Connection $connection,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly ChartDataGenerator $chartDataGenerator,
     ) {
         parent::__construct($this->connection, $this->dynamicFormFieldRepository);
 
@@ -18,7 +20,11 @@ class ItemRepository extends AbstractRepository
 
     public function getDynamicDto(): DynamicDto
     {
-        return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        return new DynamicDto(
+            $this->dynamicFormFieldRepository,
+            $this->connection,
+            $this->chartDataGenerator,
+        );
     }
 
     public function findBySearchAttributes(int $page, int $pageSize): array

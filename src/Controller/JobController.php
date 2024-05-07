@@ -12,6 +12,7 @@ use App\Form\Job\JobType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
+use App\Repository\ItemPriceHistoryRepository;
 use App\Repository\ItemRepository;
 use App\Repository\ItemTypeRepository;
 use App\Repository\ItemUnitRepository;
@@ -19,9 +20,11 @@ use App\Repository\ItemVoucherCodeRedeemRepository;
 use App\Repository\ItemVoucherCodeRepository;
 use App\Repository\JobPositionRepository;
 use App\Repository\JobRepository;
+use App\Repository\SystemSettingRepository;
 use App\Repository\UserSettingRepository;
 use App\Repository\VoucherRepository;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -47,7 +50,10 @@ class JobController extends AbstractDynamicFormController
         private readonly HttpClientInterface $httpClient,
         private readonly TranslatorInterface $translator,
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
+        private readonly SystemSettingRepository $systemSettings,
         private readonly Connection $connection,
+        #[Autowire(lazy: true)]
+        private readonly ItemPriceHistoryRepository $priceHistoryRepository,
     ) {
         parent::__construct(
             $this->httpClient,
@@ -406,6 +412,15 @@ class JobController extends AbstractDynamicFormController
             $unit = $this->itemUnitRepository->find($item->getIntField('unit_id'));
             $position->setItemId($itemId);
             $position->setUnit($unit);
+
+            // Item Price History Extension
+            $isPriceHistoryEnabled = (bool) $this->systemSettings
+                ->findSettingByKey('item-price-history-extension-enabled'
+                )?->getSettingValue() ?? false
+            ;
+            if ($isPriceHistoryEnabled) {
+                $position->setPrice($this->priceHistoryRepository->getCurrentPriceForItem($itemId));
+            }
         } else {
             if ($unitId <= 0) {
                 return $this->json([

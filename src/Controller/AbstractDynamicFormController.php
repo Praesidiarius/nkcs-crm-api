@@ -116,10 +116,15 @@ class AbstractDynamicFormController extends AbstractApiController
 
         $dto->serializeDataForApiByFormModel($formKey);
 
+        $sections = [];
+        foreach ($form->getTabbedFormSections($formKey) as $section) {
+            $sections[] = $section;
+         }
+
         $data = [
             'item' => $dto->getDataSerialized(),
             'form' => $form->getFormFields($formKey),
-            'sections' => $form->getFormSections($formKey, true),
+            'sections' => $sections,
         ];
 
         return $this->json(array_merge($data, $extraData));

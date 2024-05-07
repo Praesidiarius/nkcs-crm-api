@@ -38,6 +38,9 @@ class DynamicFormFieldRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @return DynamicFormField[]
+     */
     public function getUserFieldsByFormKey(string $dynamicFormKey): array
     {
         return $this->createQueryBuilder('d')

@@ -8,11 +8,15 @@ use App\Form\Item\ItemType;
 use App\Model\DynamicDto;
 use App\Repository\AbstractRepository;
 use App\Repository\DynamicFormFieldRepository;
+use App\Repository\ItemPriceHistoryRepository;
 use App\Repository\ItemRepository;
+use App\Repository\SystemSettingRepository;
+use App\Repository\TableFieldRelatedTableRepository;
 use App\Repository\UserSettingRepository;
 use App\Service\DataExporter;
 use Doctrine\DBAL\Connection;
 use Stripe\StripeClient;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -31,6 +35,9 @@ class ItemController extends AbstractDynamicFormController
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly Connection $connection,
         private readonly DataExporter $dataExporter,
+        private readonly SystemSettingRepository $systemSettings,
+        #[Autowire(lazy: true)]
+        private readonly ItemPriceHistoryRepository $priceHistoryRepository,
     ) {
         parent::__construct(
             $this->httpClient,
@@ -53,6 +60,32 @@ class ItemController extends AbstractDynamicFormController
 
         $body = $request->getContent();
         $data = json_decode($body, true);
+
+        // Item Price History Extension
+        $isPriceHistoryEnabled = (bool) $this->systemSettings
+            ->findSettingByKey('item-price-history-extension-enabled'
+            )?->getSettingValue() ?? false
+        ;
+        $itemHasPrice = false;
+        $priceData = [];
+
+        if ($isPriceHistoryEnabled) {
+            // move price history related data out of data for validation
+            $priceForm = $this->dynamicFormFieldRepository->getUserFieldsByFormKey('itemPrice');
+            $priceFields = [];
+            foreach ($priceForm as $priceField) {
+                $priceFields[] = $priceField->getFieldKey();
+            }
+
+            foreach ($priceFields as $priceField) {
+                if (!isset($data[$priceField])) {
+                    continue;
+                }
+                $itemHasPrice = true;
+                $priceData[$priceField] = $data[$priceField];
+                unset($data[$priceField]);
+            }
+        }
 
         $form = $this->createForm(ItemType::class);
         $form->submit($data);
@@ -82,6 +115,17 @@ class ItemController extends AbstractDynamicFormController
 
         // save contact
         $item = $this->itemRepository->save($item);
+
+        /** Price History Extension */
+        if ($itemHasPrice) {
+            $priceData['item_id'] = $item->getId();
+            $price = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+            $price->setData($priceData);
+            // set readonly fields
+            $price->setCreatedBy($this->getUser()->getId());
+            $price->setCreatedDate();
+            $this->priceHistoryRepository->save($price);
+        }
 
         /**
          * Stripe Integration
@@ -195,6 +239,59 @@ class ItemController extends AbstractDynamicFormController
         }
 
         return $this->json(['state' => 'success']);
+    }
+
+    #[Route(
+        path: '/add-table-field-entry/{itemId}/{tableField}',
+        name: 'item_add_price',
+        requirements: ['id' => Requirement::DIGITS],
+        methods: ['POST']
+    )]
+    public function addTableFieldEntry(
+        int $itemId,
+        string $tableField,
+        Request $request,
+    ): Response {
+        if (!$this->checkLicense()) {
+            throw new HttpException(402, 'no valid license found');
+        }
+
+        if (!$this->itemForm->hasTableFieldForUser($tableField)) {
+            throw new HttpException(404, 'item form has no field "' . $tableField . '"');
+        }
+
+        $tableFieldFormFields = $this->dynamicFormFieldRepository->getUserFieldsByFormKey('item' . ucfirst($tableField));
+
+        $body = $request->getContent();
+        $data = json_decode($body, true);
+
+        $tableFieldData = [];
+        foreach ($tableFieldFormFields as $formField) {
+            if (array_key_exists($formField->getFieldKey(), $data)) {
+                $tableFieldData[$formField->getFieldKey()] = $data[$formField->getFieldKey()];
+            }
+        }
+
+        $tableFieldData['item_id'] = $itemId;
+
+        $model = new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+        $model->setData($tableFieldData);
+        // set readonly fields
+        $model->setCreatedBy($this->getUser()->getId());
+        $model->setCreatedDate();
+
+        // get repo for table field related table
+        $repository = new TableFieldRelatedTableRepository(
+            connection: $this->connection,
+            dynamicFormFieldRepository: $this->dynamicFormFieldRepository,
+            baseTable: 'item_price',
+            relationField: 'item_id'
+        );
+        $repository->save($model);
+
+        $item = $this->itemRepository->findById($itemId);
+
+        return $this->itemResponse($item, 'item', $this->itemForm);
     }
 
     #[Route('/list', name: 'item_index', methods: ['GET'])]
