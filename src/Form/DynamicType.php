@@ -30,8 +30,7 @@ class DynamicType extends AbstractType
         private readonly DynamicFormFieldRepository $dynamicFormFieldRepository,
         private readonly SystemSettingRepository $systemSettings,
         private readonly SerializerInterface $serializer,
-    )
-    {
+    ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
