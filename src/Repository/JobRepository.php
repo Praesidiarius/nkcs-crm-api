@@ -18,6 +18,7 @@ class JobRepository extends AbstractRepository
         private readonly ItemTypeRepository $itemTypeRepository,
         private readonly ItemVoucherCodeRepository $voucherCodeRepository,
         private readonly VoucherRepository $voucherRepository,
+        private readonly SystemSettingRepository $systemSettings,
     ) {
         parent::__construct($this->connection, $this->dynamicFormFieldRepository);
 
@@ -35,6 +36,7 @@ class JobRepository extends AbstractRepository
             $this->itemRepository,
             $this->voucherCodeRepository,
             $this->voucherRepository,
+            $this->systemSettings,
         );
     }
 

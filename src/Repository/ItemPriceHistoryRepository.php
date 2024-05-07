@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Model\DynamicDto;
+use Cake\Chronos\Chronos;
 use Doctrine\DBAL\Connection;
 
 class ItemPriceHistoryRepository extends AbstractRepository
@@ -20,6 +21,30 @@ class ItemPriceHistoryRepository extends AbstractRepository
     public function getDynamicDto(): DynamicDto
     {
         return new DynamicDto($this->dynamicFormFieldRepository, $this->connection);
+    }
+
+    public function getCurrentPriceForItem(int $itemId): float
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('*')
+            ->from($this->baseTable)
+            ->where('item_id = :itemId')
+            ->andWhere('date >= :today')
+            ->orderBy('date', 'ASC')
+            ->setMaxResults(1)
+            ->setParameters([
+                'itemId' => $itemId,
+                'today' => Chronos::now()->format('Y-m-d')
+            ])
+        ;
+
+        $rawData = $qb->fetchAssociative();
+        if ($rawData) {
+            return $rawData['price_sell'];
+        }
+
+        return 0.0;
     }
 
     public function getPriceForItem(int $itemId, int $historyId): ?DynamicDto
